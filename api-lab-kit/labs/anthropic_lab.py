@@ -89,7 +89,7 @@ def run_auth():
             max_tokens=8,
             messages=[{"role": "user", "content": "Reply with ok."}],
         )
-        save_output("auth", "ok", DEFAULT_MODEL, started, "Minimal Messages API call", text_from_message(message), message)
+        save_output("auth", "ok", DEFAULT_MODEL, started, "Minimal Messages API call", text_from_message(message), raw_response=message)
     except Exception as exc:
         save_output("auth", "error", DEFAULT_MODEL, started, "Minimal Messages API call", error_message=str(exc))
 
@@ -105,7 +105,7 @@ def run_basic():
             max_tokens=32,
             messages=[{"role": "user", "content": "Reply with exactly: api-lab-ok"}],
         )
-        save_output("basic", "ok", DEFAULT_MODEL, started, "Messages API text call", text_from_message(message), message)
+        save_output("basic", "ok", DEFAULT_MODEL, started, "Messages API text call", text_from_message(message), raw_response=message)
     except Exception as exc:
         save_output("basic", "error", DEFAULT_MODEL, started, "Messages API text call", error_message=str(exc))
 
@@ -124,7 +124,7 @@ def run_stream():
         ) as stream:
             for text in stream.text_stream:
                 chunks.append(text)
-        save_output("stream", "ok", DEFAULT_MODEL, started, "Messages API stream", "".join(chunks), {"chunks": chunks})
+        save_output("stream", "ok", DEFAULT_MODEL, started, "Messages API stream", "".join(chunks), raw_response={"chunks": chunks})
     except Exception as exc:
         save_output("stream", "error", DEFAULT_MODEL, started, "Messages API stream", error_message=str(exc))
 
@@ -151,7 +151,7 @@ def run_tools():
             messages=[{"role": "user", "content": "Use the tool to get lab weather for Tokyo."}],
         )
         summary = "tool_use_detected" if "tool_use" in clean_raw(message) else "no_tool_use_detected"
-        save_output("tools", "ok", DEFAULT_MODEL, started, "Messages API tool use", summary, message)
+        save_output("tools", "ok", DEFAULT_MODEL, started, "Messages API tool use", summary, raw_response=message)
     except Exception as exc:
         save_output("tools", "error", DEFAULT_MODEL, started, "Messages API tool use", error_message=str(exc))
 

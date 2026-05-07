@@ -28,7 +28,28 @@ API Builder Lab is not production implementation. It is an isolated testing surf
 - The user explicitly asks to skip real API calls.
 - You are implementing the final production TypeScript adapter.
 
-## Required workflow
+## Operating modes
+
+### Execution mode
+
+Use this mode when the provider case already exists in `labs/` and the goal is to get a fresh result, avoid rework, and save tokens.
+
+```txt
+Python lab -> real output -> technical feedback -> TypeScript plan -> main implementation
+```
+
+In execution mode, do not re-read official provider docs every time. Run the focused lab case, inspect the saved JSON, and use the real output as the practical source of truth.
+
+Use official provider docs in execution mode only when:
+
+- the case has no previous real output
+- the case fails with auth, SDK, payload, streaming, tool call, model, or structured-output errors
+- the lab code needs to be created, fixed, or adapted
+- the output shape conflicts with the current TypeScript plan
+
+### Investigation mode
+
+Use this mode when a case is new, broken, or uncertain.
 
 ```txt
 Official docs -> Python lab -> real output -> technical feedback -> TypeScript plan -> main implementation
@@ -36,17 +57,32 @@ Official docs -> Python lab -> real output -> technical feedback -> TypeScript p
 
 1. Read `providers.md` and the official provider docs.
 2. Configure `.env` from `.env.example`.
-3. Run exactly one focused lab case.
-4. Inspect the saved JSON in `outputs/`.
-5. Report the command, status, model, response shape, latency, and failure mode.
-6. Plan TypeScript only after a real output exists.
+3. Create or adjust the focused lab case.
+4. Run exactly one focused lab case.
+5. Inspect the saved JSON in `outputs/`.
+6. Report the command, status, model, response shape, latency, and failure mode.
+7. Plan TypeScript only after a real output exists.
 
 ## Commands
 
 Run from `api-lab-kit/`:
 
 ```bash
+python run_lab.py --provider <provider> --case <case>
+```
+
+The executor follows this skill's reporting contract and is the default command for repeat execution. It does not print secrets and it reads the JSON output after the lab script runs.
+
+Direct provider scripts remain available for debugging:
+
+```bash
 python labs/<provider>_lab.py --case <case>
+```
+
+Readiness without API calls:
+
+```bash
+python run_lab.py --status
 ```
 
 Available cases:
@@ -71,6 +107,8 @@ Do not proceed to main implementation unless the lab has evidence:
 - TypeScript implication
 
 No real output means stop. A missing API key, auth failure, SDK mismatch, unclear streaming event shape, missing tool call, or invalid structured output is a blocker.
+
+If one provider case passes through `run_lab.py`, the lab harness is proven for the shared workflow: local `.env`, isolated Python call, JSON output, redaction, summary, and TypeScript handoff evidence. Other providers are structurally ready, but each provider is API-validated only after its own real output exists.
 
 ## Technical response template
 

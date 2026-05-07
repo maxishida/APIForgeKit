@@ -83,7 +83,7 @@ def run_auth():
             models.append(getattr(model, "name", str(model)))
             if len(models) >= 5:
                 break
-        save_output("auth", "ok", "models.list", started, "List first available models", ", ".join(models), models)
+        save_output("auth", "ok", "models.list", started, "List first available models", ", ".join(models), raw_response=models)
     except Exception as exc:
         save_output("auth", "error", "models.list", started, "List first available models", error_message=str(exc))
 
@@ -95,7 +95,7 @@ def run_basic():
         return
     try:
         response = client.models.generate_content(model=DEFAULT_MODEL, contents="Reply with exactly: api-lab-ok")
-        save_output("basic", "ok", DEFAULT_MODEL, started, "generate_content text call", response.text, response)
+        save_output("basic", "ok", DEFAULT_MODEL, started, "generate_content text call", response.text, raw_response=response)
     except Exception as exc:
         save_output("basic", "error", DEFAULT_MODEL, started, "generate_content text call", error_message=str(exc))
 
@@ -110,7 +110,7 @@ def run_stream():
         response = client.models.generate_content_stream(model=DEFAULT_MODEL, contents="Count from one to three.")
         for chunk in response:
             chunks.append(getattr(chunk, "text", ""))
-        save_output("stream", "ok", DEFAULT_MODEL, started, "generate_content_stream text call", "".join(chunks), {"chunks": chunks})
+        save_output("stream", "ok", DEFAULT_MODEL, started, "generate_content_stream text call", "".join(chunks), raw_response={"chunks": chunks})
     except Exception as exc:
         save_output("stream", "error", DEFAULT_MODEL, started, "generate_content_stream text call", error_message=str(exc))
 
@@ -140,7 +140,7 @@ def run_tools():
             config=tool_config,
         )
         summary = "function_call_detected" if "function_call" in clean_raw(response) else "no_function_call_detected"
-        save_output("tools", "ok", DEFAULT_MODEL, started, "Gemini function declaration", summary, response)
+        save_output("tools", "ok", DEFAULT_MODEL, started, "Gemini function declaration", summary, raw_response=response)
     except Exception as exc:
         save_output("tools", "error", DEFAULT_MODEL, started, "Gemini function declaration", error_message=str(exc))
 
@@ -161,7 +161,7 @@ def run_vision():
                 types.Part.from_bytes(data=png_bytes, mime_type="image/png"),
             ],
         )
-        save_output("vision", "ok", DEFAULT_MODEL, started, "Gemini inline PNG vision prompt", response.text, response)
+        save_output("vision", "ok", DEFAULT_MODEL, started, "Gemini inline PNG vision prompt", response.text, raw_response=response)
     except Exception as exc:
         save_output("vision", "error", DEFAULT_MODEL, started, "Gemini inline PNG vision prompt", error_message=str(exc))
 

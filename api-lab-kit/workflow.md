@@ -10,6 +10,23 @@ O lab deve rodar com o `.env` local atual do repositorio, dentro desta pasta iso
 
 ## Required flow
 
+### Repeat execution
+
+Use repeat execution when a focused case already exists and the goal is to get a fresh result without spending tokens on documentation review.
+
+```txt
+1. Pick provider and case
+2. Configure .env
+3. Run python run_lab.py --provider <provider> --case <case>
+4. Inspect output JSON
+5. Record status, model, response shape, latency, and errors
+6. Plan TypeScript adapter only after real output exists
+```
+
+`run_lab.py --status` checks readiness without API calls. It reports only whether keys are present or missing; it never prints key values.
+
+### Investigation or repair
+
 ```txt
 1. Pick provider
 2. Read official docs in providers.md
@@ -21,6 +38,8 @@ O lab deve rodar com o `.env` local atual do repositorio, dentro desta pasta iso
 8. Record SDK, model, endpoint, payload, response shape, latency, and errors
 9. Plan TypeScript adapter only after real output exists
 ```
+
+Use investigation or repair when a case is new, fails, or has uncertain SDK/payload behavior. Official docs are required in this mode.
 
 ## Environment rules
 
@@ -75,6 +94,10 @@ Allowed statuses:
 - `error`
 - `skipped_missing_env`
 - `missing_dependency`
+
+## Harness proof
+
+When one provider passes a real case through the executor, the shared lab harness is working: `.env` loading, isolated SDK call, output JSON, secret redaction, summary, and TypeScript handoff evidence. That proves the lab workflow. It does not mark every provider API as validated; each provider still needs its own real output when its key is available.
 
 ## Implementation boundary
 

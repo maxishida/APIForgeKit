@@ -80,10 +80,55 @@ cp .env.example .env
 ### 3️⃣ Execute um teste
 
 ```bash
-python labs/openai_lab.py --case basic
+python run_lab.py --provider xai --case basic
 ```
 
 Outputs são salvos automaticamente em `outputs/` como JSON.
+
+Para checar quais providers estão prontos sem fazer chamadas de API:
+
+```bash
+python run_lab.py --status
+```
+
+### Como usar o API Builder Lab
+
+Use o lab antes de pedir qualquer integracao final no app principal. O objetivo e gerar um output real pequeno, salvar a evidencia local e evitar retrabalho.
+
+1. Entre em `api-lab-kit/`.
+2. Configure a `.env` com a key do provider que voce quer testar.
+3. Rode `python run_lab.py --status` para confirmar quais keys estao presentes, sem fazer chamada de API.
+4. Escolha um provider e um case focado.
+5. Rode `python run_lab.py --provider <provider> --case <case>`.
+6. Leia o resumo tecnico impresso no terminal.
+7. Abra o JSON em `outputs/` se precisar ver o shape real da resposta.
+8. So planeje TypeScript ou integracao principal quando o case tiver `status: ok`.
+
+Exemplo xAI:
+
+```bash
+cd api-lab-kit
+python run_lab.py --status
+python run_lab.py --provider xai --case auth
+python run_lab.py --provider xai --case basic
+python run_lab.py --provider xai --case stream
+python run_lab.py --provider xai --case tools
+```
+
+Para pedir isso a um agent/coding assistant, use o `SKILL.md` do lab como instrucao:
+
+```txt
+Use api-lab-kit/SKILL.md.
+Provider: xai
+Case: basic
+Execute pelo API Builder Lab com run_lab.py.
+Nao exponha keys.
+Leia o JSON salvo em outputs/.
+Responda usando o template tecnico da skill.
+Nao implemente TypeScript ainda.
+```
+
+Docs oficiais nao precisam ser relidas em toda execucao. Consulte docs do provider quando o case for novo, falhar, mudar SDK/payload, ou quando o output real entrar em conflito com o plano.
 
 ---
 
@@ -104,14 +149,14 @@ Cada provedor possui **casos de teste isolados**:
 
 ```bash
 # Testes básicos
-python labs/openai_lab.py --case auth
-python labs/openai_lab.py --case basic
-python labs/gemini_lab.py --case stream
+python run_lab.py --provider openai --case auth
+python run_lab.py --provider openai --case basic
+python run_lab.py --provider gemini --case stream
 
 # Recursos avançados
-python labs/anthropic_lab.py --case tools
-python labs/openai_lab.py --case structured
-python labs/gemini_lab.py --case vision
+python run_lab.py --provider anthropic --case tools
+python run_lab.py --provider openai --case structured
+python run_lab.py --provider gemini --case vision
 ```
 
 ### Variáveis de ambiente
@@ -200,7 +245,7 @@ APIForgeKit/
 
 | Regra | Por quê |
 |-------|--------|
-| Sempre leia a docs oficial primeiro | Blogs podem estar desatualizados |
+| Use docs oficiais quando investigar ou corrigir | Execucao repetida usa output real; docs entram em caso novo, falha ou mudanca de SDK |
 | Use Python antes de TypeScript | Validação rápida sem compilação |
 | Mantenha cada caso de teste focado | Isolamento facilita debug |
 | Use `.env` apenas para secrets | Segurança de chaves de API |
@@ -239,7 +284,7 @@ APIForgeKit/
 2. ✅ Entre em `api-lab-kit/`
 3. ✅ Copie `.env.example` para `.env` e adicione suas chaves
 4. ✅ Configure o virtualenv e instale dependências
-5. ✅ Execute um lab case: `python labs/openai_lab.py --case basic`
+5. ✅ Execute um lab case: `python run_lab.py --provider xai --case basic`
 6. ✅ Inspecione o output JSON em `outputs/`
 7. ✅ Use os resultados para planejar seu adapter TypeScript
 

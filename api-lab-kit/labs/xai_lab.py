@@ -80,7 +80,7 @@ def run_auth():
         chat = client.chat.create(model=DEFAULT_MODEL)
         chat.append(chat_types["user"]("Reply with ok."))
         response = chat.sample()
-        save_output("auth", "ok", DEFAULT_MODEL, started, "Minimal xAI chat sample", getattr(response, "content", ""), response)
+        save_output("auth", "ok", DEFAULT_MODEL, started, "Minimal xAI chat sample", getattr(response, "content", ""), raw_response=response)
     except Exception as exc:
         save_output("auth", "error", DEFAULT_MODEL, started, "Minimal xAI chat sample", error_message=str(exc))
 
@@ -95,7 +95,7 @@ def run_basic():
         chat.append(chat_types["system"]("You are a concise API lab assistant."))
         chat.append(chat_types["user"]("Reply with exactly: api-lab-ok"))
         response = chat.sample()
-        save_output("basic", "ok", DEFAULT_MODEL, started, "xAI chat sample text call", getattr(response, "content", ""), response)
+        save_output("basic", "ok", DEFAULT_MODEL, started, "xAI chat sample text call", getattr(response, "content", ""), raw_response=response)
     except Exception as exc:
         save_output("basic", "error", DEFAULT_MODEL, started, "xAI chat sample text call", error_message=str(exc))
 
@@ -114,7 +114,7 @@ def run_stream():
             final_response = response
             if getattr(chunk, "content", ""):
                 chunks.append(chunk.content)
-        save_output("stream", "ok", DEFAULT_MODEL, started, "xAI chat stream", "".join(chunks), final_response or {"chunks": chunks})
+        save_output("stream", "ok", DEFAULT_MODEL, started, "xAI chat stream", "".join(chunks), raw_response=final_response or {"chunks": chunks})
     except Exception as exc:
         save_output("stream", "error", DEFAULT_MODEL, started, "xAI chat stream", error_message=str(exc))
 
@@ -144,7 +144,7 @@ def run_tools():
                 chat.append(chat_types["tool_result"](json.dumps(result)))
             response = chat.sample()
         summary = "tool_call_detected" if "tool_calls" in clean_raw(response) else "no_tool_call_detected"
-        save_output("tools", "ok", DEFAULT_MODEL, started, "xAI function tool call", summary, response)
+        save_output("tools", "ok", DEFAULT_MODEL, started, "xAI function tool call", summary, raw_response=response)
     except Exception as exc:
         save_output("tools", "error", DEFAULT_MODEL, started, "xAI function tool call", error_message=str(exc))
 

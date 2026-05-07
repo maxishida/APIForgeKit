@@ -85,7 +85,7 @@ def run_auth():
     try:
         response = client.models.list()
         ids = [model.id for model in list(response.data)[:5]]
-        save_output("auth", "ok", "models.list", started, "List first available models", ", ".join(ids), response)
+        save_output("auth", "ok", "models.list", started, "List first available models", ", ".join(ids), raw_response=response)
     except Exception as exc:
         save_output("auth", "error", "models.list", started, "List first available models", error_message=str(exc))
 
@@ -97,7 +97,7 @@ def run_basic():
         return
     try:
         response = client.responses.create(model=DEFAULT_MODEL, input="Reply with exactly: api-lab-ok")
-        save_output("basic", "ok", DEFAULT_MODEL, started, "Responses API text call", response.output_text, response)
+        save_output("basic", "ok", DEFAULT_MODEL, started, "Responses API text call", response.output_text, raw_response=response)
     except Exception as exc:
         save_output("basic", "error", DEFAULT_MODEL, started, "Responses API text call", error_message=str(exc))
 
@@ -113,7 +113,7 @@ def run_stream():
         for event in stream:
             if getattr(event, "type", "") == "response.output_text.delta":
                 chunks.append(getattr(event, "delta", ""))
-        save_output("stream", "ok", DEFAULT_MODEL, started, "Responses API stream=True", "".join(chunks), {"chunks": chunks})
+        save_output("stream", "ok", DEFAULT_MODEL, started, "Responses API stream=True", "".join(chunks), raw_response={"chunks": chunks})
     except Exception as exc:
         save_output("stream", "error", DEFAULT_MODEL, started, "Responses API stream=True", error_message=str(exc))
 
@@ -141,7 +141,7 @@ def run_tools():
             tools=tools,
         )
         summary = "tool_call_detected" if "function_call" in clean_raw(response) else "no_tool_call_detected"
-        save_output("tools", "ok", DEFAULT_MODEL, started, "Responses API function tool", summary, response)
+        save_output("tools", "ok", DEFAULT_MODEL, started, "Responses API function tool", summary, raw_response=response)
     except Exception as exc:
         save_output("tools", "error", DEFAULT_MODEL, started, "Responses API function tool", error_message=str(exc))
 
@@ -167,7 +167,7 @@ def run_structured():
             text={"format": {"type": "json_schema", "name": "lab_result", "schema": schema, "strict": True}},
         )
         parsed = json.loads(response.output_text)
-        save_output("structured", "ok", DEFAULT_MODEL, started, "Responses API json_schema response", parsed, response)
+        save_output("structured", "ok", DEFAULT_MODEL, started, "Responses API json_schema response", parsed, raw_response=response)
     except Exception as exc:
         save_output("structured", "error", DEFAULT_MODEL, started, "Responses API json_schema response", error_message=str(exc))
 
