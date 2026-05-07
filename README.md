@@ -1,10 +1,10 @@
-# 🧪 API Lab Kit
+# 🧪 API Forge Kit
 
 <div align="center">
 
 [![Python 3.8+](https://img.shields.io/badge/python-3.8%2B-blue)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Providers](https://img.shields.io/badge/Providers-4-green)](./providers.md)
+[![Providers](https://img.shields.io/badge/Providers-4-green)](#-api-support)
 [![Status](https://img.shields.io/badge/Status-Active-success)]()
 
 **A compact, isolated Python lab for validating real AI provider APIs before main-project integration.**
@@ -17,7 +17,7 @@
 
 ## 📖 About
 
-API Lab Kit é uma **camada de economia de tokens** para sua IDE, agent de código ou automação local. Em vez de gastar contexto lendo documentação repetidamente e chutando payloads dentro da aplicação principal, este kit oferece um **fluxo isolado de testes reais** com os provedores de IA.
+**API Forge Kit** é uma **camada de economia de tokens** para sua IDE, agent de código ou automação local. Em vez de gastar contexto lendo documentação repetidamente e chutando payloads dentro da aplicação principal, este kit oferece um **fluxo isolado de testes reais** com os provedores de IA.
 
 ### Por que usar?
 
@@ -45,7 +45,7 @@ Docs oficiais → Python lab → Output real → TypeScript adapter → Implemen
 | **Anthropic Claude** | `anthropic` | `@anthropic-ai/sdk` | ✅ | ✅ | ✅ | ✅ | ✓ Scaffolded |
 | **xAI Grok** | `xai-sdk` | `@ai-sdk/xai` | ✅ | ✅ | ✅ | ✅ | ✓ Scaffolded |
 
-📖 Veja [providers.md](./providers.md) para links da documentação oficial de cada provedor.
+📖 Veja [providers.md](./api-lab-kit/providers.md) para links da documentação oficial de cada provedor.
 
 ---
 
@@ -136,7 +136,7 @@ XAI_MODEL=grok-2
 
 ## 📊 Outputs
 
-Cada teste gera um arquivo JSON em `outputs/`:
+Cada teste gera um arquivo JSON em `api-lab-kit/outputs/`:
 
 ```
 outputs/YYYY-MM-DD_provider_case_result.json
@@ -164,31 +164,35 @@ outputs/YYYY-MM-DD_provider_case_result.json
 ## 📁 Estrutura do projeto
 
 ```
-api-lab-kit/
-├── labs/                          # Scripts de teste para cada provedor
-│   ├── openai_lab.py             # OpenAI test cases
-│   ├── gemini_lab.py             # Google Gemini test cases
-│   ├── anthropic_lab.py          # Anthropic Claude test cases
-│   └── xai_lab.py                # xAI Grok test cases
+APIForgeKit/
+├── api-lab-kit/                       # Lab isolado para testes de API
+│   ├── labs/                          # Scripts de teste para cada provedor
+│   │   ├── openai_lab.py             # OpenAI test cases
+│   │   ├── gemini_lab.py             # Google Gemini test cases
+│   │   ├── anthropic_lab.py          # Anthropic Claude test cases
+│   │   └── xai_lab.py                # xAI Grok test cases
+│   │
+│   ├── outputs/                       # Resultados dos testes (local only)
+│   │   └── *.json                     # Output JSONs (gitignored)
+│   │
+│   ├── .env.example                   # Template de variáveis de ambiente
+│   ├── requirements.txt               # Dependências Python
+│   ├── README.md                      # Documentação do lab
+│   ├── SKILL.md                       # Instruções para agents/IDEs
+│   ├── workflow.md                    # Fluxo de trabalho detalhado
+│   └── providers.md                   # Documentação dos provedores
 │
-├── outputs/                       # Resultados dos testes (local only)
-│   └── *.json                     # Output JSONs (gitignored)
-│
-├── .env.example                   # Template de variáveis de ambiente
-├── requirements.txt               # Dependências Python
-├── README.md                      # Este arquivo
-├── SKILL.md                       # Instruções de uso para agents/IDEs
-├── workflow.md                    # Descrição do fluxo de trabalho
-└── providers.md                   # Documentação dos provedores
+└── README.md                          # Este arquivo
 ```
 
 ---
 
 ## 📚 Documentation
 
-- **[SKILL.md](./SKILL.md)** - Guia para agents (VS Code Copilot, Claude, etc.)
-- **[workflow.md](./workflow.md)** - Fluxo de trabalho detalhado
-- **[providers.md](./providers.md)** - Links e referências de cada provedor
+- **[api-lab-kit/README.md](./api-lab-kit/README.md)** - Guia completo do lab
+- **[api-lab-kit/SKILL.md](./api-lab-kit/SKILL.md)** - Instruções para agents (VS Code Copilot, Claude, etc.)
+- **[api-lab-kit/workflow.md](./api-lab-kit/workflow.md)** - Fluxo de trabalho detalhado
+- **[api-lab-kit/providers.md](./api-lab-kit/providers.md)** - Links e referências de cada provedor
 
 ---
 
@@ -232,17 +236,18 @@ api-lab-kit/
 ## 📝 Next Steps
 
 1. ✅ Clone ou fork este repositório
-2. ✅ Copie `.env.example` para `.env` e adicione suas chaves
-3. ✅ Configure o virtualenv e instale dependências
-4. ✅ Execute um lab case: `python labs/openai_lab.py --case basic`
-5. ✅ Inspecione o output JSON em `outputs/`
-6. ✅ Use os resultados para planejar seu adapter TypeScript
+2. ✅ Entre em `api-lab-kit/`
+3. ✅ Copie `.env.example` para `.env` e adicione suas chaves
+4. ✅ Configure o virtualenv e instale dependências
+5. ✅ Execute um lab case: `python labs/openai_lab.py --case basic`
+6. ✅ Inspecione o output JSON em `outputs/`
+7. ✅ Use os resultados para planejar seu adapter TypeScript
 
 ---
 
 ## 📄 License
 
-MIT License - veja [LICENSE](../../LICENSE) para detalhes.
+MIT License - veja [LICENSE](./LICENSE) para detalhes.
 
 ---
 
@@ -262,6 +267,6 @@ Contribuições são bem-vindas! Para melhorias, bugs ou novos casos de teste:
 
 **Desenvolvido com ❤️ para economizar tokens e acelerar integração de IA**
 
-[⬆ Voltar ao topo](#-api-lab-kit)
+[⬆ Voltar ao topo](#-api-forge-kit)
 
 </div>

@@ -1,91 +1,108 @@
 ---
 name: api-builder-lab
-description: Use when validating real AI provider APIs before integrating them into a main project, especially OpenAI, Gemini, Anthropic, or xAI calls involving auth, streaming, tools/function calling, structured outputs, vision, or future TypeScript adapters.
+description: Use when an agent needs to validate real AI provider API behavior before main-project integration, especially auth, SDK setup, streaming, tools/function calling, structured outputs, vision/VLM, web search, or TypeScript adapter planning for OpenAI, Gemini, Anthropic, or xAI.
 ---
 
 # API Builder Lab
 
-## Core rule
+## Finalidade
 
-Do not implement a provider integration in the main project until the provider has passed a real Python lab.
+Use this skill to validate real provider behavior in a local Python lab before any main-project integration.
 
-Use this skill to save IDE and agent tokens. The lab replaces repeated prompt-side guessing with local proof: run the provider SDK with the current `.env`, capture the response shape, then use that evidence for the TypeScript plan.
+The goal is token economy for the IDE or coding agent: stop guessing provider payloads inside the app, run a short proof command with the current repository `.env`, save the real response shape, then use that evidence to plan TypeScript.
 
-In Portuguese: o API Builder existe para economizar tokens da IDE. A IDE executa uma pipeline curta de testes com a API real, usando as ferramentas e SDKs que voce pretende usar, direto com a chave atual do repositorio. Depois disso, o app principal nao fica poluido com tentativas, caches, virtualenvs ou payloads experimentais.
+API Builder Lab is not production implementation. It is an isolated testing surface for SDK calls, auth, streaming, tools/functions, structured output, vision/VLM, web search, and future adapter planning.
 
-Required flow:
+## When to use
+
+- A provider integration may touch OpenAI, Gemini, Anthropic, or xAI.
+- SDK behavior, payload shape, streaming events, tool calls, or structured output are uncertain.
+- The user wants to test an API with the repository's current local key.
+- TypeScript implementation depends on a real provider response.
+- The main workspace must stay clean while the API is being explored.
+
+## When not to use
+
+- The task is only a mock, fixture, UI, or business-logic change.
+- The provider behavior is already validated by a current real output.
+- The user explicitly asks to skip real API calls.
+- You are implementing the final production TypeScript adapter.
+
+## Required workflow
 
 ```txt
 Official docs -> Python lab -> real output -> technical feedback -> TypeScript plan -> main implementation
 ```
 
-## Use the lab
-
-1. Read `providers.md` and the relevant official docs.
+1. Read `providers.md` and the official provider docs.
 2. Configure `.env` from `.env.example`.
-3. Run one focused case from `labs/`.
-4. Check the saved JSON in `outputs/`.
-5. Report the exact SDK, endpoint, model, payload shape, response shape, latency, and failure mode.
-6. Only plan TypeScript after a real output exists.
+3. Run exactly one focused lab case.
+4. Inspect the saved JSON in `outputs/`.
+5. Report the command, status, model, response shape, latency, and failure mode.
+6. Plan TypeScript only after a real output exists.
 
-Keep the main workspace clean. Do not move experimental provider code into the app while the lab is still discovering auth, payloads, event shapes, tool calls, or structured output behavior.
+## Commands
 
-## Provider commands
+Run from `api-lab-kit/`:
 
 ```bash
-python labs/openai_lab.py --case auth
-python labs/openai_lab.py --case basic
-python labs/openai_lab.py --case stream
-python labs/openai_lab.py --case tools
-python labs/openai_lab.py --case structured
-
-python labs/gemini_lab.py --case auth
-python labs/gemini_lab.py --case basic
-python labs/gemini_lab.py --case stream
-python labs/gemini_lab.py --case tools
-python labs/gemini_lab.py --case vision
-
-python labs/anthropic_lab.py --case auth
-python labs/anthropic_lab.py --case basic
-python labs/anthropic_lab.py --case stream
-python labs/anthropic_lab.py --case tools
-
-python labs/xai_lab.py --case auth
-python labs/xai_lab.py --case basic
-python labs/xai_lab.py --case stream
-python labs/xai_lab.py --case tools
+python labs/<provider>_lab.py --case <case>
 ```
 
-Run commands from the `api-lab-kit/` directory.
+Available cases:
 
-## Output rule
+| Provider | Cases |
+| --- | --- |
+| `openai` | `auth`, `basic`, `stream`, `tools`, `structured` |
+| `gemini` | `auth`, `basic`, `stream`, `tools`, `vision` |
+| `anthropic` | `auth`, `basic`, `stream`, `tools` |
+| `xai` | `auth`, `basic`, `stream`, `tools` |
 
-Every real run must save a JSON file in `outputs/` with:
+## Required evidence
+
+Do not proceed to main implementation unless the lab has evidence:
+
+- command executed
+- output JSON path
+- `status` value
+- `model_used`
+- request summary
+- response summary or exact failure
+- TypeScript implication
+
+No real output means stop. A missing API key, auth failure, SDK mismatch, unclear streaming event shape, missing tool call, or invalid structured output is a blocker.
+
+## Technical response template
+
+Use this format after running or reviewing a lab:
 
 ```txt
-provider
-test_name
-timestamp
-status
-model_used
-latency_ms
-request_summary
-response_summary
-error_message
-raw_response_without_secrets
+Provider:
+Case:
+Command:
+Output file:
+Status:
+Model:
+Finding:
+Failure mode:
+TypeScript implication:
+Next action:
 ```
 
-Never hardcode API keys. Never print complete keys. Never save secrets in outputs.
+## Safety rules
 
-Real output JSON files are local runtime artifacts and are ignored by git by default.
+- Never hardcode API keys.
+- Never print complete API keys.
+- Never save secrets in outputs.
+- Keep `.env`, `.venv`, caches, and output JSON local.
+- Do not move experimental provider code into the main app.
+- Use official docs as the source of truth; blogs are secondary only.
 
-## Stop conditions
+## Common mistakes
 
-Stop before main implementation when:
-
-- the official docs do not match the SDK behavior
-- auth fails
-- streaming event shapes are unclear
-- tool/function call payloads are not captured
-- structured output does not validate
-- no real output has been saved
+- Implementing TypeScript before a real Python output exists.
+- Trusting old docs or model-invented payloads.
+- Testing provider behavior inside the production app.
+- Committing `.env` or raw provider outputs.
+- Mixing lab exploration with app business logic.
+- Treating a passing auth test as proof that streaming, tools, or structured output works.
