@@ -60,7 +60,7 @@ def get_client(test_name, started):
             DEFAULT_MODEL,
             started,
             "GEMINI_API_KEY missing",
-            error_message="Set GEMINI_API_KEY in api-lab-kit/.env",
+            error_message="Set GEMINI_API_KEY in .env",
         )
         return None, None
     try:

@@ -1,0 +1,9 @@
+.env
+.venv/
+__pycache__/
+*.pyc
+outputs/*.json
+api-lab-kit/.env
+api-lab-kit/.venv/
+api-lab-kit/__pycache__/
+api-lab-kit/outputs/*.json

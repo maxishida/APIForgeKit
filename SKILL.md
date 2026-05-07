@@ -65,7 +65,7 @@ Official docs -> Python lab -> real output -> technical feedback -> TypeScript p
 
 ## Commands
 
-Run from `api-lab-kit/`:
+Run from the repository root:
 
 ```bash
 python run_lab.py --provider <provider> --case <case>

@@ -61,7 +61,7 @@ def require_key(test_name, started):
         DEFAULT_MODEL,
         started,
         "OPENAI_API_KEY missing",
-        error_message="Set OPENAI_API_KEY in api-lab-kit/.env",
+        error_message="Set OPENAI_API_KEY in .env",
     )
     return False
 

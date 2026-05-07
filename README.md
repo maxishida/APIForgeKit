@@ -45,7 +45,7 @@ Docs oficiais → Python lab → Output real → TypeScript adapter → Implemen
 | **Anthropic Claude** | `anthropic` | `@anthropic-ai/sdk` | ✅ | ✅ | ✅ | ✅ | ✓ Scaffolded |
 | **xAI Grok** | `xai-sdk` | `@ai-sdk/xai` | ✅ | ✅ | ✅ | ✅ | ✓ Scaffolded |
 
-📖 Veja [providers.md](./api-lab-kit/providers.md) para links da documentação oficial de cada provedor.
+📖 Veja [providers.md](./providers.md) para links da documentação oficial de cada provedor.
 
 ---
 
@@ -54,7 +54,7 @@ Docs oficiais → Python lab → Output real → TypeScript adapter → Implemen
 ### 1️⃣ Configuração inicial
 
 ```bash
-cd api-lab-kit
+cd APIForgeKit
 python -m venv .venv
 
 # Windows
@@ -95,7 +95,7 @@ python run_lab.py --status
 
 Use o lab antes de pedir qualquer integracao final no app principal. O objetivo e gerar um output real pequeno, salvar a evidencia local e evitar retrabalho.
 
-1. Entre em `api-lab-kit/`.
+1. Use a raiz do repositorio.
 2. Configure a `.env` com a key do provider que voce quer testar.
 3. Rode `python run_lab.py --status` para confirmar quais keys estao presentes, sem fazer chamada de API.
 4. Escolha um provider e um case focado.
@@ -107,7 +107,7 @@ Use o lab antes de pedir qualquer integracao final no app principal. O objetivo 
 Exemplo xAI:
 
 ```bash
-cd api-lab-kit
+cd APIForgeKit
 python run_lab.py --status
 python run_lab.py --provider xai --case auth
 python run_lab.py --provider xai --case basic
@@ -118,7 +118,7 @@ python run_lab.py --provider xai --case tools
 Para pedir isso a um agent/coding assistant, use o `SKILL.md` do lab como instrucao:
 
 ```txt
-Use api-lab-kit/SKILL.md.
+Use SKILL.md.
 Provider: xai
 Case: basic
 Execute pelo API Builder Lab com run_lab.py.
@@ -181,7 +181,7 @@ XAI_MODEL=grok-2
 
 ## 📊 Outputs
 
-Cada teste gera um arquivo JSON em `api-lab-kit/outputs/`:
+Cada teste gera um arquivo JSON em `outputs/`:
 
 ```
 outputs/YYYY-MM-DD_provider_case_result.json
@@ -210,34 +210,33 @@ outputs/YYYY-MM-DD_provider_case_result.json
 
 ```
 APIForgeKit/
-├── api-lab-kit/                       # Lab isolado para testes de API
-│   ├── labs/                          # Scripts de teste para cada provedor
-│   │   ├── openai_lab.py             # OpenAI test cases
-│   │   ├── gemini_lab.py             # Google Gemini test cases
-│   │   ├── anthropic_lab.py          # Anthropic Claude test cases
-│   │   └── xai_lab.py                # xAI Grok test cases
-│   │
-│   ├── outputs/                       # Resultados dos testes (local only)
-│   │   └── *.json                     # Output JSONs (gitignored)
-│   │
-│   ├── .env.example                   # Template de variáveis de ambiente
-│   ├── requirements.txt               # Dependências Python
-│   ├── README.md                      # Documentação do lab
-│   ├── SKILL.md                       # Instruções para agents/IDEs
-│   ├── workflow.md                    # Fluxo de trabalho detalhado
-│   └── providers.md                   # Documentação dos provedores
-│
-└── README.md                          # Este arquivo
+├── labs/                              # Scripts de teste para cada provedor
+│   ├── openai_lab.py                  # OpenAI test cases
+│   ├── gemini_lab.py                  # Google Gemini test cases
+│   ├── anthropic_lab.py               # Anthropic Claude test cases
+│   └── xai_lab.py                     # xAI Grok test cases
+├── outputs/                           # Resultados dos testes (local only)
+│   └── *.json                         # Output JSONs (gitignored)
+├── tests/                             # Testes do executor e contrato dos labs
+├── .env.example                       # Template de variáveis de ambiente
+├── requirements.txt                   # Dependências Python
+├── run_lab.py                         # Executor padrão do API Builder Lab
+├── README.md                          # Guia completo
+├── SKILL.md                           # Instruções para agents/IDEs
+├── workflow.md                        # Fluxo de trabalho detalhado
+└── providers.md                       # Documentação dos provedores
 ```
 
 ---
 
 ## 📚 Documentation
 
-- **[api-lab-kit/README.md](./api-lab-kit/README.md)** - Guia completo do lab
-- **[api-lab-kit/SKILL.md](./api-lab-kit/SKILL.md)** - Instruções para agents (VS Code Copilot, Claude, etc.)
-- **[api-lab-kit/workflow.md](./api-lab-kit/workflow.md)** - Fluxo de trabalho detalhado
-- **[api-lab-kit/providers.md](./api-lab-kit/providers.md)** - Links e referências de cada provedor
+- **[README.md](./README.md)** - Guia completo do lab
+- **[SKILL.md](./SKILL.md)** - Instruções para agents (VS Code Copilot, Claude, etc.)
+- **[workflow.md](./workflow.md)** - Fluxo de trabalho detalhado
+- **[providers.md](./providers.md)** - Links e referências de cada provedor
+- **[run_lab.py](./run_lab.py)** - Executor padrão do API Builder Lab
+- **[tests/](./tests/)** - Testes do executor e contrato dos outputs
 
 ---
 
@@ -281,12 +280,11 @@ APIForgeKit/
 ## 📝 Next Steps
 
 1. ✅ Clone ou fork este repositório
-2. ✅ Entre em `api-lab-kit/`
-3. ✅ Copie `.env.example` para `.env` e adicione suas chaves
-4. ✅ Configure o virtualenv e instale dependências
-5. ✅ Execute um lab case: `python run_lab.py --provider xai --case basic`
-6. ✅ Inspecione o output JSON em `outputs/`
-7. ✅ Use os resultados para planejar seu adapter TypeScript
+2. ✅ Copie `.env.example` para `.env` e adicione suas chaves
+3. ✅ Configure o virtualenv e instale dependências
+4. ✅ Execute um lab case: `python run_lab.py --provider xai --case basic`
+5. ✅ Inspecione o output JSON em `outputs/`
+6. ✅ Use os resultados para planejar seu adapter TypeScript
 
 ---
 

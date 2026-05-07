@@ -59,7 +59,7 @@ def get_client(test_name, started):
             DEFAULT_MODEL,
             started,
             "ANTHROPIC_API_KEY missing",
-            error_message="Set ANTHROPIC_API_KEY in api-lab-kit/.env",
+            error_message="Set ANTHROPIC_API_KEY in .env",
         )
         return None
     try:
