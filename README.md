@@ -21,6 +21,7 @@
 
 ### Por que usar?
 
+✅ **Economia conservadora de tokens** - Pode reduzir cerca de 30% do uso de tokens em integrações de APIs de IA ao transformar exploração incerta em testes curtos, reutilizáveis e baseados em outputs reais
 ✅ **Rodar o código antes de integrar** - Teste exatamente as ferramentas de API que você quer usar  
 ✅ **Com suas próprias chaves** - Execute testes com o `.env` local atual do repositório  
 ✅ **Validação completa** - Auth, streaming, tools/functions, structured outputs e vision em isolamento  
