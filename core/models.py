@@ -59,3 +59,136 @@ class LeadTest(Base):
             "status": self.status,
             "error": self.error,
         }
+
+
+class TestRun(Base):
+    __tablename__ = "test_runs"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC), index=True)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    provider: Mapped[str] = mapped_column(String(80), index=True)
+    suite_name: Mapped[str] = mapped_column(String(120), index=True)
+    status: Mapped[str] = mapped_column(String(40), default="running", index=True)
+    phases: Mapped[list[str]] = mapped_column(JSON, default=list)
+    summary: Mapped[dict[str, object]] = mapped_column(JSON, default=dict)
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "id": self.id,
+            "created_at": self.created_at.isoformat() if self.created_at else "",
+            "completed_at": self.completed_at.isoformat() if self.completed_at else "",
+            "provider": self.provider,
+            "suite_name": self.suite_name,
+            "status": self.status,
+            "phases": self.phases,
+            "summary": self.summary,
+        }
+
+
+class TestEvent(Base):
+    __tablename__ = "test_events"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC), index=True)
+    run_id: Mapped[str] = mapped_column(String(64), index=True)
+    provider: Mapped[str] = mapped_column(String(80), index=True)
+    module: Mapped[str] = mapped_column(String(120), index=True)
+    test_name: Mapped[str] = mapped_column(String(120), index=True)
+    event_type: Mapped[str] = mapped_column(String(120), index=True)
+    status: Mapped[str] = mapped_column(String(40), index=True)
+    message: Mapped[str] = mapped_column(Text, default="")
+    latency_ms: Mapped[float] = mapped_column(Float, default=0)
+    tokens: Mapped[dict[str, object]] = mapped_column(JSON, default=dict)
+    cost: Mapped[float] = mapped_column(Float, default=0)
+    request: Mapped[dict[str, object]] = mapped_column(JSON, default=dict)
+    response: Mapped[dict[str, object]] = mapped_column(JSON, default=dict)
+    error: Mapped[str | None] = mapped_column(Text, nullable=True)
+    recommendation: Mapped[str] = mapped_column(Text, default="")
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "id": self.id,
+            "event_id": self.id,
+            "timestamp": self.created_at.isoformat() if self.created_at else "",
+            "created_at": self.created_at.isoformat() if self.created_at else "",
+            "run_id": self.run_id,
+            "provider": self.provider,
+            "module": self.module,
+            "test_name": self.test_name,
+            "event_type": self.event_type,
+            "status": self.status,
+            "message": self.message,
+            "latency_ms": self.latency_ms,
+            "tokens": self.tokens,
+            "cost": self.cost,
+            "request": self.request,
+            "response": self.response,
+            "error": self.error,
+            "recommendation": self.recommendation,
+        }
+
+
+class ApiRequest(Base):
+    __tablename__ = "api_requests"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC), index=True)
+    run_id: Mapped[str] = mapped_column(String(64), index=True)
+    event_id: Mapped[str] = mapped_column(String(64), index=True)
+    provider: Mapped[str] = mapped_column(String(80), index=True)
+    test_name: Mapped[str] = mapped_column(String(120), index=True)
+    endpoint: Mapped[str] = mapped_column(String(255))
+    payload: Mapped[dict[str, object]] = mapped_column(JSON, default=dict)
+
+
+class ApiResponse(Base):
+    __tablename__ = "api_responses"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC), index=True)
+    run_id: Mapped[str] = mapped_column(String(64), index=True)
+    event_id: Mapped[str] = mapped_column(String(64), index=True)
+    status_code: Mapped[int] = mapped_column(Integer, default=0)
+    payload: Mapped[dict[str, object]] = mapped_column(JSON, default=dict)
+    tokens: Mapped[dict[str, object]] = mapped_column(JSON, default=dict)
+    cost: Mapped[float] = mapped_column(Float, default=0)
+
+
+class VoiceTest(Base):
+    __tablename__ = "voice_tests"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC), index=True)
+    run_id: Mapped[str] = mapped_column(String(64), index=True)
+    audio_artifact: Mapped[str] = mapped_column(String(500), default="")
+    transcript: Mapped[str] = mapped_column(Text, default="")
+    classification: Mapped[str] = mapped_column(String(120), default="")
+    metrics: Mapped[dict[str, object]] = mapped_column(JSON, default=dict)
+    status: Mapped[str] = mapped_column(String(40), default="pending", index=True)
+    error: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+
+class AgentTest(Base):
+    __tablename__ = "agent_tests"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC), index=True)
+    run_id: Mapped[str] = mapped_column(String(64), index=True)
+    agent_name: Mapped[str] = mapped_column(String(120), default="")
+    task: Mapped[str] = mapped_column(Text, default="")
+    events: Mapped[list[dict[str, object]]] = mapped_column(JSON, default=list)
+    metrics: Mapped[dict[str, object]] = mapped_column(JSON, default=dict)
+    status: Mapped[str] = mapped_column(String(40), default="pending", index=True)
+    error: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+
+class ContextExport(Base):
+    __tablename__ = "context_exports"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC), index=True)
+    run_id: Mapped[str] = mapped_column(String(64), index=True)
+    format: Mapped[str] = mapped_column(String(20))
+    path: Mapped[str] = mapped_column(String(500))
+    summary: Mapped[dict[str, object]] = mapped_column(JSON, default=dict)

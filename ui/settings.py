@@ -21,6 +21,6 @@ def render_settings(services) -> None:
             ui.code("docker compose up -d\npython app.py\npython -m pytest -q", language="bash").classes("w-full")
 
     with ui.column().classes("afk-card w-full gap-3").style("padding:18px;"):
-        ui.label("Local-first MVP").classes("text-xl font-bold")
-        ui.label("O Studio não usa LLM, API externa, agentes, voice ou vision nesta V1.").classes("afk-muted")
-        ui.label("PostgreSQL Docker é a fonte principal; JSONL é trilha de auditoria local.").classes("afk-muted")
+        ui.label("Local-first Observability Lab").classes("text-xl font-bold")
+        ui.label("O Studio executa testes reais somente quando o usuário aciona o runner e existe XAI_API_KEY local.").classes("afk-muted")
+        ui.label("PostgreSQL Docker é a fonte principal para runs, eventos, requests, responses e context exports.").classes("afk-muted")

@@ -1,146 +1,218 @@
 ---
-name: api-builder-lab
-description: Use when an agent needs to validate real AI provider API behavior before main-project integration, especially auth, SDK setup, streaming, tools/function calling, structured outputs, vision/VLM, web search, or TypeScript adapter planning for OpenAI, Gemini, Anthropic, or xAI.
+name: apiforgekit-operational-brain
+description: Use when an agent works in APIForgeKit and needs to validate APIs, collect evidence, operate live logs, build reports, or prepare implementation context without guessing provider behavior.
 ---
 
-# API Builder Lab
+# APIForgeKit Operational Brain
 
-## Finalidade
+APIForgeKit exists to turn uncertain AI API behavior into observable evidence before any product implementation.
 
-Use this skill to validate real provider behavior in a local Python lab before any main-project integration.
-
-The goal is token economy for the IDE or coding agent: stop guessing provider payloads inside the app, run a short proof command with the current repository `.env`, save the real response shape, then use that evidence to plan TypeScript.
-
-API Builder Lab is not production implementation. It is an isolated testing surface for SDK calls, auth, streaming, tools/functions, structured output, vision/VLM, web search, and future adapter planning.
-
-## When to use
-
-- A provider integration may touch OpenAI, Gemini, Anthropic, or xAI.
-- SDK behavior, payload shape, streaming events, tool calls, or structured output are uncertain.
-- The user wants to test an API with the repository's current local key.
-- TypeScript implementation depends on a real provider response.
-- The main workspace must stay clean while the API is being explored.
-
-## When not to use
-
-- The task is only a mock, fixture, UI, or business-logic change.
-- The provider behavior is already validated by a current real output.
-- The user explicitly asks to skip real API calls.
-- You are implementing the final production TypeScript adapter.
-
-## Operating modes
-
-### Execution mode
-
-Use this mode when the provider case already exists in `labs/` and the goal is to get a fresh result, avoid rework, and save tokens.
+Primary flow:
 
 ```txt
-Python lab -> real output -> technical feedback -> TypeScript plan -> main implementation
+Teste Real
+↓
+Logs Estruturados
+↓
+Evidências
+↓
+Contexto Técnico
+↓
+Implementação futura
 ```
 
-In execution mode, do not re-read official provider docs every time. Run the focused lab case, inspect the saved JSON, and use the real output as the practical source of truth.
+Do not jump directly to app code. First run a focused test, collect logs, inspect evidence, build context, and only then recommend implementation work.
 
-Use official provider docs in execution mode only when:
+## Core Rule
 
-- the case has no previous real output
-- the case fails with auth, SDK, payload, streaming, tool call, model, or structured-output errors
-- the lab code needs to be created, fixed, or adapted
-- the output shape conflicts with the current TypeScript plan
+No implementation without evidence.
 
-### Investigation mode
+Evidence means:
 
-Use this mode when a case is new, broken, or uncertain.
+- command or UI action executed
+- sanitized input payload
+- sanitized output payload
+- status
+- latency
+- provider, model, endpoint or SDK path
+- token/cost metadata when available
+- error details when failed
+- recommendation
 
-```txt
-Official docs -> Python lab -> real output -> technical feedback -> TypeScript plan -> main implementation
-```
+## Current Product Focus
 
-1. Read `providers.md` and the official provider docs.
-2. Configure `.env` from `.env.example`.
-3. Create or adjust the focused lab case.
-4. Run exactly one focused lab case.
-5. Inspect the saved JSON in `outputs/`.
-6. Report the command, status, model, response shape, latency, and failure mode.
-7. Plan TypeScript only after a real output exists.
+The current APIForgeKit Studio focus is observability for AI APIs:
 
-## Commands
+- live dashboard
+- real-time event stream
+- structured PostgreSQL logs
+- request/response evidence
+- xAI test runner
+- Context Builder from real logs
+- Markdown, JSON and HTML reports
 
-Run from the repository root:
+Lead Algorithm Lab remains available as a deterministic local module, but it is not the center of the current delivery.
+
+## Operating Modes
+
+### 1. Live Observability Mode
+
+Use the NiceGUI Studio to run and inspect live provider tests.
 
 ```bash
-python run_lab.py --provider <provider> --case <case>
+npm run db
+python app.py
 ```
 
-The executor follows this skill's reporting contract and is the default command for repeat execution. It does not print secrets and it reads the JSON output after the lab script runs.
+Open `http://localhost:8080`, then use Live Dashboard -> Executar xAI Compact.
 
-Direct provider scripts remain available for debugging:
+This path writes to PostgreSQL tables:
+
+- `test_runs`
+- `test_events`
+- `api_requests`
+- `api_responses`
+- `voice_tests`
+- `agent_tests`
+- `context_exports`
+
+### 2. Provider Validation Mode
+
+Use for direct API/provider exploration, especially xAI.
+
+The agent must:
+
+1. Read current official provider docs when the endpoint is new, changed, or failing.
+2. Verify local readiness without printing secrets.
+3. Run the smallest focused real test possible.
+4. Persist structured logs and request/response evidence.
+5. Generate context and reports.
+6. Stop before implementation unless the user explicitly approves a later build phase.
+
+Legacy compact runner remains available:
 
 ```bash
-python labs/<provider>_lab.py --case <case>
+python run_lab.py --provider xai --case auth
+python run_lab.py --provider xai --case basic
+python run_lab.py --provider xai --case stream
+python run_lab.py --provider xai --case tools
 ```
 
-Readiness without API calls:
+## xAI Validation Priority
 
-```bash
-python run_lab.py --status
+Use official xAI docs as source of truth:
+
+- Overview: https://docs.x.ai/overview
+- Text / Responses: https://docs.x.ai/developers/model-capabilities/text/generate-text
+- Structured Outputs: https://docs.x.ai/developers/model-capabilities/text/structured-outputs
+- Streaming: https://docs.x.ai/developers/model-capabilities/text/streaming
+- Function Calling: https://docs.x.ai/developers/tools/function-calling
+- Multi Agent: https://docs.x.ai/developers/model-capabilities/text/multi-agent
+- Voice: https://docs.x.ai/developers/model-capabilities/audio/voice
+- Speech to Text: https://docs.x.ai/developers/model-capabilities/audio/speech-to-text
+- Models: https://docs.x.ai/developers/rest-api-reference/inference/models
+- Rate Limits: https://docs.x.ai/developers/rate-limits
+- Debugging: https://docs.x.ai/developers/debugging
+
+Current practical stance:
+
+- Prefer Responses API concepts for future integrations, but use `xai-sdk` where it gives cleaner Python validation.
+- Validate structured outputs with schemas before trusting parser behavior.
+- Capture streaming chunks, first-chunk latency and final response shape.
+- Treat Multi Agent as beta and record additional cost/latency risk.
+- Treat Voice as a separate validation track with explicit budget, audio fixtures and privacy rules.
+
+## Structured Event Contract
+
+Every live test event should follow this shape:
+
+```json
+{
+  "event_id": "uuid",
+  "timestamp": "",
+  "provider": "xai",
+  "module": "",
+  "test_name": "",
+  "status": "running | success | failed | blocked",
+  "latency_ms": 0,
+  "tokens": {},
+  "cost": 0,
+  "request": {},
+  "response": {},
+  "error": null,
+  "recommendation": ""
+}
 ```
 
-Available cases:
+Never log full API keys, bearer tokens, private audio, raw private transcripts or user secrets. If an artifact is sensitive, log metadata and a local artifact path instead.
 
-| Provider | Cases |
-| --- | --- |
-| `openai` | `auth`, `basic`, `stream`, `tools`, `structured` |
-| `gemini` | `auth`, `basic`, `stream`, `tools`, `vision` |
-| `anthropic` | `auth`, `basic`, `stream`, `tools` |
-| `xai` | `auth`, `basic`, `stream`, `tools` |
+## Context Builder Contract
 
-## Required evidence
+After each test sequence, generate context containing:
 
-Do not proceed to main implementation unless the lab has evidence:
+- what was tested
+- what worked
+- what failed
+- correct payloads
+- response shapes
+- latency and reliability observations
+- token/cost observations
+- limitations discovered
+- recommendations
+- implementation blockers
 
-- command executed
-- output JSON path
-- `status` value
-- `model_used`
-- request summary
-- response summary or exact failure
-- TypeScript implication
+## Report Contract
 
-No real output means stop. A missing API key, auth failure, SDK mismatch, unclear streaming event shape, missing tool call, or invalid structured output is a blocker.
+Reports export to:
 
-If one provider case passes through `run_lab.py`, the lab harness is proven for the shared workflow: local `.env`, isolated Python call, JSON output, redaction, summary, and TypeScript handoff evidence. Other providers are structurally ready, but each provider is API-validated only after its own real output exists.
+- Markdown
+- JSON
+- HTML
 
-## Technical response template
+Each report should include:
 
-Use this format after running or reviewing a lab:
+- executive summary
+- metrics
+- errors
+- evidence references
+- recommendations
+- implementation impact for a future phase
+
+## Stop Conditions
+
+Stop and ask before continuing when:
+
+- no real output exists
+- `XAI_API_KEY` is missing
+- PostgreSQL is offline for live runs
+- docs conflict with observed behavior
+- voice tests require real or private audio not approved by the user
+- a test may generate meaningful cost
+- rate limit or account permission blocks validation
+
+## Safety Rules
+
+- Never hardcode API keys.
+- Never print complete secrets.
+- Never commit `.env`, provider outputs, audio samples or sensitive responses.
+- Use official docs over memory.
+- Prefer small tests over broad exploratory calls.
+- Record failures as evidence instead of hiding them.
+
+## Response Template After Validation
 
 ```txt
 Provider:
-Case:
-Command:
-Output file:
+Phase:
+Test:
+Action:
+Report:
 Status:
-Model:
+Model or endpoint:
+Latency:
+Tokens/cost:
 Finding:
 Failure mode:
-TypeScript implication:
+Evidence:
 Next action:
 ```
-
-## Safety rules
-
-- Never hardcode API keys.
-- Never print complete API keys.
-- Never save secrets in outputs.
-- Keep `.env`, `.venv`, caches, and output JSON local.
-- Do not move experimental provider code into the main app.
-- Use official docs as the source of truth; blogs are secondary only.
-
-## Common mistakes
-
-- Implementing TypeScript before a real Python output exists.
-- Trusting old docs or model-invented payloads.
-- Testing provider behavior inside the production app.
-- Committing `.env` or raw provider outputs.
-- Mixing lab exploration with app business logic.
-- Treating a passing auth test as proof that streaming, tools, or structured output works.

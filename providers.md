@@ -1,28 +1,75 @@
 # Providers
 
-Official documentation is the source of truth. Blogs can help with context, but must not define payloads, SDK usage, or compatibility decisions.
+Official documentation is the source of truth. Blogs can help with context, but must not define payloads, SDK usage, compatibility, or pricing decisions.
 
 ## Provider Matrix
 
-| Provider | Python SDK | TypeScript SDK | Streaming | Tools / Functions | Structured Output | Vision / VLM | Web Search | Live / Realtime | Status |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| OpenAI | `openai` | `openai` | Yes | Yes | Yes | Yes, by supported model | Yes, with tools | Realtime API separately | Lab scaffolded |
-| Gemini | `google-genai` | `@google/genai` | Yes | Yes | Yes | Yes | Google Search tools | Live API | Lab scaffolded |
-| Anthropic | `anthropic` | `@anthropic-ai/sdk` | Yes | Yes | Schema-like tool input | Yes, by supported model | Yes | No primary live API in this kit | Lab scaffolded |
-| xAI | `xai-sdk` | `@ai-sdk/xai` or OpenAI-compatible SDK | Yes | Yes | Responses API support | Yes, by supported model | Yes | Voice Agent API separately | Lab scaffolded |
+| Provider | Current Role | Python SDK | TypeScript Path | Status |
+| --- | --- | --- | --- | --- |
+| xAI | Priority validation provider for APIForgeKit Observability Lab | `xai-sdk` and OpenAI-compatible client | Future only | Live compact runner implemented; expanded plan documented |
+| OpenAI | Legacy comparison provider | `openai` | `openai` | Compact lab scaffolded |
+| Gemini | Legacy comparison provider | `google-genai` | `@google/genai` | Compact lab scaffolded |
+| Anthropic | Legacy comparison provider | `anthropic` | `@anthropic-ai/sdk` | Compact lab scaffolded |
+
+## xAI / Grok
+
+Primary docs:
+
+- Overview: https://docs.x.ai/overview
+- Generate Text / Responses API: https://docs.x.ai/developers/model-capabilities/text/generate-text
+- Chat Completions legacy endpoint: https://docs.x.ai/developers/model-capabilities/text/chat-completions
+- Structured Outputs: https://docs.x.ai/developers/model-capabilities/text/structured-outputs
+- Streaming: https://docs.x.ai/developers/model-capabilities/text/streaming
+- Function Calling: https://docs.x.ai/developers/tools/function-calling
+- Multi Agent: https://docs.x.ai/developers/model-capabilities/text/multi-agent
+- Voice Overview: https://docs.x.ai/developers/model-capabilities/audio/voice
+- Speech to Text: https://docs.x.ai/developers/model-capabilities/audio/speech-to-text
+- Voice Agent API: https://docs.x.ai/docs/guides/voice/agent
+- Rate Limits: https://docs.x.ai/developers/rate-limits
+- Errors / Debugging: https://docs.x.ai/developers/debugging
+- Models API reference: https://docs.x.ai/developers/rest-api-reference/inference/models
+
+Important current findings from docs:
+
+- New text work should prefer the Responses API; Chat Completions is legacy.
+- Responses API supports conversation continuation with `previous_response_id`.
+- Structured outputs support JSON schema via `response_format` and JSON object mode.
+- Streaming text uses SSE and requires `stream: true`.
+- Function calling uses JSON Schema parameters and can pause execution for custom tool handling.
+- Multi Agent is beta and should be treated as a separate benchmark/cost track.
+- Models can be listed through `/v1/models`; richer language model metadata is available through `/v1/language-models`.
+- Rate limits are per team and per model using RPM and TPM.
+- Voice APIs are separate from text inference: Voice Agent realtime over WebSocket, Text to Speech, and Speech to Text.
+
+Current Live Studio compact coverage:
+
+- `auth`
+- `basic`
+- `schema_parse`
+- `stream`
+- `tools`
+- blocked placeholder events for `agents` and `voice`
+
+Expanded planned xAI coverage:
+
+- connectivity and model metadata
+- Responses API text tests
+- JSON mode
+- structured output
+- streaming latency and interruption behavior
+- STT upload
+- voice intent/classification using transcript
+- TTS generation
+- realtime voice agent feasibility
+- benchmark and report generation
 
 ## OpenAI
 
 - Main docs: https://platform.openai.com/docs
-- Quickstart: https://platform.openai.com/docs/quickstart?api-mode=responses&lang=python
 - Python SDK: https://github.com/openai/openai-python
 - TypeScript SDK: https://github.com/openai/openai-node
-- Streaming: https://platform.openai.com/docs/guides/streaming-responses
-- Function calling: https://platform.openai.com/docs/guides/function-calling?api-mode=responses
-- Tools: https://platform.openai.com/docs/guides/tools?api-mode=responses
-- Structured outputs: https://platform.openai.com/docs/guides/structured-outputs?api-mode=responses
 
-Lab coverage:
+Compact lab coverage:
 
 - `auth`
 - `basic`
@@ -34,15 +81,8 @@ Lab coverage:
 
 - Main docs: https://ai.google.dev/gemini-api/docs
 - API reference: https://ai.google.dev/api
-- Quickstart: https://ai.google.dev/gemini-api/docs/quickstart
-- Text generation and streaming: https://ai.google.dev/gemini-api/docs/text-generation
-- Function calling: https://ai.google.dev/gemini-api/docs/function-calling
-- Structured outputs: https://ai.google.dev/gemini-api/docs/structured-output
-- Vision / image understanding: https://ai.google.dev/gemini-api/docs/vision
-- Live API: https://ai.google.dev/gemini-api/docs/live
-- Live API tool use: https://ai.google.dev/gemini-api/docs/live-tools
 
-Lab coverage:
+Compact lab coverage:
 
 - `auth`
 - `basic`
@@ -50,41 +90,14 @@ Lab coverage:
 - `tools`
 - `vision`
 
-Live API is documented here but not executed by the compact lab.
-
 ## Anthropic / Claude
 
 - Main docs: https://docs.anthropic.com
 - Client SDKs: https://docs.anthropic.com/en/api/client-sdks
-- Messages API: https://docs.anthropic.com/en/api/messages
-- Streaming: https://docs.anthropic.com/en/docs/build-with-claude/streaming
-- Tool use: https://docs.anthropic.com/en/docs/agents-and-tools/tool-use/implement-tool-use
-- Fine-grained tool streaming: https://docs.anthropic.com/en/docs/agents-and-tools/tool-use/fine-grained-tool-streaming
-- Errors: https://docs.anthropic.com/en/api/errors
 
-Lab coverage:
+Compact lab coverage:
 
 - `auth`
 - `basic`
 - `stream`
 - `tools`
-
-## xAI / Grok
-
-- Main docs: https://docs.x.ai
-- Getting started: https://docs.x.ai/docs/tutorial
-- API reference: https://docs.x.ai/docs/api-reference
-- Streaming: https://docs.x.ai/docs/guides/streaming-response
-- Function calling: https://docs.x.ai/developers/tools/function-calling
-- Streaming and sync tools: https://docs.x.ai/developers/tools/streaming-and-sync
-- Web search: https://docs.x.ai/developers/tools/web-search
-- Realtime / voice agent: https://docs.x.ai/developers/models/realtime-api
-
-Lab coverage:
-
-- `auth`
-- `basic`
-- `stream`
-- `tools`
-
-Web search is documented here but not required as a compact lab case.

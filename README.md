@@ -1,28 +1,40 @@
 # APIForgeKit Studio
 
-APIForgeKit Studio is a local-first harness for validating deterministic business logic before implementing it in Next.js.
+APIForgeKit Studio is a local-first observability lab for validating AI APIs with real tests, structured logs and reusable technical context.
 
-V1 focuses on a Lead Algorithm Lab:
+Current operating principle:
 
 ```txt
-Docker PostgreSQL
+Teste Python
 ↓
-APIForgeKit Studio
+API xAI
 ↓
-Lead Algorithm Lab
+Resposta
 ↓
-Structured Logs
+Log Estruturado
 ↓
-Dashboard Visual
+PostgreSQL
+↓
+Dashboard Live
 ↓
 Context Builder
-↓
-Next.js Blueprint
-↓
-Implementation with Prisma / Next.js
 ```
 
-No LLM, external API, agent, voice, or vision is used in this MVP.
+The product goal is evidence before implementation:
+
+```txt
+Teste Real
+↓
+Logs Estruturados
+↓
+Evidências
+↓
+Contexto Técnico
+↓
+Implementação futura
+```
+
+The Lead Algorithm Lab still exists, but the current V1 focus is live observability, xAI validation, reports and context building.
 
 ## Stack
 
@@ -30,6 +42,7 @@ No LLM, external API, agent, voice, or vision is used in this MVP.
 - Plotly and Pandas for interactive charts
 - PostgreSQL via Docker
 - SQLAlchemy 2.x with `psycopg`
+- `xai-sdk` for real xAI validation
 - Pydantic Settings and python-dotenv for configuration
 - Loguru for application logs
 - Pytest for tests
@@ -39,7 +52,7 @@ No LLM, external API, agent, voice, or vision is used in this MVP.
 ```bash
 python -m pip install -r requirements.txt
 copy .env.example .env
-docker compose up -d
+npm run db
 python app.py
 ```
 
@@ -53,114 +66,116 @@ Optional npm helpers:
 
 ```bash
 npm run db
+npm run db:logs
+npm run db:reset
 npm run dev
 npm run test
 ```
 
-## Pages
+## xAI Key
 
-- Dashboard: metrics, latest tests, classification donut, score histogram, leads by source, test evolution, score by channel.
-- Lead Algorithm Lab: run deterministic scoring and persist the result.
-- Logs: inspect history, filter/search, view full JSON, export CSV/JSONL.
-- Context Builder: generate technical Markdown context for implementation agents.
-- Next.js Blueprint: generate a Prisma/Next.js implementation blueprint without full code.
-- Settings: database status and operational commands.
+Set the key only in `.env`:
 
-## Lead Score Rules
-
-Strong keywords add 10 points each:
-
-- comprar
-- preço / preco
-- orçamento / orcamento
-- urgente
-- hoje
-- agora
-- WhatsApp
-- ligação / ligacao
-
-Source:
-
-- WhatsApp: +25
-- Ligação: +30
-- Landing Page: +20
-- Instagram: +15
-- LinkedIn: +10
-
-Urgency:
-
-- alta: +25
-- média: +15
-- baixa: +5
-
-Interest:
-
-- alto: +25
-- médio: +15
-- baixo: +5
-
-Contact and history:
-
-- phone: +10
-- email: +5
-- previous customer: +20
-
-Penalties:
-
-- empty message: `invalid_lead`
-- spam pattern: `invalid_lead`
-- no phone and no email: -20
-- very short message: -10
-
-Classification:
-
-- 0-30: `cold_lead`
-- 31-60: `warm_lead`
-- 61-80: `hot_lead`
-- 81-100: `urgent_lead`
-- invalid input: `invalid_lead`
-
-## PostgreSQL
-
-Start local PostgreSQL:
-
-```bash
-docker compose up -d
+```txt
+XAI_API_KEY=
+XAI_MODEL=grok-4.3
 ```
 
-The app creates the `lead_tests` table automatically on startup when the database is online.
+Never commit `.env` or raw provider outputs with secrets.
 
-If PostgreSQL is offline, the UI opens in degraded mode. Dashboard and Logs show offline status, and the Lead Lab blocks real execution until the database is available.
+## Pages
 
-## Structured Logs
+- Live Dashboard: real-time test metrics, event stream, charts, filters and xAI compact runner.
+- Lead Algorithm Lab: deterministic local lead-score module preserved from the first MVP.
+- Logs: observability event table with filters, search, JSON detail and CSV/JSONL export.
+- Context Builder: converts real events into technical context and exports reports.
+- Blueprint Archive: legacy future-implementation reference, not the current focus.
+- Settings: database status and operational commands.
 
-Every persisted test appends a JSONL record to:
+## PostgreSQL Tables
+
+The app creates tables automatically on startup when PostgreSQL is online:
+
+- `lead_tests`
+- `test_runs`
+- `test_events`
+- `api_requests`
+- `api_responses`
+- `voice_tests`
+- `agent_tests`
+- `context_exports`
+
+If PostgreSQL is offline, the UI opens in degraded mode and live runs are blocked until the database returns.
+
+## Live xAI Runner
+
+From the Live Dashboard, click:
+
+```txt
+Executar xAI Compact
+```
+
+The compact sequence currently validates:
+
+- connectivity/auth
+- basic chat
+- structured outputs with Pydantic schema parsing
+- streaming chunks
+- function calling loop
+- blocked placeholders for Agents and Voice until dedicated fixtures/budget exist
+
+Every event is persisted in PostgreSQL and appears in the Live Event Stream.
+
+## Reports
+
+The Context Builder and Live Dashboard export reports to:
+
+```txt
+exports/reports/
+```
+
+Formats:
+
+- Markdown
+- JSON
+- HTML
+
+Reports are generated from real runs and events, not from assumptions.
+
+## Legacy Lead Logs
+
+Lead Algorithm Lab still writes a JSONL audit trail to:
 
 ```txt
 logs/lead_tests.jsonl
 ```
 
-The database remains the source of truth; JSONL is a local audit trail.
+The live xAI observability flow uses PostgreSQL as the source of truth.
 
-## Exports
+## Documentation
 
-Generated context files are written to:
+Start here before adding provider features:
 
-```txt
-exports/contexts/
-```
+- [SKILL.md](./SKILL.md): operational brain for evidence-first APIForgeKit work.
+- [workflow.md](./workflow.md): validation workflow.
+- [architecture.md](./architecture.md): current Studio architecture.
+- [providers.md](./providers.md): provider documentation index.
+- [XAI_TEST_PLAN.md](./XAI_TEST_PLAN.md): phased xAI validation plan.
+- [VALIDATION_CHECKLIST.md](./VALIDATION_CHECKLIST.md): checklist for real API validation.
 
-Generated Next.js blueprints are written to:
+Official xAI docs reviewed for this track:
 
-```txt
-exports/blueprints/
-```
-
-Logs page exports are written to:
-
-```txt
-exports/logs/
-```
+- https://docs.x.ai/overview
+- https://docs.x.ai/developers/model-capabilities/text/generate-text
+- https://docs.x.ai/developers/model-capabilities/text/structured-outputs
+- https://docs.x.ai/developers/model-capabilities/text/streaming
+- https://docs.x.ai/developers/tools/function-calling
+- https://docs.x.ai/developers/model-capabilities/text/multi-agent
+- https://docs.x.ai/developers/model-capabilities/audio/voice
+- https://docs.x.ai/developers/model-capabilities/audio/speech-to-text
+- https://docs.x.ai/developers/rest-api-reference/inference/models
+- https://docs.x.ai/developers/rate-limits
+- https://docs.x.ai/developers/debugging
 
 ## Tests
 
@@ -170,26 +185,22 @@ python -m pytest -q
 
 The test suite covers:
 
-- scoring rules
-- invalid/spam cases
-- penalties
-- classification boundaries
+- lead scoring rules
 - JSONL logging
 - SQLAlchemy repository behavior
 - Context Builder output
 - Blueprint Generator output
+- observability repository, metrics and report exports
+- xAI live runner missing-key behavior
 - legacy provider lab contract tests
 
 ## Legacy Provider Lab
 
-The original API Builder Lab is preserved for future provider validation. It is separate from Studio V1 and uses `requirements-legacy.txt`.
+The original CLI provider lab is preserved:
 
-See:
-
-```txt
-legacy/README.md
-run_lab.py
-labs/
-providers.md
-workflow.md
+```bash
+python -m pip install -r requirements-legacy.txt
+python run_lab.py --status
 ```
+
+It remains useful for isolated provider checks, but the Studio UI is now the primary observability surface.

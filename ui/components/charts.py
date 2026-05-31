@@ -93,3 +93,72 @@ def channel_score_bar(channel_scores: dict[str, float]) -> go.Figure:
     frame = pd.DataFrame({"channel": list(channel_scores), "score": list(channel_scores.values())})
     fig = px.bar(frame, x="channel", y="score", title="Score Médio por Canal", color="score", color_continuous_scale=["#2563EB", "#00D4FF", "#10B981"])
     return _style(fig)
+
+
+OBS_STATUS_COLORS = {
+    "success": "#10B981",
+    "running": "#00D4FF",
+    "failed": "#EF4444",
+    "blocked": "#F59E0B",
+    "pending": "#9CA3AF",
+}
+
+
+def event_status_donut(events: list[dict[str, object]]) -> go.Figure:
+    if not events:
+        return empty_figure("Eventos por Status")
+    frame = pd.DataFrame(events)
+    counts = frame["status"].fillna("unknown").value_counts().reset_index()
+    counts.columns = ["status", "count"]
+    fig = go.Figure(
+        data=[
+            go.Pie(
+                labels=counts["status"],
+                values=counts["count"],
+                hole=0.62,
+                marker={"colors": [OBS_STATUS_COLORS.get(str(status), "#00D4FF") for status in counts["status"]]},
+            )
+        ]
+    )
+    fig.update_layout(title="Eventos por Status")
+    return _style(fig)
+
+
+def module_event_bar(events: list[dict[str, object]]) -> go.Figure:
+    if not events:
+        return empty_figure("Eventos por Módulo")
+    frame = pd.DataFrame(events)
+    counts = frame["module"].fillna("unknown").value_counts().reset_index()
+    counts.columns = ["module", "count"]
+    fig = px.bar(counts, x="module", y="count", title="Eventos por Módulo", color="module")
+    return _style(fig)
+
+
+def latency_timeline(events: list[dict[str, object]]) -> go.Figure:
+    latency_events = [event for event in events if float(event.get("latency_ms") or 0) > 0]
+    if not latency_events:
+        return empty_figure("Latência por Evento")
+    frame = pd.DataFrame(latency_events)
+    frame["timestamp"] = pd.to_datetime(frame["timestamp"])
+    frame = frame.sort_values("timestamp")
+    fig = px.line(
+        frame,
+        x="timestamp",
+        y="latency_ms",
+        color="module",
+        markers=True,
+        title="Latência por Evento",
+    )
+    fig.update_traces(line={"width": 3})
+    return _style(fig)
+
+
+def event_volume_area(events: list[dict[str, object]]) -> go.Figure:
+    if not events:
+        return empty_figure("Volume de Eventos")
+    frame = pd.DataFrame(events)
+    frame["timestamp"] = pd.to_datetime(frame["timestamp"])
+    frame["minute"] = frame["timestamp"].dt.floor("min")
+    counts = frame.groupby("minute").size().reset_index(name="events")
+    fig = px.area(counts, x="minute", y="events", title="Volume de Eventos", color_discrete_sequence=["#00D4FF"])
+    return _style(fig)

@@ -1,113 +1,170 @@
-# API Lab Workflow
+# APIForgeKit Validation Workflow
 
 ## Goal
 
-Validate real provider behavior before implementation in the main project.
+Validate real behavior before building production code.
 
-Esse tambem e um fluxo de economia de tokens para a IDE ou coding agent. O lab transforma trabalho incerto de provider em testes curtos e repetiveis, em vez de ciclos longos de prompt onde o agent fica lendo docs, chutando chamadas de SDK e mexendo no app principal. Rode o API Builder primeiro, capture o output real, depois use essa evidencia para planejar o adapter TypeScript.
-
-O lab deve rodar com o `.env` local atual do repositorio, dentro desta pasta isolada. Ele pode criar um virtualenv local, executar chamadas reais dos SDKs dos providers e salvar outputs JSON sem poluir a superficie do app principal. Arquivos de runtime ficam locais por padrao.
-
-## Required flow
-
-### Repeat execution
-
-Use repeat execution when a focused case already exists and the goal is to get a fresh result without spending tokens on documentation review.
+APIForgeKit is not a shortcut for guessing SDK payloads. It is an evidence pipeline:
 
 ```txt
-1. Pick provider and case
-2. Configure .env
-3. Run python run_lab.py --provider <provider> --case <case>
-4. Inspect output JSON
-5. Record status, model, response shape, latency, and errors
-6. Plan TypeScript adapter only after real output exists
+Teste Real
+↓
+Logs Estruturados
+↓
+Evidências
+↓
+Contexto Técnico
+↓
+Implementação futura
 ```
 
-`run_lab.py --status` checks readiness without API calls. It reports only whether keys are present or missing; it never prints key values.
+## Current Tracks
 
-### Investigation or repair
+### Live Studio Track
+
+The NiceGUI app is the main observability surface.
+
+```bash
+npm run db
+python app.py
+```
+
+Use this for:
+
+- xAI compact runner
+- live event stream
+- PostgreSQL event persistence
+- dashboard metrics
+- logs table
+- report export
+- Context Builder
+
+### Lead Algorithm Track
+
+The deterministic Lead Algorithm Lab remains available for local business-rule testing.
+
+Use this for:
+
+- lead scoring
+- `lead_tests`
+- `logs/lead_tests.jsonl`
+
+### Legacy Provider Track
+
+The CLI provider lab remains available for isolated checks.
+
+```bash
+python run_lab.py --status
+python run_lab.py --provider xai --case auth
+```
+
+The existing CLI runner is intentionally small. Expanded xAI validation phases are documented in `XAI_TEST_PLAN.md`.
+
+## Required Provider Flow
+
+1. Read official docs for any new, changed, or failing case.
+2. Verify local readiness without printing secrets.
+3. Run one focused real test.
+4. Save structured output without secrets.
+5. Inspect the output JSON/event.
+6. Generate or update technical context.
+7. Export report.
+8. Only then propose implementation.
+
+## Output Rules
+
+Live Studio outputs use PostgreSQL:
 
 ```txt
-1. Pick provider
-2. Read official docs in providers.md
-3. Configure .env
-4. Run auth case
-5. Run basic case
-6. Run stream/tools/structured/vision case as needed
-7. Inspect output JSON
-8. Record SDK, model, endpoint, payload, response shape, latency, and errors
-9. Plan TypeScript adapter only after real output exists
+test_runs
+test_events
+api_requests
+api_responses
+voice_tests
+agent_tests
+context_exports
 ```
 
-Use investigation or repair when a case is new, fails, or has uncertain SDK/payload behavior. Official docs are required in this mode.
-
-## Environment rules
-
-Required variables:
+Reports use:
 
 ```txt
-OPENAI_API_KEY=
-GEMINI_API_KEY=
-ANTHROPIC_API_KEY=
-XAI_API_KEY=
+exports/reports/
 ```
 
-Optional model overrides:
-
-```txt
-OPENAI_MODEL=
-GEMINI_MODEL=
-ANTHROPIC_MODEL=
-XAI_MODEL=
-```
-
-Never hardcode keys. Never print full keys. Never save secrets in output files.
-
-## Output rules
-
-Files are saved in:
+Compact legacy outputs are saved in:
 
 ```txt
 outputs/YYYY-MM-DD_provider_testname_result.json
 ```
 
-JSONs de output sao ignorados pelo git. Commite templates, docs e scripts do lab; mantenha respostas reais dos providers localmente, salvo quando houver uma decisao explicita de compartilhar uma fixture redigida.
+Minimum event contract:
 
-Each output contains:
-
-```txt
-provider
-test_name
-timestamp
-status
-model_used
-latency_ms
-request_summary
-response_summary
-error_message
-raw_response_without_secrets
+```json
+{
+  "event_id": "uuid",
+  "provider": "xai",
+  "module": "voice",
+  "test_name": "voice_transcription",
+  "status": "success",
+  "latency_ms": 0,
+  "tokens": {},
+  "cost": 0,
+  "request": {},
+  "response": {},
+  "error": null,
+  "recommendation": ""
+}
 ```
 
-Allowed statuses:
+## Evidence Rules
 
-- `ok`
-- `error`
-- `skipped_missing_env`
-- `missing_dependency`
+Evidence must be specific enough to implement against later:
 
-## Harness proof
+- endpoint, SDK path or method
+- model
+- request body or multipart fields
+- response body shape
+- streaming event shape
+- error status and message
+- latency
+- usage/tokens/cost if exposed
+- account limitation if discovered
 
-When one provider passes a real case through the executor, the shared lab harness is working: `.env` loading, isolated SDK call, output JSON, secret redaction, summary, and TypeScript handoff evidence. That proves the lab workflow. It does not mark every provider API as validated; each provider still needs its own real output when its key is available.
+## xAI Validation Sequence
 
-## Implementation boundary
+Follow `XAI_TEST_PLAN.md`:
 
-This kit is isolated. Do not add:
+1. Readiness
+2. Connectivity
+3. Chat / Responses
+4. Structured Outputs
+5. Streaming
+6. Agents
+7. Voice
+8. Benchmark
 
-- app frontend
-- app backend
-- app database
-- app authentication
-- business logic
-- production TypeScript adapter
+Do not start Voice until connectivity, model access, basic text calls and budget boundaries are proven.
 
-TypeScript is planned only after the Python lab has a real output.
+## Environment Rules
+
+Required for xAI:
+
+```txt
+XAI_API_KEY=
+XAI_MODEL=
+```
+
+Never hardcode keys. Never print full keys. Never commit raw provider outputs unless they are intentionally redacted fixtures.
+
+## Implementation Boundary
+
+Do not implement production code from docs alone.
+
+Implementation can begin only after:
+
+- at least one real successful test exists for the target endpoint
+- failures are logged
+- context is generated
+- a report explains limitations and recommendations
+
+Failure is useful evidence. Preserve it.

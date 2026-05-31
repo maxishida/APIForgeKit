@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     log_path: Path = ROOT_DIR / "logs" / "lead_tests.jsonl"
     contexts_dir: Path = ROOT_DIR / "exports" / "contexts"
     blueprints_dir: Path = ROOT_DIR / "exports" / "blueprints"
+    reports_dir: Path = ROOT_DIR / "exports" / "reports"
 
     model_config = SettingsConfigDict(env_file=str(ROOT_DIR / ".env"), extra="ignore")
 

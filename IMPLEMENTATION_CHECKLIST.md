@@ -4,22 +4,25 @@
 
 - NiceGUI local app em `app.py`.
 - Shell visual com sidebar, header, cards e tema Dark/Neon Blue.
-- Lead Algorithm Lab determinístico.
-- Dashboard com métricas e gráficos Plotly.
+- Live Dashboard como tela principal.
+- xAI compact runner acionado pela UI.
+- Live Event Stream com atualização periódica.
+- Gráficos Plotly para status, módulos, latência e volume de eventos.
 - PostgreSQL Docker com SQLAlchemy.
-- Logs JSONL em `logs/lead_tests.jsonl`.
-- Tela Logs com filtros, busca, AG Grid, JSON completo e export CSV/JSONL.
-- Context Builder com export Markdown.
-- Next.js Blueprint Generator com Prisma local como orientação.
+- Tabelas de observabilidade: `test_runs`, `test_events`, `api_requests`, `api_responses`, `voice_tests`, `agent_tests`, `context_exports`.
+- Tela Logs baseada em eventos de observabilidade, com filtros, busca, AG Grid, JSON completo e export CSV/JSONL.
+- Context Builder baseado em logs reais.
+- Exportação de relatórios Markdown, JSON e HTML.
+- Lead Algorithm Lab preservado.
+- Blueprint Archive preservado como referência legada.
 - Testes unitários com Pytest.
-- Lab antigo de providers preservado como legado.
 
 ## Como rodar
 
 ```bash
 python -m pip install -r requirements.txt
 copy .env.example .env
-docker compose up -d
+npm run db
 python app.py
 ```
 
@@ -36,55 +39,82 @@ Abra `http://localhost:8080`.
 - `pydantic-settings`
 - `loguru`
 - `pytest`
+- `xai-sdk`
 
-## Como testar algoritmo
+## Como testar
 
 ```bash
-python -m pytest tests/test_lead_algorithm.py -q
+python -m pytest -q
 ```
 
-## Como ver dashboard
+Testes focados:
 
-1. Suba o banco com `docker compose up -d`.
+```bash
+python -m pytest tests/test_observability.py tests/test_xai_live_runner.py -q
+```
+
+## Como ver o dashboard live
+
+1. Suba o banco com `npm run db`.
 2. Rode `python app.py`.
 3. Acesse `http://localhost:8080`.
-4. Abra a página Dashboard.
+4. Abra Live Dashboard.
+5. Clique em `Executar xAI Compact`.
 
 ## Como ler logs
 
 - Pela UI: página Logs.
-- No arquivo local: `logs/lead_tests.jsonl`.
-- No banco: tabela `lead_tests`.
+- No banco: `test_runs`, `test_events`, `api_requests`, `api_responses`.
+- Exports locais: `exports/logs/`.
 
 ## Como gerar contexto
 
-1. Execute testes no Lead Algorithm Lab.
+1. Execute a sequência xAI no Live Dashboard.
 2. Abra Context Builder.
-3. Clique em Exportar Markdown.
-4. Veja o arquivo em `exports/contexts/`.
+3. Revise o contexto técnico gerado dos eventos reais.
+4. Clique em Exportar Relatórios.
 
-## Como gerar blueprint Next.js
+## Como gerar relatórios
 
-1. Abra Next.js Blueprint.
-2. Clique em Exportar Blueprint.
-3. Veja o arquivo em `exports/blueprints/`.
+Use Live Dashboard ou Context Builder:
+
+```txt
+exports/reports/
+```
+
+Arquivos gerados:
+
+- `observability_report_*.md`
+- `observability_report_*.json`
+- `observability_report_*.html`
+
+## Como usar o Lead Algorithm Lab
+
+1. Abra Lead Algorithm Lab.
+2. Execute um teste local.
+3. O resultado grava em `lead_tests` e `logs/lead_tests.jsonl`.
 
 ## Próximos passos V2
 
-- Autenticação local opcional.
-- Migrations formais com Alembic.
-- Templates completos de código Next.js.
-- Integração com Prisma em projeto Next real.
-- Observabilidade avançada com filtros por período e live refresh completo.
-- Testes end-to-end de UI.
+- Separar runner xAI em fases executáveis: connectivity, chat, structured outputs, streaming, agents, voice e benchmark.
+- Adicionar teste real de `/v1/models` e endpoints REST de Responses API.
+- Implementar Voice Lab com áudio sintético, STT, TTS, Voice Agent WebSocket e métricas.
+- Implementar benchmark com repetições, p95, erro, custo e reliability score.
+- Adicionar migrations formais com Alembic.
+- Adicionar paginação server-side para volumes altos.
+- Adicionar screenshots/e2e de UI.
 
 ## Bugs conhecidos
 
-- A UI depende do PostgreSQL para executar testes reais; sem banco, abre em modo degradado.
+- A UI depende do PostgreSQL para executar live runs; sem banco, abre em modo degradado.
 - Export CSV/JSONL grava arquivo local e mostra o caminho, sem download automático pelo navegador.
+- O runner compacto usa `xai-sdk`; endpoints REST completos ainda ficam para V2.
+- Agents e Voice aparecem como fases bloqueadas até haver fixtures, orçamento e critérios próprios.
 
 ## Pendências
 
-- Criar suite visual automatizada para screenshots.
-- Adicionar paginação server-side para volumes muito altos.
-- Adicionar migrações versionadas antes de uso fora do MVP local.
+- Rodar sequência xAI completa após cada mudança relevante.
+- Definir orçamento máximo de chamadas antes dos benchmarks.
+- Criar fixture sintética de áudio para Voice Lab.
+- Registrar custo real quando a API retornar metadados suficientes.
+- Adicionar retenção/limpeza de eventos antigos.

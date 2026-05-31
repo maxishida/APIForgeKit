@@ -5,12 +5,13 @@ from nicegui import ui
 
 from core.config import get_settings
 from core.database import build_engine, build_session_factory, database_status, init_db
+from core.observability import ObservabilityRepository
 from core.repositories import LeadTestRepository
 from ui.app_shell import AppServices, render_shell, set_services
 from ui.blueprint import render_blueprint
 from ui.context_builder import render_context_builder
-from ui.dashboard import render_dashboard
 from ui.lead_lab import render_lead_lab
+from ui.live_dashboard import render_live_dashboard
 from ui.logs import render_logs
 from ui.settings import render_settings
 from ui.theme import apply_theme
@@ -20,10 +21,12 @@ settings = get_settings()
 settings.log_path.parent.mkdir(parents=True, exist_ok=True)
 settings.contexts_dir.mkdir(parents=True, exist_ok=True)
 settings.blueprints_dir.mkdir(parents=True, exist_ok=True)
+settings.reports_dir.mkdir(parents=True, exist_ok=True)
 
 engine = build_engine(settings.database_url)
 session_factory = build_session_factory(engine)
 repository = LeadTestRepository(session_factory)
+observability_repository = ObservabilityRepository(session_factory)
 
 try:
     init_db(engine)
@@ -34,9 +37,11 @@ set_services(
     AppServices(
         engine=engine,
         repository=repository,
+        observability_repository=observability_repository,
         log_path=settings.log_path,
         contexts_dir=settings.contexts_dir,
         blueprints_dir=settings.blueprints_dir,
+        reports_dir=settings.reports_dir,
     )
 )
 
@@ -45,10 +50,10 @@ set_services(
 def dashboard_page() -> None:
     apply_theme()
     render_shell(
-        "Dashboard",
-        "APIForgeKit Studio",
-        "Observabilidade local para algoritmo de lead score",
-        lambda: render_dashboard(_services()),
+        "Live Dashboard",
+        "APIForgeKit Live Ops",
+        "Observabilidade local para validação real de APIs de IA",
+        lambda: render_live_dashboard(_services()),
     )
 
 
@@ -75,7 +80,7 @@ def context_page() -> None:
     render_shell(
         "Context Builder",
         "Context Builder",
-        "Transforme testes persistidos em contexto técnico para IA implementar",
+        "Transforme logs reais em contexto técnico e evidências reutilizáveis",
         lambda: render_context_builder(_services()),
     )
 
@@ -84,9 +89,9 @@ def context_page() -> None:
 def blueprint_page() -> None:
     apply_theme()
     render_shell(
-        "Next.js Blueprint",
-        "Next.js Blueprint",
-        "Estrutura futura com Prisma, API route e componentes de dashboard",
+        "Blueprint Archive",
+        "Blueprint Archive",
+        "Referência legada preservada; o foco atual é observabilidade",
         lambda: render_blueprint(_services()),
     )
 

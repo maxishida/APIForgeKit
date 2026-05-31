@@ -7,6 +7,7 @@ __pycache__/
 outputs/*.json
 logs/*.jsonl
 exports/logs/
+exports/reports/
 api-lab-kit/.env
 api-lab-kit/.venv/
 api-lab-kit/__pycache__/

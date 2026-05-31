@@ -8,9 +8,8 @@ import pandas as pd
 from nicegui import ui
 
 from core.database import database_status
-from core.repositories import filter_records
 from ui.components.alerts import db_offline, empty_state
-from ui.components.tables import logs_grid
+from ui.components.tables import observability_grid
 
 
 def render_logs(services) -> None:
@@ -20,7 +19,7 @@ def render_logs(services) -> None:
         empty_state("Logs indisponíveis", "A tabela de logs precisa do PostgreSQL online.")
         return
 
-    all_records = services.repository.list_recent(limit=1000)
+    all_records = services.observability_repository.list_events(limit=1000)
     filter_state = {"records": all_records}
     table_container = ui.column().classes("w-full")
     json_container = ui.column().classes("w-full")
@@ -28,25 +27,26 @@ def render_logs(services) -> None:
     with ui.column().classes("afk-card w-full gap-4").style("padding:18px;"):
         ui.label("Filtros").classes("text-lg font-bold")
         with ui.grid(columns=5).classes("w-full gap-3"):
-            source = ui.select(["", "Instagram", "WhatsApp", "Landing Page", "LinkedIn", "Ligação"], value="", label="Origem").classes("w-full")
-            classification = ui.select(["", "urgent_lead", "hot_lead", "warm_lead", "cold_lead", "invalid_lead"], value="", label="Classificação").classes("w-full")
-            record_status = ui.select(["", "success", "failed"], value="", label="Status").classes("w-full")
-            min_score = ui.number("Score mínimo", value=0, min=0, max=100).classes("w-full")
-            query = ui.input("Buscar mensagem").classes("w-full")
+            provider = ui.select(["", "xai"], value="", label="Provider").classes("w-full")
+            module = ui.select(["", "connectivity", "chat", "structured_outputs", "streaming", "function_calling", "agents", "voice"], value="", label="Módulo").classes("w-full")
+            record_status = ui.select(["", "running", "success", "failed", "blocked"], value="", label="Status").classes("w-full")
+            min_latency = ui.number("Latência mínima", value=0, min=0).classes("w-full")
+            query = ui.input("Buscar JSON").classes("w-full")
 
         def apply_filters() -> None:
-            filtered = filter_records(
-                all_records,
-                source=source.value or None,
-                classification=classification.value or None,
-                status=record_status.value or None,
-                min_score=int(min_score.value or 0),
-                query=query.value or None,
+            refreshed = services.observability_repository.list_events(limit=1000)
+            filtered = _filter_records(
+                refreshed,
+                provider=provider.value or "",
+                module=module.value or "",
+                status=record_status.value or "",
+                min_latency=float(min_latency.value or 0),
+                query=query.value or "",
             )
             filter_state["records"] = filtered
             table_container.clear()
             with table_container:
-                logs_grid(filtered)
+                observability_grid(filtered)
             json_container.clear()
             with json_container:
                 _json_details(filtered)
@@ -58,7 +58,7 @@ def render_logs(services) -> None:
             ui.button("Exportar JSONL", icon="data_object", on_click=lambda: _export_jsonl(filter_state["records"])).classes("afk-ghost-btn")
 
     with table_container:
-        logs_grid(all_records)
+        observability_grid(all_records)
     with json_container:
         _json_details(all_records)
 
@@ -82,7 +82,7 @@ def _json_details(records: list[dict[str, object]]) -> None:
 def _export_csv(records: list[dict[str, object]]) -> None:
     output_dir = Path("exports/logs")
     output_dir.mkdir(parents=True, exist_ok=True)
-    path = output_dir / f"lead_logs_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}.csv"
+    path = output_dir / f"observability_logs_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}.csv"
     pd.DataFrame(records).to_csv(path, index=False)
     ui.notify(f"CSV exportado: {path}", type="positive")
 
@@ -90,8 +90,34 @@ def _export_csv(records: list[dict[str, object]]) -> None:
 def _export_jsonl(records: list[dict[str, object]]) -> None:
     output_dir = Path("exports/logs")
     output_dir.mkdir(parents=True, exist_ok=True)
-    path = output_dir / f"lead_logs_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}.jsonl"
+    path = output_dir / f"observability_logs_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}.jsonl"
     with path.open("w", encoding="utf-8") as handle:
         for record in records:
             handle.write(json.dumps(record, ensure_ascii=False) + "\n")
     ui.notify(f"JSONL exportado: {path}", type="positive")
+
+
+def _filter_records(
+    records: list[dict[str, object]],
+    *,
+    provider: str,
+    module: str,
+    status: str,
+    min_latency: float,
+    query: str,
+) -> list[dict[str, object]]:
+    query_lower = query.lower().strip()
+    filtered: list[dict[str, object]] = []
+    for record in records:
+        if provider and record.get("provider") != provider:
+            continue
+        if module and record.get("module") != module:
+            continue
+        if status and record.get("status") != status:
+            continue
+        if float(record.get("latency_ms") or 0) < min_latency:
+            continue
+        if query_lower and query_lower not in json.dumps(record, ensure_ascii=False, default=str).lower():
+            continue
+        filtered.append(record)
+    return filtered

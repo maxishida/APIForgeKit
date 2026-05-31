@@ -7,3 +7,4 @@ python-dotenv
 pydantic-settings
 loguru
 pytest
+xai-sdk
