@@ -86,7 +86,8 @@ def render_algorithm_lab(services) -> None:
                 ui.button("Executar teste único", icon="play_arrow", on_click=lambda: run_single(selected_case.value, case_options)).classes(
                     "afk-primary-btn"
                 )
-                ui.button("Executar suite completa", icon="playlist_play", on_click=lambda: run_suite(definition)).classes("afk-primary-btn")
+                ui.button("Run Demo Suite", icon="playlist_play", on_click=lambda: run_suite(definition)).classes("afk-primary-btn")
+                ui.button("Generate AI Context", icon="integration_instructions", on_click=lambda: ui.navigate.to("/context-builder")).classes("afk-ghost-btn")
                 ui.button("Atualizar", icon="refresh", on_click=lambda: ui.navigate.reload()).classes("afk-ghost-btn")
 
     def render_results() -> None:

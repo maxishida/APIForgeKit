@@ -4,7 +4,9 @@
 
 - NiceGUI local app em `app.py`.
 - Shell visual com sidebar, header, cards e tema Dark/Neon Blue.
-- Live Dashboard como tela principal.
+- Home demo dashboard como tela principal.
+- API Provider Lab separado em `/live-dashboard`.
+- Tutorial open source dentro da UI em `/tutorial`.
 - xAI compact runner acionado pela UI.
 - Live Event Stream com atualização periódica.
 - Algorithm Test Lab em `/algorithm-test-lab`.

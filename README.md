@@ -87,9 +87,9 @@ npm run test
 
 1. Start PostgreSQL with `npm run db`.
 2. Run `python app.py`.
-3. Open `http://localhost:8080/algorithm-test-lab`.
-4. Select `lead_score`.
-5. Click `Executar suite completa`.
+3. Open `http://localhost:8080`.
+4. Click `Run Demo Suite`.
+5. Inspect `Algorithm Test Lab`.
 6. Open `Context Builder`.
 7. Copy the generated context into your LLM before asking for implementation.
 
@@ -114,11 +114,13 @@ Never commit `.env` or raw provider outputs with secrets.
 
 ## Pages
 
-- Live Dashboard: real-time test metrics, event stream, charts, filters and xAI compact runner.
+- Home: clean demo dashboard with quick actions for the two main tracks.
+- API Provider Lab: real-time test metrics, event stream, charts, filters and xAI compact runner.
 - Algorithm Test Lab: deterministic Python algorithm validation with expected-vs-actual diff.
 - Lead Algorithm Lab: deterministic local lead-score module preserved from the first MVP.
 - Logs: observability event table with filters, search, JSON detail and CSV/JSONL export.
 - Context Builder: converts real events into technical context and exports reports.
+- Tutorial: in-app open source tutorial for saving LLM tokens with the lab.
 - Blueprint Archive: legacy future-implementation reference, not the current focus.
 - Settings: database status and operational commands.
 
@@ -169,7 +171,13 @@ If PostgreSQL is offline, the UI opens in degraded mode and live runs are blocke
 
 ## Live xAI Runner
 
-From the Live Dashboard, click:
+Open:
+
+```txt
+http://localhost:8080/live-dashboard
+```
+
+Then click:
 
 ```txt
 Executar xAI Compact

@@ -58,11 +58,17 @@ Abra:
 http://localhost:8080
 ```
 
+O mesmo conteúdo também aparece dentro do app em:
+
+```txt
+http://localhost:8080/tutorial
+```
+
 ## Tutorial 1 - Testar algoritmo puro
 
 1. Abra `Algorithm Test Lab`.
 2. Selecione `lead_score`.
-3. Clique em `Executar suite completa`.
+3. Clique em `Run Demo Suite`.
 4. Veja os casos `passed` e `failed`.
 5. Abra o JSON estruturado.
 6. Abra `Context Builder`.

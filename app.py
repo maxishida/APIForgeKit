@@ -12,11 +12,13 @@ from ui.app_shell import AppServices, render_shell, set_services
 from ui.algorithm_lab import render_algorithm_lab
 from ui.blueprint import render_blueprint
 from ui.context_builder import render_context_builder
+from ui.home import render_home
 from ui.lead_lab import render_lead_lab
 from ui.live_dashboard import render_live_dashboard
 from ui.logs import render_logs
 from ui.settings import render_settings
 from ui.theme import apply_theme
+from ui.tutorial import render_tutorial
 
 
 settings = get_settings()
@@ -55,8 +57,19 @@ set_services(
 def dashboard_page() -> None:
     apply_theme()
     render_shell(
-        "Live Dashboard",
-        "APIForgeKit Live Ops",
+        "Home",
+        "APIForgeKit Test Lab",
+        "Teste APIs e algoritmos antes de gastar tokens implementando no escuro",
+        lambda: render_home(_services()),
+    )
+
+
+@ui.page("/live-dashboard")
+def live_dashboard_page() -> None:
+    apply_theme()
+    render_shell(
+        "API Provider Lab",
+        "API Provider Lab",
         "Observabilidade local para validação real de APIs de IA",
         lambda: render_live_dashboard(_services()),
     )
@@ -116,6 +129,17 @@ def blueprint_page() -> None:
 def settings_page() -> None:
     apply_theme()
     render_shell("Settings", "Settings", "Status local e comandos operacionais", lambda: render_settings(_services()))
+
+
+@ui.page("/tutorial")
+def tutorial_page() -> None:
+    apply_theme()
+    render_shell(
+        "Tutorial",
+        "Open Source Tutorial",
+        "Fluxo simples para economizar tokens de LLM com testes reais",
+        render_tutorial,
+    )
 
 
 def _services() -> AppServices:

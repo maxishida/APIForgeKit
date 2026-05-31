@@ -43,6 +43,8 @@ python app.py
 
 Use this for:
 
+- clean Home dashboard
+- in-app open source tutorial
 - xAI compact runner
 - live event stream
 - PostgreSQL event persistence
