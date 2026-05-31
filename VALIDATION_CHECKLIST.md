@@ -9,6 +9,22 @@
 - [x] architecture.md aligned to PostgreSQL event architecture.
 - [x] IMPLEMENTATION_CHECKLIST updated.
 - [x] XAI_TEST_PLAN updated.
+- [x] Algorithm Test Lab documentation added.
+
+## Algorithm Test Lab
+
+- [x] `algorithm_definitions` table.
+- [x] `algorithm_test_cases` table.
+- [x] `algorithm_test_runs` table.
+- [x] `algorithm_test_results` table.
+- [x] `lead_score` algorithm registered.
+- [x] 8 seed cases registered.
+- [x] Expected-vs-actual validator implemented.
+- [x] Suite execution implemented.
+- [x] Structured result log persisted.
+- [x] Context Builder includes algorithm evidence.
+- [ ] Add HTTP harness for site/API algorithms.
+- [ ] Add algorithm charts to main dashboard.
 
 ## xAI Documentation Review
 

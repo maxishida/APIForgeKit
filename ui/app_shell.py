@@ -6,6 +6,7 @@ from typing import Callable
 from nicegui import ui
 from sqlalchemy.engine import Engine
 
+from core.algorithm_test_lab import AlgorithmTestRepository
 from core.database import database_status
 from core.observability import ObservabilityRepository
 from core.repositories import LeadTestRepository
@@ -16,6 +17,7 @@ class AppServices:
     engine: Engine
     repository: LeadTestRepository
     observability_repository: ObservabilityRepository
+    algorithm_repository: AlgorithmTestRepository
     log_path: object
     contexts_dir: object
     blueprints_dir: object
@@ -38,6 +40,7 @@ def get_services() -> AppServices:
 
 NAV_ITEMS = (
     ("Live Dashboard", "/", "monitor_heart"),
+    ("Algorithm Test Lab", "/algorithm-test-lab", "rule"),
     ("Lead Algorithm Lab", "/lead-lab", "science"),
     ("Logs", "/logs", "terminal"),
     ("Context Builder", "/context-builder", "integration_instructions"),

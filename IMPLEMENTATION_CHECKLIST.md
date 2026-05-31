@@ -7,6 +7,11 @@
 - Live Dashboard como tela principal.
 - xAI compact runner acionado pela UI.
 - Live Event Stream com atualização periódica.
+- Algorithm Test Lab em `/algorithm-test-lab`.
+- Tabelas: `algorithm_definitions`, `algorithm_test_cases`, `algorithm_test_runs`, `algorithm_test_results`.
+- Suíte `lead_score` com 8 casos prontos.
+- Validador esperado x recebido com diff estruturado.
+- Context Builder integrado aos resultados de algoritmo.
 - Gráficos Plotly para status, módulos, latência e volume de eventos.
 - PostgreSQL Docker com SQLAlchemy.
 - Tabelas de observabilidade: `test_runs`, `test_events`, `api_requests`, `api_responses`, `voice_tests`, `agent_tests`, `context_exports`.
@@ -15,6 +20,9 @@
 - Exportação de relatórios Markdown, JSON e HTML.
 - Lead Algorithm Lab preservado.
 - Blueprint Archive preservado como referência legada.
+- `USER_GUIDE.md` criado para explicar o uso da ferramenta.
+- `OPEN_SOURCE_TUTORIAL.md` criado para usuários GitHub/open source.
+- `ALGORITHM_TEST_PLAN.md` criado para orientar validação de algoritmos por site/API.
 - Testes unitários com Pytest.
 
 ## Como rodar
@@ -94,9 +102,55 @@ Arquivos gerados:
 2. Execute um teste local.
 3. O resultado grava em `lead_tests` e `logs/lead_tests.jsonl`.
 
+## Como usar o Algorithm Test Lab
+
+1. Abra `http://localhost:8080/algorithm-test-lab`.
+2. Selecione `lead_score`.
+3. Revise ou crie um caso com input JSON e resultado esperado JSON.
+4. Clique em `Executar teste único` ou `Executar suite completa`.
+5. Veja passed/failed, score, classificação, latência e diff.
+6. Abra Context Builder para gerar contexto técnico para IA.
+
+## Como entender a ferramenta
+
+Leia:
+
+- `USER_GUIDE.md`
+- `OPEN_SOURCE_TUTORIAL.md`
+- `ALGORITHM_TEST_PLAN.md`
+
+Resumo:
+
+```txt
+API ou algoritmo entra no harness
+↓
+Teste real é executado
+↓
+JSON estruturado é salvo
+↓
+Dashboard mostra comportamento
+↓
+Context Builder gera contexto para IA
+```
+
+Ideia central:
+
+```txt
+Test Lab simples
+↓
+Menos tentativa-e-erro
+↓
+Menos tokens de LLM
+↓
+Implementação mais rápida
+```
+
 ## Próximos passos V2
 
 - Separar runner xAI em fases executáveis: connectivity, chat, structured outputs, streaming, agents, voice e benchmark.
+- Expandir Algorithm Test Lab para algoritmos customizados por API HTTP.
+- Criar harness HTTP para testar APIs de WhatsApp, webhooks e endpoints de SaaS.
+- Criar dashboard de taxa de aprovação por algoritmo.
 - Adicionar teste real de `/v1/models` e endpoints REST de Responses API.
 - Implementar Voice Lab com áudio sintético, STT, TTS, Voice Agent WebSocket e métricas.
 - Implementar benchmark com repetições, p95, erro, custo e reliability score.

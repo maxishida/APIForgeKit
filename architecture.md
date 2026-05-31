@@ -2,7 +2,7 @@
 
 ## Product Intent
 
-APIForgeKit Studio is a local-first observability environment for AI API validation.
+APIForgeKit Studio is a local-first observability environment for API and algorithm validation.
 
 Its purpose is to collect evidence before implementation:
 
@@ -19,6 +19,8 @@ Implementação futura
 ```
 
 The current delivery is not a code generator. It is a visual lab for telemetry, logs, reports and technical context.
+
+The platform should let a user insert an API, webhook, site endpoint or algorithm into a harness and receive evidence that can be reused by an implementation AI.
 
 ## Current Runtime
 
@@ -46,6 +48,20 @@ lead_tests table
 logs/lead_tests.jsonl
 ```
 
+Future generic algorithm/API harness:
+
+```txt
+User-defined case
+↓
+HTTP endpoint or Python function
+↓
+Expected vs actual comparison
+↓
+Structured event
+↓
+Dashboard / Logs / Context Builder
+```
+
 ## Main Directories
 
 - `core/`: database, models, repositories, observability, xAI runner, context and report generation.
@@ -67,6 +83,29 @@ Live observability uses PostgreSQL as the source of truth:
 - `voice_tests`: future voice validation metadata.
 - `agent_tests`: future multi-agent validation metadata.
 - `context_exports`: exported context/report records.
+
+Next algorithm-specific tables should be:
+
+- `algorithm_definitions`: algorithm name, purpose, input schema and output schema.
+- `algorithm_test_cases`: manual and suite test cases.
+- `algorithm_test_runs`: one execution batch.
+- `algorithm_test_results`: expected vs actual result, diff and recommendation.
+
+Implemented Algorithm Test Lab flow:
+
+```txt
+Test Case
+↓
+Algorithm Runner
+↓
+Expected Output Validator
+↓
+Structured Log
+↓
+PostgreSQL
+↓
+Context Builder
+```
 
 ## Event Contract
 
@@ -120,6 +159,16 @@ The Context Builder summarizes:
 - latencies
 - limitations
 - recommendations
+
+For algorithms, Context Builder should also summarize:
+
+- business objective
+- input contract
+- output contract
+- expected vs actual behavior
+- cases that passed
+- cases that failed
+- examples ready to paste into an implementation AI
 
 ## Implementation Boundary
 

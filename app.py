@@ -3,11 +3,13 @@ from __future__ import annotations
 from loguru import logger
 from nicegui import ui
 
+from core.algorithm_test_lab import AlgorithmTestRepository, ensure_default_algorithms
 from core.config import get_settings
 from core.database import build_engine, build_session_factory, database_status, init_db
 from core.observability import ObservabilityRepository
 from core.repositories import LeadTestRepository
 from ui.app_shell import AppServices, render_shell, set_services
+from ui.algorithm_lab import render_algorithm_lab
 from ui.blueprint import render_blueprint
 from ui.context_builder import render_context_builder
 from ui.lead_lab import render_lead_lab
@@ -27,9 +29,11 @@ engine = build_engine(settings.database_url)
 session_factory = build_session_factory(engine)
 repository = LeadTestRepository(session_factory)
 observability_repository = ObservabilityRepository(session_factory)
+algorithm_repository = AlgorithmTestRepository(session_factory)
 
 try:
     init_db(engine)
+    ensure_default_algorithms(algorithm_repository)
 except Exception as exc:  # noqa: BLE001 - startup must degrade cleanly when PostgreSQL is offline
     logger.warning(f"Database initialization skipped: {exc}")
 
@@ -38,6 +42,7 @@ set_services(
         engine=engine,
         repository=repository,
         observability_repository=observability_repository,
+        algorithm_repository=algorithm_repository,
         log_path=settings.log_path,
         contexts_dir=settings.contexts_dir,
         blueprints_dir=settings.blueprints_dir,
@@ -65,6 +70,17 @@ def lead_lab_page() -> None:
         "Lead Algorithm Lab",
         "Execute o algoritmo determinístico e gere evidência estruturada",
         lambda: render_lead_lab(_services()),
+    )
+
+
+@ui.page("/algorithm-test-lab")
+def algorithm_test_lab_page() -> None:
+    apply_theme()
+    render_shell(
+        "Algorithm Test Lab",
+        "Algorithm Test Lab",
+        "Valide algoritmos determinísticos com esperado x recebido",
+        lambda: render_algorithm_lab(_services()),
     )
 
 

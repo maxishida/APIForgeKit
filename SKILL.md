@@ -1,11 +1,13 @@
 ---
 name: apiforgekit-operational-brain
-description: Use when an agent works in APIForgeKit and needs to validate APIs, collect evidence, operate live logs, build reports, or prepare implementation context without guessing provider behavior.
+description: Use when an agent works in APIForgeKit and needs to validate APIs or algorithms, collect evidence, reduce LLM token waste, operate live logs, build reports, or prepare implementation context without guessing behavior.
 ---
 
 # APIForgeKit Operational Brain
 
-APIForgeKit exists to turn uncertain AI API behavior into observable evidence before any product implementation.
+APIForgeKit exists to turn uncertain API or algorithm behavior into observable evidence before any product implementation.
+
+The repo should teach a simple open source idea: a small local test lab can save LLM tokens for developers by replacing long speculative chats with compact validated context.
 
 Primary flow:
 
@@ -23,6 +25,20 @@ Implementação futura
 
 Do not jump directly to app code. First run a focused test, collect logs, inspect evidence, build context, and only then recommend implementation work.
 
+The user-facing promise is:
+
+```txt
+Insert API or algorithm into the harness
+↓
+Run validation
+↓
+Get JSON behavior evidence
+↓
+Generate AI-ready context
+↓
+Build the SaaS with fewer assumptions
+```
+
 ## Core Rule
 
 No implementation without evidence.
@@ -39,19 +55,46 @@ Evidence means:
 - error details when failed
 - recommendation
 
+## Token Economy Rule
+
+Use the lab to shrink prompts before asking a LLM to implement.
+
+Do:
+
+1. Run the smallest real test.
+2. Save structured JSON.
+3. Generate context.
+4. Give the LLM the context, not the whole debugging story.
+
+Avoid:
+
+- pasting full docs when a validated payload is enough
+- asking a LLM to guess API behavior
+- repeating failed attempts without structured logs
+- implementing before expected-vs-actual behavior is known
+
+Good implementation prompt:
+
+```txt
+Use este contexto técnico validado pelo APIForgeKit.
+Implemente somente a lógica confirmada pelos testes.
+Não invente endpoints, payloads ou regras.
+```
+
 ## Current Product Focus
 
-The current APIForgeKit Studio focus is observability for AI APIs:
+The current APIForgeKit Studio focus is observability for APIs and algorithms:
 
 - live dashboard
 - real-time event stream
 - structured PostgreSQL logs
 - request/response evidence
 - xAI test runner
+- Algorithm Test Lab for deterministic Python logic
 - Context Builder from real logs
 - Markdown, JSON and HTML reports
 
-Lead Algorithm Lab remains available as a deterministic local module, but it is not the center of the current delivery.
+Algorithm Test Lab now validates `lead_score` with seed cases, expected output validation and structured PostgreSQL results. Future harnesses should support WhatsApp APIs, webhooks, local algorithms and site/API endpoints using the same evidence pattern.
 
 ## Operating Modes
 
@@ -96,6 +139,50 @@ python run_lab.py --provider xai --case auth
 python run_lab.py --provider xai --case basic
 python run_lab.py --provider xai --case stream
 python run_lab.py --provider xai --case tools
+```
+
+### 3. Algorithm Validation Mode
+
+Use when validating a business algorithm before turning it into a SaaS feature.
+
+Examples:
+
+- lead score
+- WhatsApp lead qualification
+- ticket classification
+- spam detection
+- recommendation logic
+- pricing or eligibility rules
+
+The agent must:
+
+1. Define the algorithm objective in plain language.
+2. Define required inputs and expected outputs.
+3. Create manual cases first.
+4. Compare expected output with actual output.
+5. Save JSON evidence.
+6. Generate context that explains the behavior to an implementation AI.
+
+Preferred output:
+
+```json
+{
+  "case_id": "uuid",
+  "algorithm": "lead_score",
+  "status": "passed",
+  "input": {},
+  "expected": {},
+  "actual": {},
+  "diff": {},
+  "latency_ms": 0,
+  "recommendation": ""
+}
+```
+
+Open source tutorial:
+
+```txt
+README.md -> OPEN_SOURCE_TUTORIAL.md -> Algorithm Test Lab -> Context Builder
 ```
 
 ## xAI Validation Priority
@@ -155,6 +242,7 @@ After each test sequence, generate context containing:
 - what failed
 - correct payloads
 - response shapes
+- expected vs actual behavior for algorithms
 - latency and reliability observations
 - token/cost observations
 - limitations discovered
