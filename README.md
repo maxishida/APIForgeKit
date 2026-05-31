@@ -1,316 +1,195 @@
-# 🧪 API Forge Kit
+# APIForgeKit Studio
 
-<div align="center">
+APIForgeKit Studio is a local-first harness for validating deterministic business logic before implementing it in Next.js.
 
-[![Python 3.8+](https://img.shields.io/badge/python-3.8%2B-blue)](https://www.python.org/downloads/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Providers](https://img.shields.io/badge/Providers-4-green)](#-api-support)
-[![Status](https://img.shields.io/badge/Status-Active-success)]()
-
-**A compact, isolated Python lab for validating real AI provider APIs before main-project integration.**
-
-[🚀 Quick Start](#-quick-start) • [📋 API Support](#-api-support) • [🔧 Usage](#-usage) • [📚 Documentation](#-documentation)
-
-</div>
-
----
-
-## 📖 About
-
-**API Forge Kit** é uma **camada de economia de tokens** para sua IDE, agent de código ou automação local. Em vez de gastar contexto lendo documentação repetidamente e chutando payloads dentro da aplicação principal, este kit oferece um **fluxo isolado de testes reais** com os provedores de IA.
-
-### Por que usar?
-
-✅ **Economia conservadora de tokens** - Pode reduzir cerca de 30% do uso de tokens em integrações de APIs de IA ao transformar exploração incerta em testes curtos, reutilizáveis e baseados em outputs reais
-✅ **Rodar o código antes de integrar** - Teste exatamente as ferramentas de API que você quer usar  
-✅ **Com suas próprias chaves** - Execute testes com o `.env` local atual do repositório  
-✅ **Validação completa** - Auth, streaming, tools/functions, structured outputs e vision em isolamento  
-✅ **Evidência real** - Salve o formato exato da resposta para planejar adapters TypeScript  
-✅ **Workspace limpo** - Evite que código experimental polua o projeto principal  
-✅ **Secrets seguros** - Mantenha `.env`, virtualenvs e outputs reais fora do git  
-
-### Fluxo recomendado
-
-```
-Docs oficiais → Python lab → Output real → TypeScript adapter → Implementação principal
-```
-
----
-
-## 🤖 API Support
-
-| Provider | Python SDK | TypeScript SDK | Streaming | Tools/Functions | Structured Output | Vision | Status |
-|----------|:-----------:|:--------------:|:---------:|:---------------:|:-----------------:|:------:|--------|
-| **OpenAI** | `openai` | `openai` | ✅ | ✅ | ✅ | ✅ | ✓ Scaffolded |
-| **Google Gemini** | `google-genai` | `@google/genai` | ✅ | ✅ | ✅ | ✅ | ✓ Scaffolded |
-| **Anthropic Claude** | `anthropic` | `@anthropic-ai/sdk` | ✅ | ✅ | ✅ | ✅ | ✓ Scaffolded |
-| **xAI Grok** | `xai-sdk` | `@ai-sdk/xai` | ✅ | ✅ | ✅ | ✅ | ✓ Scaffolded |
-
-📖 Veja [providers.md](./providers.md) para links da documentação oficial de cada provedor.
-
----
-
-## 🚀 Quick Start
-
-### 1️⃣ Configuração inicial
-
-```bash
-cd APIForgeKit
-python -m venv .venv
-
-# Windows
-.venv\Scripts\Activate.ps1
-
-# macOS/Linux
-source .venv/bin/activate
-
-# Instale as dependências
-python -m pip install -r requirements.txt
-```
-
-### 2️⃣ Configure suas API keys
-
-```bash
-# Copie o arquivo de exemplo
-cp .env.example .env
-
-# Edite o .env com suas chaves de API
-# Adicione as chaves necessárias para os provedores que deseja testar
-```
-
-### 3️⃣ Execute um teste
-
-```bash
-python run_lab.py --provider xai --case basic
-```
-
-Outputs são salvos automaticamente em `outputs/` como JSON.
-
-Para checar quais providers estão prontos sem fazer chamadas de API:
-
-```bash
-python run_lab.py --status
-```
-
-### Como usar o API Builder Lab
-
-Use o lab antes de pedir qualquer integracao final no app principal. O objetivo e gerar um output real pequeno, salvar a evidencia local e evitar retrabalho.
-
-1. Use a raiz do repositorio.
-2. Configure a `.env` com a key do provider que voce quer testar.
-3. Rode `python run_lab.py --status` para confirmar quais keys estao presentes, sem fazer chamada de API.
-4. Escolha um provider e um case focado.
-5. Rode `python run_lab.py --provider <provider> --case <case>`.
-6. Leia o resumo tecnico impresso no terminal.
-7. Abra o JSON em `outputs/` se precisar ver o shape real da resposta.
-8. So planeje TypeScript ou integracao principal quando o case tiver `status: ok`.
-
-Exemplo xAI:
-
-```bash
-cd APIForgeKit
-python run_lab.py --status
-python run_lab.py --provider xai --case auth
-python run_lab.py --provider xai --case basic
-python run_lab.py --provider xai --case stream
-python run_lab.py --provider xai --case tools
-```
-
-Para pedir isso a um agent/coding assistant, use o `SKILL.md` do lab como instrucao:
+V1 focuses on a Lead Algorithm Lab:
 
 ```txt
-Use SKILL.md.
-Provider: xai
-Case: basic
-Execute pelo API Builder Lab com run_lab.py.
-Nao exponha keys.
-Leia o JSON salvo em outputs/.
-Responda usando o template tecnico da skill.
-Nao implemente TypeScript ainda.
+Docker PostgreSQL
+↓
+APIForgeKit Studio
+↓
+Lead Algorithm Lab
+↓
+Structured Logs
+↓
+Dashboard Visual
+↓
+Context Builder
+↓
+Next.js Blueprint
+↓
+Implementation with Prisma / Next.js
 ```
 
-Docs oficiais nao precisam ser relidas em toda execucao. Consulte docs do provider quando o case for novo, falhar, mudar SDK/payload, ou quando o output real entrar em conflito com o plano.
+No LLM, external API, agent, voice, or vision is used in this MVP.
 
----
+## Stack
 
-## 🔧 Usage
+- NiceGUI for the local Python interface
+- Plotly and Pandas for interactive charts
+- PostgreSQL via Docker
+- SQLAlchemy 2.x with `psycopg`
+- Pydantic Settings and python-dotenv for configuration
+- Loguru for application logs
+- Pytest for tests
 
-### Estrutura de testes
-
-Cada provedor possui **casos de teste isolados**:
-
-| Provedor | Casos disponíveis |
-|----------|----------------|
-| `openai` | `auth`, `basic`, `stream`, `tools`, `structured` |
-| `gemini` | `auth`, `basic`, `stream`, `tools`, `vision` |
-| `anthropic` | `auth`, `basic`, `stream`, `tools` |
-| `xai` | `auth`, `basic`, `stream`, `tools` |
-
-### Exemplos de execução
+## Quick Start
 
 ```bash
-# Testes básicos
-python run_lab.py --provider openai --case auth
-python run_lab.py --provider openai --case basic
-python run_lab.py --provider gemini --case stream
-
-# Recursos avançados
-python run_lab.py --provider anthropic --case tools
-python run_lab.py --provider openai --case structured
-python run_lab.py --provider gemini --case vision
+python -m pip install -r requirements.txt
+copy .env.example .env
+docker compose up -d
+python app.py
 ```
 
-### Variáveis de ambiente
+Open:
 
-**Obrigatórias** (adicione suas chaves no `.env`):
-```env
-OPENAI_API_KEY=sk-...
-GEMINI_API_KEY=...
-ANTHROPIC_API_KEY=...
-XAI_API_KEY=...
+```txt
+http://localhost:8080
 ```
 
-**Opcionais** (override de modelos):
-```env
-OPENAI_MODEL=gpt-4
-GEMINI_MODEL=gemini-2.0-flash
-ANTHROPIC_MODEL=claude-3-5-sonnet
-XAI_MODEL=grok-2
+Optional npm helpers:
+
+```bash
+npm run db
+npm run dev
+npm run test
 ```
 
----
+## Pages
 
-## 📊 Outputs
+- Dashboard: metrics, latest tests, classification donut, score histogram, leads by source, test evolution, score by channel.
+- Lead Algorithm Lab: run deterministic scoring and persist the result.
+- Logs: inspect history, filter/search, view full JSON, export CSV/JSONL.
+- Context Builder: generate technical Markdown context for implementation agents.
+- Next.js Blueprint: generate a Prisma/Next.js implementation blueprint without full code.
+- Settings: database status and operational commands.
 
-Cada teste gera um arquivo JSON em `outputs/`:
+## Lead Score Rules
 
+Strong keywords add 10 points each:
+
+- comprar
+- preço / preco
+- orçamento / orcamento
+- urgente
+- hoje
+- agora
+- WhatsApp
+- ligação / ligacao
+
+Source:
+
+- WhatsApp: +25
+- Ligação: +30
+- Landing Page: +20
+- Instagram: +15
+- LinkedIn: +10
+
+Urgency:
+
+- alta: +25
+- média: +15
+- baixa: +5
+
+Interest:
+
+- alto: +25
+- médio: +15
+- baixo: +5
+
+Contact and history:
+
+- phone: +10
+- email: +5
+- previous customer: +20
+
+Penalties:
+
+- empty message: `invalid_lead`
+- spam pattern: `invalid_lead`
+- no phone and no email: -20
+- very short message: -10
+
+Classification:
+
+- 0-30: `cold_lead`
+- 31-60: `warm_lead`
+- 61-80: `hot_lead`
+- 81-100: `urgent_lead`
+- invalid input: `invalid_lead`
+
+## PostgreSQL
+
+Start local PostgreSQL:
+
+```bash
+docker compose up -d
 ```
-outputs/YYYY-MM-DD_provider_case_result.json
+
+The app creates the `lead_tests` table automatically on startup when the database is online.
+
+If PostgreSQL is offline, the UI opens in degraded mode. Dashboard and Logs show offline status, and the Lead Lab blocks real execution until the database is available.
+
+## Structured Logs
+
+Every persisted test appends a JSONL record to:
+
+```txt
+logs/lead_tests.jsonl
 ```
 
-**Exemplo de output:**
-```json
-{
-  "provider": "openai",
-  "test_name": "basic",
-  "timestamp": "2026-05-07T10:30:45Z",
-  "status": "ok",
-  "model_used": "gpt-4-turbo",
-  "latency_ms": 245,
-  "request_summary": "Single chat completion request",
-  "response_summary": "Generated response with usage stats",
-  "raw_response_without_secrets": {...}
-}
+The database remains the source of truth; JSONL is a local audit trail.
+
+## Exports
+
+Generated context files are written to:
+
+```txt
+exports/contexts/
 ```
 
-> 💡 **Nota:** JSONs de output são ignorados pelo git por padrão. Mantenha esses arquivos localmente para respostas específicas da sua conta e metadados temporários dos provedores.
+Generated Next.js blueprints are written to:
 
----
-
-## 📁 Estrutura do projeto
-
-```
-APIForgeKit/
-├── labs/                              # Scripts de teste para cada provedor
-│   ├── openai_lab.py                  # OpenAI test cases
-│   ├── gemini_lab.py                  # Google Gemini test cases
-│   ├── anthropic_lab.py               # Anthropic Claude test cases
-│   └── xai_lab.py                     # xAI Grok test cases
-├── outputs/                           # Resultados dos testes (local only)
-│   └── *.json                         # Output JSONs (gitignored)
-├── tests/                             # Testes do executor e contrato dos labs
-├── .env.example                       # Template de variáveis de ambiente
-├── requirements.txt                   # Dependências Python
-├── run_lab.py                         # Executor padrão do API Builder Lab
-├── README.md                          # Guia completo
-├── SKILL.md                           # Instruções para agents/IDEs
-├── workflow.md                        # Fluxo de trabalho detalhado
-└── providers.md                       # Documentação dos provedores
+```txt
+exports/blueprints/
 ```
 
----
+Logs page exports are written to:
 
-## 📚 Documentation
+```txt
+exports/logs/
+```
 
-- **[README.md](./README.md)** - Guia completo do lab
-- **[SKILL.md](./SKILL.md)** - Instruções para agents (VS Code Copilot, Claude, etc.)
-- **[workflow.md](./workflow.md)** - Fluxo de trabalho detalhado
-- **[providers.md](./providers.md)** - Links e referências de cada provedor
-- **[run_lab.py](./run_lab.py)** - Executor padrão do API Builder Lab
-- **[tests/](./tests/)** - Testes do executor e contrato dos outputs
+## Tests
 
----
+```bash
+python -m pytest -q
+```
 
-## ✅ Rules & Best Practices
+The test suite covers:
 
-| Regra | Por quê |
-|-------|--------|
-| Use docs oficiais quando investigar ou corrigir | Execucao repetida usa output real; docs entram em caso novo, falha ou mudanca de SDK |
-| Use Python antes de TypeScript | Validação rápida sem compilação |
-| Mantenha cada caso de teste focado | Isolamento facilita debug |
-| Use `.env` apenas para secrets | Segurança de chaves de API |
-| Salve os outputs reais | Evidência para planning do adapter |
-| Não mova código experimental para o app | Risco de código quebrado em produção |
-| Comite docs e scripts, não JSON outputs | Evita secrets e dados temporários |
+- scoring rules
+- invalid/spam cases
+- penalties
+- classification boundaries
+- JSONL logging
+- SQLAlchemy repository behavior
+- Context Builder output
+- Blueprint Generator output
+- legacy provider lab contract tests
 
----
+## Legacy Provider Lab
 
-## 🔐 Security
+The original API Builder Lab is preserved for future provider validation. It is separate from Studio V1 and uses `requirements-legacy.txt`.
 
-- ✅ Nunca faça hardcode de chaves de API
-- ✅ Nunca imprima chaves de API completas
-- ✅ Nunca salve secrets em arquivos de output
-- ✅ Use `.env` e mantenha fora do git (já configurado)
-- ✅ Outputs com dados sensíveis permanecem locais
+See:
 
----
-
-## 🛠️ Tech Stack
-
-| Componente | Versão |
-|-----------|--------|
-| Python | 3.8+ |
-| OpenAI SDK | Latest |
-| Google GenAI | Latest |
-| Anthropic SDK | Latest |
-| xAI SDK | Latest |
-| Pydantic | Latest |
-
----
-
-## 📝 Next Steps
-
-1. ✅ Clone ou fork este repositório
-2. ✅ Copie `.env.example` para `.env` e adicione suas chaves
-3. ✅ Configure o virtualenv e instale dependências
-4. ✅ Execute um lab case: `python run_lab.py --provider xai --case basic`
-5. ✅ Inspecione o output JSON em `outputs/`
-6. ✅ Use os resultados para planejar seu adapter TypeScript
-
----
-
-## 📄 License
-
-MIT License - veja [LICENSE](./LICENSE) para detalhes.
-
----
-
-## 🤝 Contributing
-
-Contribuições são bem-vindas! Para melhorias, bugs ou novos casos de teste:
-
-1. Fork este repositório
-2. Crie uma branch (`git checkout -b feature/sua-feature`)
-3. Commit suas mudanças (`git commit -m 'Add feature'`)
-4. Push para a branch (`git push origin feature/sua-feature`)
-5. Abra um Pull Request
-
----
-
-<div align="center">
-
-**Desenvolvido com ❤️ para economizar tokens e acelerar integração de IA**
-
-[⬆ Voltar ao topo](#-api-forge-kit)
-
-</div>
+```txt
+legacy/README.md
+run_lab.py
+labs/
+providers.md
+workflow.md
+```

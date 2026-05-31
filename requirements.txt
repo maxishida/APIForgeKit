@@ -1,7 +1,9 @@
+nicegui
+plotly
+pandas
+sqlalchemy>=2.0
+psycopg[binary]
 python-dotenv
-openai
-google-genai
-anthropic
-xai-sdk
-pydantic
-protobuf>=5.29.4,<6
+pydantic-settings
+loguru
+pytest

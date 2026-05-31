@@ -1,5 +1,7 @@
 .env
 .venv/
+.superpowers/
+.pytest_cache/
 __pycache__/
 *.pyc
 outputs/*.json

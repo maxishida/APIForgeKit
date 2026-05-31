@@ -1,0 +1,11 @@
+{
+  "scripts": {
+    "db": "docker compose up -d",
+    "db:docker": "docker compose up -d",
+    "db:down": "docker compose down",
+    "db:logs": "docker compose logs -f",
+    "db:reset": "docker compose down -v && docker compose up -d",
+    "dev": "python app.py",
+    "test": "python -m pytest -q"
+  }
+}

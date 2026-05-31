@@ -1,0 +1,27 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: apiforgekit-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-apiforgekit}
+      POSTGRES_USER: ${POSTGRES_USER:-apiforgekit}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-apiforgekit}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-apiforgekit} -d ${POSTGRES_DB:-apiforgekit}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - apiforgekit_network
+
+volumes:
+  postgres_data:
+
+networks:
+  apiforgekit_network:
+    driver: bridge
