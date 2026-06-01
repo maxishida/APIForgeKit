@@ -58,6 +58,61 @@ Evidence means:
 - error details when failed
 - recommendation
 
+## Decision Gates
+
+The agent must pass these gates in order. Do not skip gates because a task feels simple.
+
+### Gate 1 - Classify Request
+
+Route the user request to the correct lab before acting:
+
+| User asks for | Required mode |
+| --- | --- |
+| API, webhook, endpoint, SaaS integration | Generic API Validation Mode |
+| xAI/OpenAI/Gemini/Anthropic behavior | Provider Validation Mode |
+| deterministic business logic | Algorithm Validation Mode |
+| token usage, model price, cost per user | Token Economy Mode |
+| implementation plan or app code | Context Builder first, then Implementation Boundary |
+| agent/editor protocol | ACP Agent Direction |
+
+### Gate 2 - Evidence Checklist
+
+Before saying a test is validated, confirm:
+
+- input/request exists
+- expected output exists when applicable
+- actual output/response exists
+- status is recorded
+- latency is recorded
+- error is recorded if present
+- tokens/cost are recorded or explicitly unavailable
+- pricing source URL is recorded for cost estimates
+- recommendation is recorded
+- context is generated from observed data
+
+### Gate 3 - Implementation Permission
+
+The agent can suggest implementation only after:
+
+- at least one relevant test was executed
+- structured logs exist
+- evidence is inspectable
+- Context Builder output exists
+- known risks and limitations are listed
+
+If a gate is missing, say `ainda não validado` and run or request the missing validation step.
+
+## Anti-Guess Rule
+
+Never invent payloads, endpoints, SDK behavior, model prices, limits, token costs, response shapes or algorithm outcomes.
+
+If evidence is missing:
+
+```txt
+Ainda não validado pelo APIForgeKit.
+Próximo passo: executar teste/log/contexto antes de implementar.
+```
+
 ## Token Economy Rule
 
 Use the lab to shrink prompts before asking a LLM to implement.
@@ -103,6 +158,58 @@ The current APIForgeKit Studio focus is observability for APIs and algorithms:
 
 Algorithm Test Lab now validates `lead_score` with seed cases, expected output validation and structured PostgreSQL results. Future harnesses should support WhatsApp APIs, webhooks, local algorithms and site/API endpoints using the same evidence pattern.
 Generic API Lab now validates API/webhook contracts with expected output validation, sanitized headers and structured PostgreSQL results.
+
+## ACP Agent Direction
+
+ACP is a strong V2 direction for APIForgeKit when the Studio should be operated from an editor, IDE or agent client instead of only the NiceGUI UI.
+
+Target role:
+
+```txt
+ACP Client / Editor
+↓
+APIForgeKit ACP Agent
+↓
+Skill Gates
+↓
+API Lab / Algorithm Lab / Token Calculator
+↓
+PostgreSQL Evidence
+↓
+Context Builder / Reports
+```
+
+The ACP agent must not bypass this skill. It should execute the same gates through protocol-visible progress updates.
+
+Suggested ACP-facing capabilities:
+
+- `validate_api_contract`
+- `validate_algorithm_suite`
+- `calculate_token_usage`
+- `build_technical_context`
+- `export_evidence_bundle`
+- `explain_next_step`
+
+Implemented ACP prompt commands:
+
+- `/validate-api-suite whatsapp_validation_pack`
+- `/validate-algorithm lead_score`
+- `/token-cost provider=xai model=grok-4.3 users=10 requests=20`
+- `/build-context`
+- `/export-evidence`
+
+ACP fit:
+
+- Use ACP for editor/client interoperability.
+- Use `session/update` notifications to stream test progress.
+- Use `available_commands_update` after `session/new` so clients can discover safe commands.
+- Use `plan` updates before execution so the client sees validation gates.
+- Use `agent_message_chunk` with text content blocks for final structured summaries.
+- Use `session/request_permission` before running costly API calls, shell commands, file writes or external MCP actions.
+- Include APIForgeKit `_meta` fields so clients can correlate updates with local evidence.
+- Keep APIForgeKit's PostgreSQL/log/report system as the evidence backend.
+
+Do not build the ACP agent before the local lab contract is stable. V1 remains NiceGUI local-first; ACP is the protocolized execution layer for V2.
 
 ## Operating Modes
 
@@ -220,13 +327,22 @@ Use when the user asks about provider cost, token usage, cost per user or model 
 
 The agent must:
 
-1. Read or cite official provider pricing docs when prices may matter.
+1. Always consult the current official provider pricing docs before answering or calculating price, token cost, cost per user, monthly cost or model cost.
 2. Estimate input, cached input and output tokens separately.
 3. Calculate total requests from users, requests per user and days.
 4. Save the estimate when PostgreSQL is online.
 5. Recommend shrinking prompts through Context Builder before implementation.
 
-Never present seeded pricing as billing truth. Always call it an estimate and point to provider docs.
+Required pricing sources:
+
+- xAI: https://docs.x.ai/developers/models
+- OpenAI: https://platform.openai.com/docs/pricing
+- Anthropic: https://docs.anthropic.com/en/docs/about-claude/pricing
+- Gemini: https://ai.google.dev/gemini-api/docs/pricing
+
+Never present seeded pricing as billing truth. Always call it an estimate, include the provider pricing source URL, and say when the doc was checked.
+
+If the pricing doc cannot be reached, say the calculation is blocked or use the local seeded catalog only as a clearly labeled rough estimate.
 
 ## xAI Validation Priority
 

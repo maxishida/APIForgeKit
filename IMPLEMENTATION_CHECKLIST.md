@@ -34,6 +34,9 @@
 - Exportação de relatórios Markdown, JSON e HTML.
 - Exportação de bundle ZIP com Markdown, JSON e HTML.
 - CLI `run_algorithm_lab.py`.
+- ACP Skill Executor em `python -m agents.acp_agent`.
+- npm helper `npm run acp`.
+- ACP `session/new` com comandos disponíveis, `plan`, `agent_message_chunk`, `_meta` e `session/request_permission`.
 - Configuração Alembic opcional.
 - Lead Algorithm Lab preservado.
 - Blueprint Archive preservado como referência legada.
@@ -66,6 +69,7 @@ Abra `http://localhost:8080`.
 - `pytest`
 - `xai-sdk`
 - `alembic`
+- `agent-client-protocol`
 
 ## Como testar
 
@@ -83,6 +87,12 @@ CLI de algoritmo:
 
 ```bash
 npm run algorithm:suite
+```
+
+ACP executor:
+
+```bash
+npm run acp
 ```
 
 ## Como ver o dashboard live
@@ -158,15 +168,33 @@ Arquivos gerados:
 3. O app executa `lead_score`, `whatsapp_validation_pack` e salva uma estimativa de custo.
 4. Abra Context Builder para exportar o bundle.
 
+## Como usar o ACP Skill Executor
+
+1. Rode `npm run acp`.
+2. Conecte por cliente ACP via stdio.
+3. Envie `initialize`.
+4. Crie sessão com `session/new` usando `cwd` absoluto.
+5. Execute comandos em `session/prompt`, por exemplo `/validate-algorithm lead_score`.
+
+O executor segue o `SKILL.md`, grava evidências pelos repositórios existentes e não gera código de produto.
+
 ## Como entender a ferramenta
 
-Leia:
+Leia nesta ordem no GitHub:
 
-- `USER_GUIDE.md`
-- `OPEN_SOURCE_TUTORIAL.md`
-- `ALGORITHM_TEST_PLAN.md`
-- Generic API Lab
-- Token Calculator
+1. `README.md`
+2. `USER_GUIDE.md`
+3. `OPEN_SOURCE_TUTORIAL.md`
+4. `workflow.md`
+5. `architecture.md`
+6. `ALGORITHM_TEST_PLAN.md`
+7. `XAI_TEST_PLAN.md`
+8. `VALIDATION_CHECKLIST.md`
+9. `ACP_AGENT_ARCHITECTURE.md`
+10. `SKILL.md`
+11. Generic API Lab
+12. Algorithm Test Lab
+13. Token Calculator
 
 Resumo:
 

@@ -8,6 +8,7 @@
     "db:migrate": "alembic upgrade head",
     "dev": "python app.py",
     "test": "python -m pytest -q",
-    "algorithm:suite": "python run_algorithm_lab.py --suite lead_score --export"
+    "algorithm:suite": "python run_algorithm_lab.py --suite lead_score --export",
+    "acp": "python -m agents.acp_agent"
   }
 }

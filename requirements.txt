@@ -9,3 +9,4 @@ loguru
 pytest
 xai-sdk
 alembic
+agent-client-protocol

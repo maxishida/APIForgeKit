@@ -85,6 +85,7 @@ npm run db:migrate
 npm run dev
 npm run test
 npm run algorithm:suite
+npm run acp
 ```
 
 ## 5 Minute Tutorial
@@ -124,6 +125,7 @@ Never commit `.env` or raw provider outputs with secrets.
 - Generic API Lab: HTTP or dry-run contract testing for APIs, webhooks and WhatsApp-style payloads.
 - Algorithm Test Lab: deterministic Python algorithm validation with expected-vs-actual diff.
 - Token Calculator: provider/model cost projection per user, request volume and context savings.
+- ACP Skill Executor: local stdio agent for clients/editors that want to run the same validation gates outside the UI.
 - Lead Algorithm Lab: deterministic local lead-score module preserved from the first MVP.
 - Logs: observability event table with filters, search, JSON detail and CSV/JSONL export.
 - Context Builder: converts real events into technical context and exports reports.
@@ -331,6 +333,35 @@ Reports are generated from real runs and events, not from assumptions.
 
 Context Builder also exports a ZIP bundle with Markdown, JSON and HTML.
 
+## ACP Skill Executor
+
+APIForgeKit includes a local ACP executor for editor/agent-client integrations:
+
+```bash
+npm run acp
+```
+
+It supports:
+
+- `initialize`
+- `session/new`
+- `session/prompt`
+- `session/cancel`
+
+Prompt commands:
+
+```txt
+/validate-api-suite whatsapp_validation_pack
+/validate-algorithm lead_score
+/token-cost provider=xai model=grok-4.3 users=10 requests=20
+/build-context
+/export-evidence
+```
+
+The ACP executor follows `SKILL.md` gates and does not generate production code. HTTP real/provider calls require permission before execution.
+
+Current ACP behavior includes command discovery through `available_commands_update`, visible `plan` updates, text content chunks, `session/request_permission` for risky work and `_meta` correlation fields for local evidence.
+
 ## Legacy Lead Logs
 
 Lead Algorithm Lab still writes a JSONL audit trail to:
@@ -343,17 +374,28 @@ The live xAI observability flow uses PostgreSQL as the source of truth.
 
 ## Documentation
 
-Start here before adding provider features:
+Recommended GitHub reading order:
 
-- [USER_GUIDE.md](./USER_GUIDE.md): simple explanation of how the tool works for users.
-- [OPEN_SOURCE_TUTORIAL.md](./OPEN_SOURCE_TUTORIAL.md): GitHub/open source usage flow focused on saving LLM tokens.
-- [ALGORITHM_TEST_PLAN.md](./ALGORITHM_TEST_PLAN.md): plan for validating algorithms through forms, sites or APIs.
-- [SKILL.md](./SKILL.md): operational brain for evidence-first APIForgeKit work.
-- [workflow.md](./workflow.md): validation workflow.
-- [architecture.md](./architecture.md): current Studio architecture.
-- [providers.md](./providers.md): provider documentation index.
-- [XAI_TEST_PLAN.md](./XAI_TEST_PLAN.md): phased xAI validation plan.
-- [VALIDATION_CHECKLIST.md](./VALIDATION_CHECKLIST.md): checklist for real API validation.
+1. [README.md](./README.md): project overview, quick start and navigation.
+2. [USER_GUIDE.md](./USER_GUIDE.md): simple explanation for first-time users.
+3. [OPEN_SOURCE_TUTORIAL.md](./OPEN_SOURCE_TUTORIAL.md): practical workflow for saving LLM tokens with validated context.
+4. [workflow.md](./workflow.md): evidence-first operating workflow.
+5. [architecture.md](./architecture.md): current local-first Studio architecture.
+6. [ALGORITHM_TEST_PLAN.md](./ALGORITHM_TEST_PLAN.md): validating algorithms through forms, sites or APIs.
+7. [XAI_TEST_PLAN.md](./XAI_TEST_PLAN.md): phased xAI validation plan.
+8. [VALIDATION_CHECKLIST.md](./VALIDATION_CHECKLIST.md): checklist before real API validation.
+9. [ACP_AGENT_ARCHITECTURE.md](./ACP_AGENT_ARCHITECTURE.md): optional editor/agent-client execution layer.
+10. [SKILL.md](./SKILL.md): operational brain for agents working in this repo.
+11. [providers.md](./providers.md): provider documentation index.
+
+GitHub/open source best practices:
+
+- Copy `.env.example` to `.env`; never commit `.env` or raw provider secrets.
+- Start with `npm run db`, `python app.py`, then run the demo before adding features.
+- Validate APIs and algorithms before asking a LLM to implement product code.
+- Export context from real logs and give that compact context to the LLM.
+- Check official provider pricing docs before using token/cost estimates.
+- Keep new examples as reusable suites, reports or docs so other users can learn faster.
 
 Official xAI docs reviewed for this track:
 
