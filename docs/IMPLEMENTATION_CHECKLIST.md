@@ -188,19 +188,20 @@ O executor segue o `SKILL.md`, grava evidências pelos repositórios existentes 
 
 Leia nesta ordem no GitHub:
 
-1. `README.md`
-2. `USER_GUIDE.md`
-3. `OPEN_SOURCE_TUTORIAL.md`
-4. `workflow.md`
-5. `architecture.md`
-6. `ALGORITHM_TEST_PLAN.md`
-7. `XAI_TEST_PLAN.md`
-8. `VALIDATION_CHECKLIST.md`
-9. `ACP_AGENT_ARCHITECTURE.md`
-10. `SKILL.md`
-11. Generic API Lab
-12. Algorithm Test Lab
-13. Token Calculator
+1. [`../README.md`](../README.md)
+2. [`SUMMARY.md`](./SUMMARY.md)
+3. [`USER_GUIDE.md`](./USER_GUIDE.md)
+4. [`OPEN_SOURCE_TUTORIAL.md`](./OPEN_SOURCE_TUTORIAL.md)
+5. [`workflow.md`](./workflow.md)
+6. [`architecture.md`](./architecture.md)
+7. [`ALGORITHM_TEST_PLAN.md`](./ALGORITHM_TEST_PLAN.md)
+8. [`XAI_TEST_PLAN.md`](./XAI_TEST_PLAN.md)
+9. [`VALIDATION_CHECKLIST.md`](./VALIDATION_CHECKLIST.md)
+10. [`ACP_AGENT_ARCHITECTURE.md`](./ACP_AGENT_ARCHITECTURE.md)
+11. [`../SKILL.md`](../SKILL.md)
+12. Generic API Lab
+13. Algorithm Test Lab
+14. Token Calculator
 
 Resumo:
 

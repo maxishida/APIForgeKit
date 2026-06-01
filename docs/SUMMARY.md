@@ -1,0 +1,59 @@
+# APIForgeKit Docs Summary
+
+Este diretório guarda a documentação detalhada do APIForgeKit Studio.
+
+A raiz do repositório deve ficar simples:
+
+- `README.md`: guia rápido para instalar, rodar e entender.
+- `SKILL.md`: contrato operacional para agentes.
+
+## Comece por aqui
+
+1. [User Guide](./USER_GUIDE.md): explicação simples da ferramenta.
+2. [Open Source Tutorial](./OPEN_SOURCE_TUTORIAL.md): passo a passo para economizar tokens usando evidências.
+3. [Workflow](./workflow.md): fluxo `teste -> logs -> evidências -> contexto`.
+4. [Architecture](./architecture.md): arquitetura local-first com NiceGUI, PostgreSQL e labs.
+5. [Implementation Checklist](./IMPLEMENTATION_CHECKLIST.md): o que já existe e como testar.
+
+## Labs
+
+- [Algorithm Test Plan](./ALGORITHM_TEST_PLAN.md): validação de algoritmos determinísticos, com foco em `lead_score`.
+- [xAI Test Plan](./XAI_TEST_PLAN.md): fases de validação da API xAI.
+- [Validation Checklist](./VALIDATION_CHECKLIST.md): checklist antes de rodar validações reais.
+- [Providers](./providers.md): notas de provedores e documentação externa.
+
+## ACP
+
+- [ACP Agent Architecture](./ACP_AGENT_ARCHITECTURE.md): executor ACP, comandos, permissões e integração com o fluxo da skill.
+
+## Histórico interno
+
+- [Superpowers Plan](./superpowers/plans/2026-06-01-algorithm-validation-lab.md): plano técnico usado durante a implementação do Algorithm Test Lab.
+
+## Fluxo recomendado para novos usuários
+
+```txt
+README
+↓
+User Guide
+↓
+Open Source Tutorial
+↓
+Algorithm Test Lab
+↓
+Context Builder
+↓
+Evidence Pack
+```
+
+## Fluxo recomendado para agentes
+
+```txt
+SKILL.md
+↓
+docs/workflow.md
+↓
+docs/ALGORITHM_TEST_PLAN.md
+↓
+docs/ACP_AGENT_ARCHITECTURE.md
+```

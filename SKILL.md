@@ -382,7 +382,7 @@ Stop conditions for lead/score work:
 Open source tutorial:
 
 ```txt
-README.md -> OPEN_SOURCE_TUTORIAL.md -> Algorithm Test Lab -> Context Builder
+README.md -> docs/SUMMARY.md -> docs/OPEN_SOURCE_TUTORIAL.md -> Algorithm Test Lab -> Context Builder
 ```
 
 ### 4. Generic API Validation Mode
