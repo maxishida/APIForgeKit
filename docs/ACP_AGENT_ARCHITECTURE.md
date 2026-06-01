@@ -142,21 +142,24 @@ Supported JSON-RPC methods:
 
 Protocol behavior implemented in the seed:
 
-- `initialize` advertises local capabilities and stdio MCP support only.
+- `initialize` returns ACP v1 fields: `protocolVersion`, `agentInfo`, `agentCapabilities`, `authMethods` and APIForgeKit `_meta`.
+- MCP stdio support is advertised in `_meta.apiforgekit.supportsMcpStdio`; ACP `mcpCapabilities` keeps `http=false` and `sse=false`.
 - `session/new` requires an absolute `cwd`, stores stdio MCP metadata and emits `available_commands_update`.
-- `session/prompt` emits a `plan` update before executing a command.
-- Final summaries stream through `agent_message_chunk` using text content blocks.
-- HTTP real/provider-paid paths emit `session/request_permission` before execution.
-- `_meta.apiforgekit.sessionId` is included so clients can correlate updates and evidence.
+- `available_commands_update` advertises command names without `/`; prompts may use `/validate-lead-score` or legacy `validate-lead-score`.
+- `session/prompt` accepts official ACP `ContentBlock[]` text prompts and legacy string prompts.
+- `session/prompt` emits `plan`, `tool_call`, `tool_call_update` and final `agent_message_chunk`.
+- Final summaries stream through `agent_message_chunk` using text content blocks; `PromptResponse` keeps only `stopReason` and `_meta`.
+- HTTP real/provider-paid paths emit `session/request_permission` before execution and return `PromptResponse.stopReason="refusal"` with `_meta.apiforgekit.permissionRequired=true`.
+- `_meta.apiforgekit.sessionId`, command, algorithm, run ID, context path and evidence ZIP are included when available so clients can correlate updates and evidence.
 
 Supported prompt commands:
 
-- `/validate-api-suite whatsapp_validation_pack`
-- `/validate-lead-score`
-- `/validate-algorithm lead_score`
-- `/token-cost provider=xai model=grok-4.3 users=10 requests=20 input=1000 output=500 days=30`
-- `/build-context`
-- `/export-evidence`
+- announced: `validate-api-suite`, prompt: `/validate-api-suite whatsapp_validation_pack`
+- announced: `validate-lead-score`, prompt: `/validate-lead-score`
+- announced: `validate-algorithm`, prompt: `/validate-algorithm lead_score`
+- announced: `token-cost`, prompt: `/token-cost provider=xai model=grok-4.3 users=10 requests=20 input=1000 output=500 days=30`
+- announced: `build-context`, prompt: `/build-context`
+- announced: `export-evidence`, prompt: `/export-evidence`
 
 ## Lead Score ACP Best Practice
 

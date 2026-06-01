@@ -27,6 +27,7 @@ def test_unknown_command_returns_not_validated_with_safe_suggestions(tmp_path):
     assert result["status"] == "not_validated"
     assert "Ainda não validado" in result["message"]
     assert "/validate-algorithm lead_score" in result["suggested_commands"]
+    assert result["errors"] == []
 
 
 def test_validate_algorithm_runs_lead_score_suite_and_exports_context(tmp_path):
@@ -37,6 +38,7 @@ def test_validate_algorithm_runs_lead_score_suite_and_exports_context(tmp_path):
     assert result["run"]["status"] == "passed"
     assert result["evidence"]["passed"] >= 17
     assert result["exports"]["context"].endswith("lead_score_context.md")
+    assert result["errors"] == []
 
 
 def test_validate_lead_score_exports_evidence_bundle(tmp_path):
@@ -46,8 +48,13 @@ def test_validate_lead_score_exports_evidence_bundle(tmp_path):
     assert result["mode"] == "lead_score_validation"
     assert result["evidence"]["algorithm"] == "lead_score"
     assert result["evidence"]["passed"] >= 17
+    assert result["evidence"]["run_id"] == result["run"]["id"]
+    assert result["evidence"]["invariants"]["all_passed"] is True
+    assert result["evidence"]["invariants"]["payload_validated"] >= 17
+    assert result["evidence"]["invariants"]["failed"] == 0
     assert result["exports"]["context"].endswith("lead_score_context.md")
     assert result["exports"]["zip"].endswith(".zip")
+    assert result["errors"] == []
 
 
 def test_validate_unknown_algorithm_returns_safe_not_validated(tmp_path):
@@ -55,6 +62,7 @@ def test_validate_unknown_algorithm_returns_safe_not_validated(tmp_path):
 
     assert result["status"] == "not_validated"
     assert "Unknown algorithm" in result["message"]
+    assert result["errors"][0]["type"] == "not_validated"
 
 
 def test_validate_api_suite_runs_whatsapp_pack_without_permission(tmp_path):
@@ -67,6 +75,7 @@ def test_validate_api_suite_runs_whatsapp_pack_without_permission(tmp_path):
     assert result["permission_required"] is False
     assert result["run"]["status"] == "passed"
     assert result["evidence"]["suite"] == "whatsapp_validation_pack"
+    assert result["errors"] == []
 
 
 def test_validate_unknown_api_suite_returns_safe_not_validated(tmp_path):
@@ -74,6 +83,7 @@ def test_validate_unknown_api_suite_returns_safe_not_validated(tmp_path):
 
     assert result["status"] == "not_validated"
     assert "Unknown suite" in result["message"]
+    assert result["errors"][0]["type"] == "not_validated"
 
 
 def test_token_cost_returns_pricing_source_url(tmp_path):
@@ -83,6 +93,7 @@ def test_token_cost_returns_pricing_source_url(tmp_path):
     assert result["mode"] == "token_economy"
     assert result["estimate"]["source_url"] == "https://docs.x.ai/developers/models"
     assert result["estimate"]["cost_per_user_usd"] == 1.5
+    assert result["errors"] == []
 
 
 def test_export_evidence_creates_bundle_from_current_context(tmp_path):
@@ -92,5 +103,9 @@ def test_export_evidence_creates_bundle_from_current_context(tmp_path):
     result = executor.execute("/export-evidence")
 
     assert result["status"] == "success"
+    assert result["evidence"]["command"] == "/validate-algorithm lead_score"
+    assert result["evidence"]["algorithm"] == "lead_score"
+    assert result["evidence"]["run_id"]
     assert result["exports"]["zip"].endswith(".zip")
     assert result["exports"]["markdown"].endswith(".md")
+    assert result["errors"] == []

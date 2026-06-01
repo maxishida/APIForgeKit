@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 
-from core.algorithm_test_lab import AlgorithmTestRunner, build_algorithm_context, ensure_default_algorithms
+from core.algorithm_test_lab import AlgorithmTestRunner, build_algorithm_context, ensure_default_algorithms, summarize_algorithm_invariants
 from core.api_test_lab import ApiTestRunner, build_api_context, ensure_default_api_suites
 from core.report_bundle import create_report_bundle
 from core.token_usage import TokenUsageRepository, build_token_usage_context, calculate_token_cost
@@ -27,12 +27,14 @@ class SkillExecutor:
         self.reports_dir.mkdir(parents=True, exist_ok=True)
         self.skill_text = Path(services.skill_path).read_text(encoding="utf-8") if Path(services.skill_path).exists() else ""
         self.last_context = ""
+        self.last_evidence: dict[str, object] = {}
 
     def execute(self, prompt: str) -> dict[str, object]:
         tokens = shlex.split(prompt.strip())
         if not tokens:
             return self._not_validated()
-        command = tokens[0]
+        raw_command = tokens[0]
+        command = _normalize_command(raw_command)
         args = tokens[1:]
         if command == "/validate-lead-score":
             return self._validate_lead_score()
@@ -56,22 +58,30 @@ class SkillExecutor:
         except ValueError as exc:
             return self._not_validated(str(exc))
         run = AlgorithmTestRunner(self.services.algorithm_repository).run_suite(str(definition["id"]))
-        context = build_algorithm_context(self.services.algorithm_repository)
+        results = self.services.algorithm_repository.list_results(run_id=str(run["id"]), limit=int(run["total_cases"] or 100))
+        invariants = summarize_algorithm_invariants(results)
+        context = build_algorithm_context(self.services.algorithm_repository, algorithm_name=algorithm_name)
         context_path = self.reports_dir / f"{algorithm_name}_context.md"
         context_path.write_text(context, encoding="utf-8")
         self.last_context = context
+        evidence = {
+            "command": f"/validate-algorithm {algorithm_name}",
+            "algorithm": algorithm_name,
+            "run_id": run["id"],
+            "passed": run["passed"],
+            "failed": run["failed"],
+            "total_cases": run["total_cases"],
+            "invariants": invariants,
+        }
+        self.last_evidence = evidence
         return {
             "status": "success" if run["status"] == "passed" else "failed",
             "mode": "algorithm_validation",
             "permission_required": False,
             "run": run,
-            "evidence": {
-                "algorithm": algorithm_name,
-                "passed": run["passed"],
-                "failed": run["failed"],
-                "total_cases": run["total_cases"],
-            },
+            "evidence": evidence,
             "exports": {"context": str(context_path)},
+            "errors": [],
             "message": "Algorithm suite validated through SKILL.md gates.",
         }
 
@@ -92,8 +102,13 @@ class SkillExecutor:
         )
         exports = dict(result.get("exports") or {})
         exports.update(bundle)
+        evidence = dict(result.get("evidence") or {})
+        evidence["command"] = "/validate-lead-score"
+        self.last_evidence = evidence
         result["mode"] = "lead_score_validation"
+        result["evidence"] = evidence
         result["exports"] = exports
+        result["errors"] = []
         result["message"] = "Lead score suite validated and evidence pack exported."
         return result
 
@@ -123,19 +138,24 @@ class SkillExecutor:
         context_path = self.reports_dir / f"{suite_name}_context.md"
         context_path.write_text(context, encoding="utf-8")
         self.last_context = context
+        evidence = {
+            "command": f"/validate-api-suite {suite_name}",
+            "suite": suite_name,
+            "provider": suite["provider"],
+            "run_id": run["id"],
+            "passed": run["passed"],
+            "failed": run["failed"],
+            "total_cases": run["total_cases"],
+        }
+        self.last_evidence = evidence
         return {
             "status": "success" if run["status"] == "passed" else "failed",
             "mode": "generic_api_validation",
             "permission_required": False,
             "run": run,
-            "evidence": {
-                "suite": suite_name,
-                "provider": suite["provider"],
-                "passed": run["passed"],
-                "failed": run["failed"],
-                "total_cases": run["total_cases"],
-            },
+            "evidence": evidence,
             "exports": {"context": str(context_path)},
+            "errors": [],
             "message": "API suite validated in dry-run contract mode.",
         }
 
@@ -154,12 +174,16 @@ class SkillExecutor:
         saved = self.services.token_repository.save_estimate(estimate)
         context = build_token_usage_context(self.services.token_repository)
         self.last_context = context
+        self.last_evidence = {"command": "/token-cost", "record_id": saved["id"], "provider": estimate["provider"], "model": estimate["model"]}
         return {
             "status": "success",
             "mode": "token_economy",
             "permission_required": False,
             "estimate": estimate,
             "record": saved,
+            "evidence": self.last_evidence,
+            "exports": {},
+            "errors": [],
             "message": "Token estimate created. Verify official pricing docs before financial decisions.",
         }
 
@@ -173,11 +197,14 @@ class SkillExecutor:
         self.last_context = context
         path = self.reports_dir / f"acp_context_{_stamp()}.md"
         path.write_text(context, encoding="utf-8")
+        self.last_evidence = {"command": "/build-context", "context_path": str(path)}
         return {
             "status": "success",
             "mode": "context_builder",
             "permission_required": False,
+            "evidence": self.last_evidence,
             "exports": {"context": str(path)},
+            "errors": [],
             "message": "Technical context generated from current evidence.",
         }
 
@@ -190,13 +217,26 @@ class SkillExecutor:
             output_dir=self.reports_dir,
             name="acp_evidence_bundle",
             markdown=self.last_context,
-            payload={"generated_at": datetime.now(UTC).isoformat(), "source": "acp_skill_executor"},
+            payload={
+                "generated_at": datetime.now(UTC).isoformat(),
+                "source": "acp_skill_executor",
+                "evidence": self.last_evidence,
+                "summary": {"context_chars": len(self.last_context)},
+            },
         )
+        evidence = {
+            "command": str(self.last_evidence.get("command") or "/export-evidence"),
+            "algorithm": self.last_evidence.get("algorithm"),
+            "run_id": self.last_evidence.get("run_id"),
+            "summary": {"context_chars": len(self.last_context)},
+        }
         return {
             "status": "success",
             "mode": "evidence_export",
             "permission_required": False,
+            "evidence": evidence,
             "exports": bundle,
+            "errors": [],
             "message": "Evidence bundle exported.",
         }
 
@@ -209,6 +249,9 @@ class SkillExecutor:
             "mode": "unknown",
             "permission_required": False,
             "message": message,
+            "evidence": {},
+            "exports": {},
+            "errors": [{"type": "not_validated", "message": reason}] if reason else [],
             "suggested_commands": [
                 "/validate-lead-score",
                 "/validate-algorithm lead_score",
@@ -225,6 +268,9 @@ class SkillExecutor:
             "mode": "permission_gate",
             "permission_required": True,
             "permission": {"kind": kind, "reason": reason, "command": command},
+            "evidence": {},
+            "exports": {},
+            "errors": [{"type": "permission_required", "message": reason}],
             "message": reason,
         }
 
@@ -237,6 +283,11 @@ def _parse_key_values(args: list[str]) -> dict[str, str]:
         key, value = item.split("=", 1)
         values[key.strip().replace("-", "_")] = value.strip()
     return values
+
+
+def _normalize_command(command: str) -> str:
+    command = command.strip()
+    return command if command.startswith("/") else f"/{command}"
 
 
 def _stamp() -> str:

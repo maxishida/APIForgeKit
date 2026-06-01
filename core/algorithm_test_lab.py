@@ -522,16 +522,20 @@ class AlgorithmTestRepository:
             rows = session.scalars(select(AlgorithmTestRun).order_by(desc(AlgorithmTestRun.created_at)).limit(limit)).all()
             return [row.to_dict() for row in rows]
 
-    def list_results(self, *, run_id: str | None = None, limit: int = 100) -> list[dict[str, object]]:
+    def list_results(
+        self,
+        *,
+        run_id: str | None = None,
+        algorithm_id: str | None = None,
+        limit: int = 100,
+    ) -> list[dict[str, object]]:
         with self.session_factory() as session:
-            statement = select(AlgorithmTestResult).order_by(desc(AlgorithmTestResult.created_at)).limit(limit)
+            statement = select(AlgorithmTestResult)
             if run_id:
-                statement = (
-                    select(AlgorithmTestResult)
-                    .where(AlgorithmTestResult.run_id == run_id)
-                    .order_by(desc(AlgorithmTestResult.created_at))
-                    .limit(limit)
-                )
+                statement = statement.where(AlgorithmTestResult.run_id == run_id)
+            if algorithm_id:
+                statement = statement.where(AlgorithmTestResult.algorithm_id == algorithm_id)
+            statement = statement.order_by(desc(AlgorithmTestResult.created_at)).limit(limit)
             rows = session.scalars(statement).all()
             return [row.to_dict() for row in rows]
 
@@ -770,15 +774,41 @@ def validate_expected_output(expected: dict[str, object], actual: dict[str, obje
     return {"passed": not mismatches, "mismatches": mismatches}
 
 
-def build_algorithm_context(repository: AlgorithmTestRepository, limit: int = 100) -> str:
+def summarize_algorithm_invariants(results: list[dict[str, object]]) -> dict[str, object]:
+    invariant_names = ["payload_validated", "deterministic", "score_clamped", "invalid_override_checked"]
+    summary: dict[str, object] = {"total": len(results), "failed": 0, "all_passed": False}
+    for name in invariant_names:
+        summary[name] = 0
+    for result in results:
+        invariants = (result.get("structured_log") or {}).get("invariants") or {}
+        result_passed = True
+        for name in invariant_names:
+            if invariants.get(name) is True:
+                summary[name] = int(summary[name]) + 1
+            else:
+                result_passed = False
+        if not result_passed:
+            summary["failed"] = int(summary["failed"]) + 1
+    summary["all_passed"] = bool(results) and int(summary["failed"]) == 0
+    return summary
+
+
+def build_algorithm_context(repository: AlgorithmTestRepository, limit: int = 100, algorithm_name: str | None = None) -> str:
     definitions = repository.list_definitions()
-    results = repository.list_results(limit=limit)
     runs = repository.list_runs(limit=20)
     if not definitions:
         return "# Contexto Técnico - Algorithm Test Lab\n\nNenhum algoritmo cadastrado ainda.\n"
-    definition = definitions[0]
+    if algorithm_name:
+        try:
+            definition = repository.get_definition_by_name(algorithm_name)
+        except ValueError:
+            return f"# Contexto Técnico - Algorithm Test Lab\n\nAlgoritmo `{algorithm_name}` não encontrado.\n"
+    else:
+        definition = definitions[0]
+    results = repository.list_results(algorithm_id=str(definition["id"]), limit=limit)
     passed = [result for result in results if result["status"] == "passed"]
     failed = [result for result in results if result["status"] == "failed"]
+    invariants = summarize_algorithm_invariants(results)
     edge_cases = [result for result in results if any(tag in result["structured_log"].get("case_name", "").lower() for tag in ["inválido", "spam", "sem contato"])]
     if not edge_cases:
         edge_cases = [
@@ -807,6 +837,16 @@ def build_algorithm_context(repository: AlgorithmTestRepository, limit: int = 10
 ## Testes que falharam
 
 {_render_result_lines(failed, include_diff=True) or "- Nenhum teste falhou."}
+
+## Invariantes
+
+- Total analisado: {invariants["total"]}
+- Todos passaram: {invariants["all_passed"]}
+- Payload validado: {invariants["payload_validated"]}
+- Determinístico: {invariants["deterministic"]}
+- Score 0-100: {invariants["score_clamped"]}
+- Invalid override: {invariants["invalid_override_checked"]}
+- Falhas de invariantes: {invariants["failed"]}
 
 ## Edge Cases
 

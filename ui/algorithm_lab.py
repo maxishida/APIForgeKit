@@ -5,8 +5,16 @@ from html import escape
 
 from nicegui import ui
 
-from core.algorithm_test_lab import AlgorithmTestRunner, ensure_default_algorithms
+from core.algorithm_test_lab import (
+    AlgorithmTestRunner,
+    build_algorithm_context,
+    ensure_default_algorithms,
+    export_algorithm_suite,
+    import_algorithm_suite,
+    summarize_algorithm_invariants,
+)
 from core.database import database_status
+from core.report_bundle import create_report_bundle
 from ui.components.alerts import db_offline, empty_state
 from ui.components.cards import metric_card
 from ui.components.charts import algorithm_score_distribution, result_latency_bar, result_status_donut
@@ -70,6 +78,7 @@ def render_algorithm_lab(services) -> None:
                 "Resultado esperado JSON",
                 value=json.dumps(first_case["expected_output"] if first_case else {}, ensure_ascii=False, indent=2),
             ).classes("w-full")
+            import_path = ui.input("Import suite JSON path", placeholder="exports/reports/lead_score.json").classes("w-full")
 
             def load_case() -> None:
                 if not selected_case.value:
@@ -88,12 +97,19 @@ def render_algorithm_lab(services) -> None:
                 ui.button("Executar teste único", icon="play_arrow", on_click=lambda: run_single(selected_case.value, case_options)).classes(
                     "afk-primary-btn"
                 )
+                ui.button("Run Canonical lead_score", icon="verified", on_click=run_canonical_lead_score).classes("afk-primary-btn")
                 ui.button("Run Demo Suite", icon="playlist_play", on_click=lambda: run_suite(definition)).classes("afk-primary-btn")
+                ui.button("Export Evidence Pack", icon="inventory_2", on_click=lambda: export_evidence_pack(definition)).classes("afk-ghost-btn")
+                ui.button("Export Suite JSON", icon="download", on_click=lambda: export_suite(definition)).classes("afk-ghost-btn")
+                ui.button("Import Suite JSON", icon="upload_file", on_click=lambda: import_suite(import_path.value)).classes("afk-ghost-btn")
                 ui.button("Generate AI Context", icon="integration_instructions", on_click=lambda: ui.navigate.to("/context-builder")).classes("afk-ghost-btn")
                 ui.button("Atualizar", icon="refresh", on_click=lambda: ui.navigate.reload()).classes("afk-ghost-btn")
 
     def render_results() -> None:
-        results = services.algorithm_repository.list_results(limit=100)
+        definition = selected_definition()
+        results = services.algorithm_repository.list_results(algorithm_id=str(definition["id"]), limit=100)
+        invariant_summary = summarize_algorithm_invariants(results)
+        latest_run = [run for run in services.algorithm_repository.list_runs(limit=50) if run.get("algorithm_id") == definition["id"]][:1]
         evidence_container.clear()
         with evidence_container:
             with ui.column().classes("afk-card").style("padding:12px;"):
@@ -104,17 +120,33 @@ def render_algorithm_lab(services) -> None:
                 ui.plotly(result_latency_bar(results, title="Latência por Caso")).classes("w-full")
         results_container.clear()
         with results_container:
-            ui.label("Resultados e diff").classes("text-xl font-bold afk-title")
+            with ui.row().classes("w-full items-center justify-between gap-4"):
+                ui.label("Resultados e diff").classes("text-xl font-bold afk-title")
+                if latest_run and latest_run[0]["status"] == "passed" and invariant_summary["all_passed"]:
+                    ui.html("<span class='afk-badge' style='color:#10B981'>Ready for implementation context</span>")
+            with ui.row().classes("gap-2"):
+                for label, key in [
+                    ("Payload", "payload_validated"),
+                    ("Deterministic", "deterministic"),
+                    ("Score 0-100", "score_clamped"),
+                    ("Invalid Override", "invalid_override_checked"),
+                ]:
+                    value = invariant_summary[key]
+                    color = "#10B981" if invariant_summary["total"] and value == invariant_summary["total"] else "#F59E0B"
+                    ui.html(f"<span class='afk-badge' style='color:{color}'>{label}: {value}/{invariant_summary['total']}</span>")
             if not results:
                 ui.label("Nenhum teste de algoritmo executado ainda.").classes("afk-muted")
                 return
             row_data = [
                 {
                     "created_at": result["created_at"],
+                    "run_id": result["run_id"],
                     "status": result["status"],
                     "case": result["structured_log"].get("case_name", result["case_id"]),
                     "classification": result["actual_output"].get("classification"),
                     "score": result["actual_output"].get("score"),
+                    "invariants_ok": _invariants_ok(result),
+                    "diff_count": len((result.get("diff") or {}).get("mismatches") or []),
                     "latency_ms": result["latency_ms"],
                 }
                 for result in results
@@ -123,10 +155,13 @@ def render_algorithm_lab(services) -> None:
                 {
                     "columnDefs": [
                         {"field": "created_at", "headerName": "Timestamp", "sortable": True, "filter": True, "minWidth": 180},
+                        {"field": "run_id", "headerName": "Run ID", "sortable": True, "filter": True, "minWidth": 180},
                         {"field": "status", "headerName": "Status", "sortable": True, "filter": True, "width": 120},
                         {"field": "case", "headerName": "Case", "sortable": True, "filter": True, "flex": 1},
                         {"field": "classification", "headerName": "Classification", "sortable": True, "filter": True, "width": 160},
                         {"field": "score", "headerName": "Score", "sortable": True, "filter": "agNumberColumnFilter", "width": 110},
+                        {"field": "invariants_ok", "headerName": "Invariants", "sortable": True, "filter": True, "width": 130},
+                        {"field": "diff_count", "headerName": "Diffs", "sortable": True, "filter": "agNumberColumnFilter", "width": 100},
                         {"field": "latency_ms", "headerName": "Latency", "sortable": True, "filter": "agNumberColumnFilter", "width": 120},
                     ],
                     "rowData": row_data,
@@ -139,20 +174,35 @@ def render_algorithm_lab(services) -> None:
 
             options = {f"{result['structured_log'].get('case_name', result['case_id'])} | {result['created_at']}": result for result in results}
             selected = ui.select(list(options), value=list(options)[0], label="Abrir diff / JSON estruturado").classes("w-full")
-            code = ui.code(json.dumps(options[selected.value]["structured_log"], ensure_ascii=False, indent=2), language="json").classes("w-full")
+            detail_container = ui.column().classes("w-full gap-3")
 
             def update_code() -> None:
-                code.set_content(json.dumps(options[selected.value]["structured_log"], ensure_ascii=False, indent=2))
+                detail_container.clear()
+                result = options[selected.value]
+                sections = {
+                    "Input": result["input_payload"],
+                    "Expected": result["expected_output"],
+                    "Actual": result["actual_output"],
+                    "Diff": result["diff"],
+                    "Invariants": result["structured_log"].get("invariants", {}),
+                    "Structured Log": result["structured_log"],
+                }
+                with detail_container:
+                    with ui.tabs().classes("w-full") as tabs:
+                        tab_map = {name: ui.tab(name) for name in sections}
+                    with ui.tab_panels(tabs, value=tab_map["Structured Log"]).classes("w-full"):
+                        for name, payload in sections.items():
+                            with ui.tab_panel(tab_map[name]):
+                                ui.code(json.dumps(payload, ensure_ascii=False, indent=2), language="json").classes("w-full")
 
             selected.on_value_change(lambda _: update_code())
+            update_code()
 
     def render_context() -> None:
-        from core.algorithm_test_lab import build_algorithm_context
-
         context_container.clear()
         with context_container:
             ui.label("Contexto técnico para IA").classes("text-xl font-bold afk-title")
-            ui.markdown(build_algorithm_context(services.algorithm_repository)).classes("w-full")
+            ui.markdown(build_algorithm_context(services.algorithm_repository, algorithm_name=str(selected_algorithm.value))).classes("w-full")
 
     def save_case(definition: dict[str, object], name: str, input_value: str, expected_value: str) -> None:
         try:
@@ -191,6 +241,50 @@ def render_algorithm_lab(services) -> None:
         except Exception as exc:  # noqa: BLE001
             ui.notify(f"Erro ao executar suite: {exc}", type="negative")
 
+    def run_canonical_lead_score() -> None:
+        try:
+            ensure_default_algorithms(services.algorithm_repository)
+            definition = services.algorithm_repository.get_definition_by_name("lead_score")
+            run_suite(definition)
+        except Exception as exc:  # noqa: BLE001
+            ui.notify(f"Erro ao executar lead_score: {exc}", type="negative")
+
+    def export_suite(definition: dict[str, object]) -> None:
+        try:
+            path = export_algorithm_suite(services.algorithm_repository, str(definition["id"]), services.reports_dir)
+            ui.notify(f"Suite exportada: {path}", type="positive")
+        except Exception as exc:  # noqa: BLE001
+            ui.notify(f"Erro ao exportar suite: {exc}", type="negative")
+
+    def import_suite(path: str | None) -> None:
+        if not path:
+            ui.notify("Informe o caminho do JSON da suite.", type="warning")
+            return
+        try:
+            definition = import_algorithm_suite(services.algorithm_repository, path)
+            ui.notify(f"Suite importada: {definition['name']}", type="positive")
+            ui.navigate.reload()
+        except Exception as exc:  # noqa: BLE001
+            ui.notify(f"Erro ao importar suite: {exc}", type="negative")
+
+    def export_evidence_pack(definition: dict[str, object]) -> None:
+        try:
+            context = build_algorithm_context(services.algorithm_repository, algorithm_name=str(definition["name"]))
+            results = services.algorithm_repository.list_results(algorithm_id=str(definition["id"]), limit=100)
+            bundle = create_report_bundle(
+                output_dir=services.reports_dir,
+                name=f"{definition['name']}_ui_evidence_pack",
+                markdown=context,
+                payload={
+                    "source": "algorithm_test_lab_ui",
+                    "algorithm": definition["name"],
+                    "invariants": summarize_algorithm_invariants(results),
+                },
+            )
+            ui.notify(f"Evidence pack exportado: {bundle['zip']}", type="positive")
+        except Exception as exc:  # noqa: BLE001
+            ui.notify(f"Erro ao exportar evidence pack: {exc}", type="negative")
+
     def refresh_all() -> None:
         refresh_metrics()
         render_results()
@@ -206,3 +300,8 @@ def render_algorithm_lab(services) -> None:
             "<p class='afk-muted'>Cada execução salva input, expected, actual, diff, status, latência, recomendação e impacto Next.js em <code>algorithm_test_results</code>.</p>"
         )
         ui.html(f"<pre style='white-space:pre-wrap;color:#9CA3AF'>{escape(json.dumps(selected_definition()['output_schema'], ensure_ascii=False, indent=2))}</pre>")
+
+
+def _invariants_ok(result: dict[str, object]) -> bool:
+    invariants = (result.get("structured_log") or {}).get("invariants") or {}
+    return bool(invariants) and all(value is True for value in invariants.values())

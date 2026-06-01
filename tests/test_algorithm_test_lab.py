@@ -8,6 +8,7 @@ from core.algorithm_test_lab import (
     export_algorithm_suite,
     import_algorithm_suite,
     run_algorithm,
+    summarize_algorithm_invariants,
     validate_expected_output,
 )
 from core.database import build_session_factory, init_db
@@ -45,6 +46,7 @@ def test_default_lead_score_suite_runs_all_seed_cases_and_persists_results():
     cases = repository.list_cases(definition["id"])
     run = runner.run_suite(definition["id"])
     results = repository.list_results(limit=20)
+    filtered_results = repository.list_results(algorithm_id=definition["id"], limit=20)
 
     assert len(cases) >= 17
     assert run["status"] == "passed"
@@ -52,6 +54,8 @@ def test_default_lead_score_suite_runs_all_seed_cases_and_persists_results():
     assert run["passed"] == len(cases)
     assert run["failed"] == 0
     assert len(results) == len(cases)
+    assert len(filtered_results) == len(cases)
+    assert all(result["algorithm_id"] == definition["id"] for result in filtered_results)
     assert all(result["structured_log"]["algorithm"] == "lead_score" for result in results)
     assert all(result["structured_log"]["invariants"]["payload_validated"] is True for result in results)
     assert all(result["structured_log"]["invariants"]["score_clamped"] is True for result in results)
@@ -63,6 +67,13 @@ def test_default_lead_score_suite_runs_all_seed_cases_and_persists_results():
         "urgent_lead",
         "invalid_lead",
     }
+    summary = summarize_algorithm_invariants(results)
+    assert summary["all_passed"] is True
+    assert summary["total"] == len(results)
+    assert summary["payload_validated"] == len(results)
+    assert summary["deterministic"] == len(results)
+    assert summary["score_clamped"] == len(results)
+    assert summary["failed"] == 0
 
 
 def test_single_case_execution_records_diff_when_expected_output_is_wrong():
@@ -156,9 +167,10 @@ def test_algorithm_context_includes_rules_results_edge_cases_and_nextjs_files():
     definition = repository.get_definition_by_name("lead_score")
     runner.run_suite(definition["id"])
 
-    context = build_algorithm_context(repository)
+    context = build_algorithm_context(repository, algorithm_name="lead_score")
 
     assert "Contexto Técnico - Algorithm Test Lab" in context
+    assert "Nome: `lead_score`" in context
     assert "Regras Validadas" in context
     assert "Testes que passaram" in context
     assert "Edge Cases" in context

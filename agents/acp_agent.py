@@ -16,25 +16,28 @@ from .acp_protocol import JsonRpcError, error_response, success_response
 from .skill_executor import SkillExecutor, SkillExecutorServices
 
 
-AVAILABLE_COMMANDS: list[dict[str, str]] = [
+AVAILABLE_COMMANDS: list[dict[str, object]] = [
     {
-        "name": "/validate-api-suite",
+        "name": "validate-api-suite",
         "description": "Valida uma suite de API em modo dry-run por padrão e exige permissão para HTTP real.",
+        "input": {"hint": "whatsapp_validation_pack"},
     },
     {
-        "name": "/validate-algorithm",
+        "name": "validate-algorithm",
         "description": "Executa uma suite determinística do Algorithm Test Lab e salva evidências.",
+        "input": {"hint": "lead_score"},
     },
     {
-        "name": "/validate-lead-score",
+        "name": "validate-lead-score",
         "description": "Executa a suite lead_score, verifica invariantes e exporta evidence pack.",
     },
     {
-        "name": "/token-cost",
+        "name": "token-cost",
         "description": "Calcula estimativa de uso/custo com fonte de pricing documentada.",
+        "input": {"hint": "provider=xai model=grok-4.3 users=10 requests=20"},
     },
-    {"name": "/build-context", "description": "Gera contexto técnico a partir de logs e evidências."},
-    {"name": "/export-evidence", "description": "Exporta um pacote de evidências para revisão."},
+    {"name": "build-context", "description": "Gera contexto técnico a partir de logs e evidências."},
+    {"name": "export-evidence", "description": "Exporta um pacote de evidências para revisão."},
 ]
 
 
@@ -76,11 +79,14 @@ class AcpAgent:
             if method == "session/prompt":
                 if not isinstance(params, dict):
                     return error_response(request_id, JsonRpcError.INVALID_PARAMS, "params must be an object")
-                return success_response(request_id, self.prompt(str(params.get("sessionId", "")), str(params.get("prompt", ""))))
+                return success_response(request_id, self.prompt(str(params.get("sessionId", "")), params.get("prompt", "")))
             if method == "session/cancel":
                 if not isinstance(params, dict):
                     return error_response(request_id, JsonRpcError.INVALID_PARAMS, "params must be an object")
-                return success_response(request_id, self.cancel(str(params.get("sessionId", ""))))
+                result = self.cancel(str(params.get("sessionId", "")))
+                if request_id is None:
+                    return None
+                return success_response(request_id, result)
             return error_response(request_id, JsonRpcError.METHOD_NOT_FOUND, f"Unknown method: {method}")
         except ValueError as exc:
             return error_response(request_id, JsonRpcError.INVALID_PARAMS, str(exc))
@@ -90,12 +96,14 @@ class AcpAgent:
     def initialize(self) -> dict[str, object]:
         return {
             "protocolVersion": 1,
-            "agent": {"name": "APIForgeKit ACP Skill Executor", "version": "0.1.0"},
+            "agentInfo": {"name": "apiforgekit-acp-skill-executor", "title": "APIForgeKit ACP Skill Executor", "version": "0.2.0"},
             "agentCapabilities": {
                 "loadSession": False,
                 "promptCapabilities": {"image": False, "audio": False, "embeddedContext": True},
-                "mcpCapabilities": {"stdio": True, "http": False, "sse": False},
+                "mcpCapabilities": {"http": False, "sse": False},
             },
+            "authMethods": [],
+            "_meta": {"apiforgekit.supportsMcpStdio": True},
         }
 
     def new_session(self, *, cwd: str, mcp_servers: list[dict[str, object]]) -> AcpSession:
@@ -109,35 +117,87 @@ class AcpAgent:
         self._notify(session.session_id, "available_commands_update", {"availableCommands": AVAILABLE_COMMANDS})
         return session
 
-    def prompt(self, session_id: str, prompt: str) -> dict[str, object]:
+    def prompt(self, session_id: str, prompt: object) -> dict[str, object]:
         session = self._get_session(session_id)
         if session.cancelled:
             return {"stopReason": "cancelled", "message": "Session was cancelled.", "_meta": _session_meta(session_id)}
-        self._notify(session_id, "plan", {"entries": _plan_for_prompt(prompt)})
-        if _requires_network_permission(prompt):
+        try:
+            prompt_text = _extract_prompt_text(prompt)
+        except ValueError as exc:
+            self._notify(
+                session_id,
+                "agent_message_chunk",
+                {"content": _text_content(str(exc))},
+            )
+            return {"stopReason": "refusal", "_meta": _session_meta(session_id)}
+        command = _command_name(prompt_text)
+        plan_entries = _plan_for_prompt(prompt_text)
+        self._notify(session_id, "plan", {"entries": plan_entries})
+        self._notify(session_id, "plan", {"entries": _activate_plan_entry(plan_entries, 0)})
+        if _requires_network_permission(prompt_text):
             permission = {
                 "kind": "network",
                 "reason": "HTTP real ou provider pago exige permissão antes de executar.",
-                "command": prompt,
+                "command": prompt_text,
             }
             self._request_permission(session_id, permission)
-            return {"stopReason": "permission_required", "permission": permission, "_meta": _session_meta(session_id)}
-        result = self._get_executor().execute(prompt)
+            self._notify(
+                session_id,
+                "agent_message_chunk",
+                {"content": _text_content("Permissão necessária antes de executar HTTP real ou provider pago.")},
+            )
+            return {"stopReason": "refusal", "_meta": _permission_meta(session_id, prompt_text, permission)}
+        tool_call_id = str(uuid4())
+        self._notify(
+            session_id,
+            "tool_call",
+            {
+                "toolCallId": tool_call_id,
+                "title": f"APIForgeKit {command}",
+                "kind": "execute",
+                "status": "in_progress",
+                "rawInput": {"command": prompt_text},
+            },
+        )
+        result = self._get_executor().execute(prompt_text)
         if result.get("status") == "permission_required":
             permission = result.get("permission", {})
-            self._request_permission(session_id, permission if isinstance(permission, dict) else {})
+            permission_payload = permission if isinstance(permission, dict) else {}
+            self._request_permission(session_id, permission_payload)
+            self._notify(
+                session_id,
+                "tool_call_update",
+                {
+                    "toolCallId": tool_call_id,
+                    "status": "failed",
+                    "rawOutput": result,
+                },
+            )
+            self._notify(
+                session_id,
+                "agent_message_chunk",
+                {"content": _text_content("Permissão necessária antes de continuar a validação.")},
+            )
             return {
-                "stopReason": "permission_required",
-                "permission": permission,
-                "result": result,
-                "_meta": _session_meta(session_id),
+                "stopReason": "refusal",
+                "_meta": _permission_meta(session_id, prompt_text, permission_payload),
             }
+        tool_status = "completed" if result.get("status") == "success" else "failed"
+        self._notify(
+            session_id,
+            "tool_call_update",
+            {
+                "toolCallId": tool_call_id,
+                "status": tool_status,
+                "rawOutput": result,
+            },
+        )
         self._notify(
             session_id,
             "agent_message_chunk",
             {"content": _text_content(json.dumps(result, ensure_ascii=False))},
         )
-        return {"stopReason": "end_turn", "result": result, "_meta": _session_meta(session_id)}
+        return {"stopReason": "end_turn", "_meta": _result_meta(session_id, command, result)}
 
     def cancel(self, session_id: str) -> dict[str, object]:
         session = self._get_session(session_id)
@@ -218,7 +278,8 @@ def run_stdio() -> None:
         for notification in agent.outbox:
             print(json.dumps(notification, ensure_ascii=False), flush=True)
         agent.outbox.clear()
-        print(json.dumps(response, ensure_ascii=False), flush=True)
+        if response is not None:
+            print(json.dumps(response, ensure_ascii=False), flush=True)
 
 
 def _normalize_mcp_servers(value: object) -> list[dict[str, object]]:
@@ -241,7 +302,7 @@ def _normalize_mcp_servers(value: object) -> list[dict[str, object]]:
 
 
 def _plan_for_prompt(prompt: str) -> list[dict[str, str]]:
-    command = prompt.strip().split(" ", 1)[0] if prompt.strip() else "unknown"
+    command = _command_name(prompt)
     if command == "/validate-lead-score":
         steps = [
             "Classificar pedido como lead score",
@@ -261,22 +322,89 @@ def _plan_for_prompt(prompt: str) -> list[dict[str, str]]:
         {
             "content": step,
             "priority": "high" if index == 0 else "medium",
-            "status": "in_progress" if index == 0 else "pending",
+            "status": "pending",
         }
         for index, step in enumerate(steps)
     ]
 
 
 def _requires_network_permission(prompt: str) -> bool:
-    return prompt.strip().startswith("/validate-api-suite") and "--http-real" in prompt
+    return _command_name(prompt) == "/validate-api-suite" and "--http-real" in prompt
 
 
 def _session_meta(session_id: str) -> dict[str, str]:
     return {"apiforgekit.sessionId": session_id}
 
 
+def _result_meta(session_id: str, command: str, result: dict[str, object]) -> dict[str, object]:
+    meta: dict[str, object] = {"apiforgekit.sessionId": session_id, "apiforgekit.command": command.lstrip("/")}
+    run = result.get("run")
+    evidence = result.get("evidence") if isinstance(result.get("evidence"), dict) else {}
+    exports = result.get("exports") if isinstance(result.get("exports"), dict) else {}
+    if isinstance(run, dict) and run.get("id"):
+        meta["apiforgekit.runId"] = run["id"]
+    if isinstance(evidence, dict):
+        if evidence.get("run_id"):
+            meta["apiforgekit.runId"] = evidence["run_id"]
+        if evidence.get("algorithm"):
+            meta["apiforgekit.algorithm"] = evidence["algorithm"]
+    if isinstance(exports, dict):
+        if exports.get("context"):
+            meta["apiforgekit.contextPath"] = exports["context"]
+        if exports.get("zip"):
+            meta["apiforgekit.evidenceZip"] = exports["zip"]
+    return meta
+
+
+def _permission_meta(session_id: str, command_text: str, permission: dict[str, object]) -> dict[str, object]:
+    command = _command_name(command_text).lstrip("/")
+    return {
+        "apiforgekit.sessionId": session_id,
+        "apiforgekit.command": command,
+        "apiforgekit.permissionRequired": True,
+        "apiforgekit.blockedCommand": command_text,
+        "apiforgekit.permissionKind": str(permission.get("kind", "unknown")),
+        "apiforgekit.permissionReason": str(permission.get("reason", "")),
+    }
+
+
 def _text_content(text: str) -> dict[str, str]:
     return {"type": "text", "text": text}
+
+
+def _extract_prompt_text(prompt: object) -> str:
+    if isinstance(prompt, str):
+        return prompt
+    if isinstance(prompt, list):
+        parts: list[str] = []
+        unsupported: list[str] = []
+        for block in prompt:
+            if not isinstance(block, dict):
+                unsupported.append(type(block).__name__)
+                continue
+            block_type = block.get("type")
+            if block_type == "text":
+                parts.append(str(block.get("text", "")))
+            else:
+                unsupported.append(str(block_type))
+        if unsupported:
+            raise ValueError("Apenas blocos de texto são suportados neste executor ACP local.")
+        return "\n".join(part for part in parts if part.strip())
+    raise ValueError("Prompt ACP inválido. Use string legada ou ContentBlock[] com type=text.")
+
+
+def _command_name(prompt: str) -> str:
+    raw = prompt.strip().split(" ", 1)[0] if prompt.strip() else "unknown"
+    return raw if raw.startswith("/") else f"/{raw}"
+
+
+def _activate_plan_entry(entries: list[dict[str, str]], active_index: int) -> list[dict[str, str]]:
+    updated = []
+    for index, entry in enumerate(entries):
+        next_entry = dict(entry)
+        next_entry["status"] = "in_progress" if index == active_index else "pending"
+        updated.append(next_entry)
+    return updated
 
 
 if __name__ == "__main__":

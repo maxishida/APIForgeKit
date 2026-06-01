@@ -46,6 +46,14 @@ Context Builder
 Evidence Pack
 ```
 
+O `Context Builder` agora mostra readiness antes do export:
+
+- `Ready`: contexto suficiente para orientar uma IA.
+- `Needs tests`: faltam suites/evidências.
+- `Has failures`: existem diffs ou erros a corrigir.
+
+Use `Algorithm + API` quando quiser validar uma futura feature de SaaS com regra de negócio e payload externo; use `Algorithm only` para score/regras determinísticas; use `API only` para webhooks/endpoints.
+
 ## Fluxo recomendado para agentes
 
 ```txt

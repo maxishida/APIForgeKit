@@ -81,6 +81,30 @@ npm run acp             # inicia executor ACP via stdio
 8. Abra `Context Builder`.
 9. Exporte o relatório para usar como contexto em uma IA.
 
+## Context Builder
+
+O `Context Builder` é o gate antes de qualquer implementação. Ele não inventa comportamento; ele junta evidências reais e informa se o contexto está pronto.
+
+Modos disponíveis:
+
+- `Algorithm + API`: exige evidência de algoritmo e contrato de API.
+- `Algorithm only`: ideal para validar score, regras e classificações determinísticas.
+- `API only`: ideal para webhooks, payloads e endpoints.
+- `Full evidence`: junta algoritmo, API, live logs e cálculo de tokens.
+
+Readiness:
+
+- `Ready`: há evidência suficiente para orientar uma IA.
+- `Needs tests`: falta rodar suite ou registrar evidência.
+- `Has failures`: existem diffs/falhas que precisam ser corrigidos ou documentados.
+
+Exports gerados em `exports/reports/`:
+
+- Markdown
+- JSON com metadata
+- HTML
+- ZIP bundle
+
 ## Páginas principais
 
 - Home: visão geral e modo demo.
@@ -143,6 +167,27 @@ Comandos principais:
 ```
 
 Use `/validate-lead-score` quando quiser rodar a validação canônica de leads. Ele executa a suite, verifica invariantes e exporta um `lead_score_evidence_pack`.
+
+No ACP v1, os comandos anunciados em `available_commands_update` não usam `/`, mas o prompt do usuário usa:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 3,
+  "method": "session/prompt",
+  "params": {
+    "sessionId": "SESSION_ID",
+    "prompt": [
+      {
+        "type": "text",
+        "text": "/validate-lead-score"
+      }
+    ]
+  }
+}
+```
+
+O resultado completo sai em `session/update -> agent_message_chunk`. Caminhos como `contextPath` e `evidenceZip` também aparecem em `_meta`.
 
 ## Testes
 

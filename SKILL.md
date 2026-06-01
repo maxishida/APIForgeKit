@@ -192,20 +192,23 @@ Suggested ACP-facing capabilities:
 
 Implemented ACP prompt commands:
 
-- `/validate-api-suite whatsapp_validation_pack`
-- `/validate-lead-score`
-- `/validate-algorithm lead_score`
-- `/token-cost provider=xai model=grok-4.3 users=10 requests=20`
-- `/build-context`
-- `/export-evidence`
+- Announced `validate-api-suite`; prompt `/validate-api-suite whatsapp_validation_pack`
+- Announced `validate-lead-score`; prompt `/validate-lead-score`
+- Announced `validate-algorithm`; prompt `/validate-algorithm lead_score`
+- Announced `token-cost`; prompt `/token-cost provider=xai model=grok-4.3 users=10 requests=20`
+- Announced `build-context`; prompt `/build-context`
+- Announced `export-evidence`; prompt `/export-evidence`
 
 ACP fit:
 
 - Use ACP for editor/client interoperability.
 - Use `session/update` notifications to stream test progress.
 - Use `available_commands_update` after `session/new` so clients can discover safe commands.
+- Advertise command names without `/`, while accepting prompts with or without `/`.
 - Use `plan` updates before execution so the client sees validation gates.
-- Use `agent_message_chunk` with text content blocks for final structured summaries.
+- Accept ACP `ContentBlock[]` text prompts and keep legacy string prompt support.
+- Use `tool_call` and `tool_call_update` around local lab execution.
+- Use `agent_message_chunk` with text content blocks for final structured summaries; `PromptResponse` should carry `stopReason` and `_meta`.
 - Use `session/request_permission` before running costly API calls, shell commands, file writes or external MCP actions.
 - Include APIForgeKit `_meta` fields so clients can correlate updates with local evidence.
 - Keep APIForgeKit's PostgreSQL/log/report system as the evidence backend.
@@ -303,7 +306,7 @@ The ACP agent must treat score algorithms as deterministic validation targets, n
 
 Required ACP flow:
 
-1. Advertise `/validate-lead-score` and `/validate-algorithm lead_score` through `available_commands_update`.
+1. Advertise `validate-lead-score` and `validate-algorithm` through `available_commands_update`.
 2. Prefer `/validate-lead-score` for canonical lead qualification validation.
 3. Emit a `plan` with these gates: classify scoring objective, load canonical rules, run required cases, verify invariants, compare expected vs actual, export evidence pack.
 4. Execute the suite through Algorithm Test Lab.
@@ -480,6 +483,23 @@ Never log full API keys, bearer tokens, private audio, raw private transcripts o
 
 ## Context Builder Contract
 
+Context Builder is the implementation gate. Before suggesting product code, the agent must build or point to a Context Builder export based on real evidence.
+
+Supported source modes:
+
+- `Algorithm + API`: requires algorithm evidence and API evidence.
+- `Algorithm only`: requires deterministic algorithm evidence.
+- `API only`: requires API/webhook evidence.
+- `Full evidence`: combines algorithm, API, live observability and token evidence.
+
+Readiness statuses:
+
+- `Ready`: enough evidence exists for an implementation AI.
+- `Needs tests`: required evidence is missing.
+- `Has failures`: evidence exists but diffs/errors must be corrected or explicitly documented.
+
+If readiness is not `Ready`, return `ainda não validado` and run the missing validation step instead of recommending implementation.
+
 After each test sequence, generate context containing:
 
 - what was tested
@@ -495,6 +515,17 @@ After each test sequence, generate context containing:
 - limitations discovered
 - recommendations
 - implementation blockers
+
+The guided export must include:
+
+- source mode
+- readiness
+- algorithm metrics
+- API metrics
+- live metrics
+- token metrics
+- full context
+- paths for Markdown, JSON, HTML and ZIP when exported
 
 ## Report Contract
 

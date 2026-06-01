@@ -178,6 +178,23 @@ The Context Builder summarizes:
 - provider/model cost estimates
 - token savings from structured context
 
+The current Context Builder is a guided workflow, not only a text concatenator. It builds a central bundle with:
+
+- `source_mode`: `algorithm_api`, `algorithm`, `api` or `full`
+- `readiness`: `Ready`, `Needs tests` or `Has failures`
+- algorithm, API, live and token metrics
+- source contexts used for the final report
+- export paths for Markdown, JSON, HTML and ZIP
+
+Readiness is intentionally strict:
+
+- `Algorithm + API` requires algorithm and API evidence.
+- `Algorithm only` requires algorithm evidence.
+- `API only` requires API evidence.
+- `Full evidence` packages all sources and documents missing sections.
+
+If readiness is not `Ready`, the next action is more validation, not product implementation.
+
 For algorithms, Context Builder should also summarize:
 
 - business objective
