@@ -5,6 +5,7 @@ from nicegui import ui
 from core.algorithm_test_lab import AlgorithmTestRunner, ensure_default_algorithms
 from core.database import database_status
 from core.demo_dashboard import build_demo_dashboard_snapshot
+from core.demo_mode import run_demo_mode
 from ui.components.alerts import db_offline
 from ui.components.cards import metric_card
 
@@ -17,6 +18,7 @@ def render_home(services) -> None:
         db_offline(str(status["error"]))
 
     algorithm_metrics = services.algorithm_repository.metrics() if status["online"] else {}
+    api_metrics = services.api_test_repository.metrics() if status["online"] else {}
     provider_metrics = services.observability_repository.metrics() if status["online"] else {}
     snapshot = build_demo_dashboard_snapshot(
         db_status=status,
@@ -27,8 +29,8 @@ def render_home(services) -> None:
     with ui.grid(columns=4).classes("w-full gap-4"):
         metric_card("PostgreSQL", snapshot["database"]["label"], f"{snapshot['database']['latency_ms']} ms", snapshot["database"]["accent"])
         metric_card("Algorithm Pass Rate", snapshot["algorithm"]["primary_metric"], snapshot["algorithm"]["caption"], snapshot["algorithm"]["accent"])
-        metric_card("Algorithm Results", snapshot["algorithm"]["results"], f"{snapshot['algorithm']['runs']} runs", "#2563EB")
-        metric_card("API Provider Runs", snapshot["provider"]["primary_metric"], snapshot["provider"]["caption"], "#00D4FF")
+        metric_card("Generic API Pass", f"{float(api_metrics.get('pass_rate') or 0):g}%", f"{int(api_metrics.get('passed') or 0)} passed", "#00D4FF")
+        metric_card("Provider Runs", snapshot["provider"]["primary_metric"], snapshot["provider"]["caption"], "#2563EB")
 
     with ui.grid(columns=2).classes("w-full gap-4"):
         _track_card(
@@ -43,6 +45,17 @@ def render_home(services) -> None:
             accent="#10B981",
         )
         _track_card(
+            title="Generic API Lab",
+            badge="HTTP + Dry-run",
+            caption="Valide APIs, webhooks e contratos como WhatsApp antes de conectar no SaaS real.",
+            primary_label="Run WhatsApp Pack",
+            primary_icon="api",
+            primary_action=lambda: _run_full_demo(services),
+            secondary_label="Open API Lab",
+            secondary_target="/api-test-lab",
+            accent="#00D4FF",
+        )
+        _track_card(
             title="API Provider Lab",
             badge="Live APIs",
             caption="Capture payload, response, latency and errors from provider tests like xAI.",
@@ -52,6 +65,17 @@ def render_home(services) -> None:
             secondary_label="View Logs",
             secondary_target="/logs",
             accent="#00D4FF",
+        )
+        _track_card(
+            title="Token Calculator",
+            badge="Cost Control",
+            caption="Projete custo por usuário e compare prompt cru contra contexto técnico compacto.",
+            primary_label="Open Calculator",
+            primary_icon="calculate",
+            primary_action=lambda: ui.navigate.to("/token-calculator"),
+            secondary_label="Context Builder",
+            secondary_target="/context-builder",
+            accent="#F59E0B",
         )
 
     with ui.column().classes("afk-card w-full gap-4").style("padding:18px;"):
@@ -67,7 +91,8 @@ def render_home(services) -> None:
                     """
                 )
         with ui.row().classes("gap-3"):
-            ui.button("Generate AI Context", icon="integration_instructions", on_click=lambda: ui.navigate.to("/context-builder")).classes("afk-primary-btn")
+            ui.button("Run Full Demo", icon="play_arrow", on_click=lambda: _run_full_demo(services)).classes("afk-primary-btn")
+            ui.button("Generate AI Context", icon="integration_instructions", on_click=lambda: ui.navigate.to("/context-builder")).classes("afk-ghost-btn")
             ui.button("Open Source Tutorial", icon="article", on_click=lambda: ui.navigate.to("/tutorial")).classes("afk-ghost-btn")
 
 
@@ -104,3 +129,21 @@ def _run_algorithm_demo(services) -> None:
     run = AlgorithmTestRunner(services.algorithm_repository).run_suite(str(definition["id"]))
     ui.notify(f"Demo suite: {run['passed']} passed / {run['failed']} failed.", type="positive" if run["failed"] == 0 else "warning")
     ui.navigate.to("/algorithm-test-lab")
+
+
+def _run_full_demo(services) -> None:
+    status = database_status(services.engine)
+    if not status["online"]:
+        ui.notify("PostgreSQL offline. Rode npm run db antes da demo.", type="negative")
+        return
+    result = run_demo_mode(
+        algorithm_repository=services.algorithm_repository,
+        api_repository=services.api_test_repository,
+        token_repository=services.token_usage_repository,
+    )
+    summary = result["summary"]
+    ui.notify(
+        f"Full demo pronta: {summary['algorithm_passed']} algorithm cases, {summary['api_passed']} API cases, ${summary['estimated_cost_usd']} estimado.",
+        type="positive" if summary["demo_ready"] else "warning",
+    )
+    ui.navigate.to("/api-test-lab")

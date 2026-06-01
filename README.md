@@ -1,6 +1,6 @@
 # APIForgeKit Studio
 
-APIForgeKit Studio is a local-first observability lab for validating APIs and algorithms with real tests, structured logs and reusable technical context.
+APIForgeKit Studio is a local-first observability lab for validating APIs, webhooks and algorithms with real tests, structured logs, token/cost estimates and reusable technical context.
 
 Current operating principle:
 
@@ -34,7 +34,7 @@ Contexto Técnico
 Implementação futura
 ```
 
-The Lead Algorithm Lab still exists, but the current V1 focus is live observability, xAI validation, reports and context building.
+The Lead Algorithm Lab still exists, but the current V1 focus is observability, generic API validation, algorithm validation, token economy, reports and context building.
 
 The long-term product idea is simple: the user inserts an API, webhook, SaaS integration or algorithm into the harness, runs tests, receives JSON evidence, and gives that context to an AI before building the final SaaS.
 
@@ -46,6 +46,7 @@ Examples:
 - WhatsApp API payload and webhook validation.
 - Lead scoring algorithm validation.
 - Any site/API endpoint that returns a decision, classification, score or recommendation.
+- Token and cost planning by provider/model/user volume.
 
 ## Stack
 
@@ -54,6 +55,7 @@ Examples:
 - PostgreSQL via Docker
 - SQLAlchemy 2.x with `psycopg`
 - `xai-sdk` for real xAI validation
+- Alembic for optional versioned PostgreSQL migrations
 - Pydantic Settings and python-dotenv for configuration
 - Loguru for application logs
 - Pytest for tests
@@ -79,8 +81,10 @@ Optional npm helpers:
 npm run db
 npm run db:logs
 npm run db:reset
+npm run db:migrate
 npm run dev
 npm run test
+npm run algorithm:suite
 ```
 
 ## 5 Minute Tutorial
@@ -88,10 +92,11 @@ npm run test
 1. Start PostgreSQL with `npm run db`.
 2. Run `python app.py`.
 3. Open `http://localhost:8080`.
-4. Click `Run Demo Suite`.
-5. Inspect `Algorithm Test Lab`.
-6. Open `Context Builder`.
-7. Copy the generated context into your LLM before asking for implementation.
+4. Click `Run Full Demo`.
+5. Inspect `Algorithm Test Lab` and `Generic API Lab`.
+6. Open `Token Calculator` to estimate cost per user.
+7. Open `Context Builder`.
+8. Copy the generated context into your LLM before asking for implementation.
 
 Short prompt:
 
@@ -116,7 +121,9 @@ Never commit `.env` or raw provider outputs with secrets.
 
 - Home: clean demo dashboard with quick actions for the two main tracks.
 - API Provider Lab: real-time test metrics, event stream, charts, filters and xAI compact runner.
+- Generic API Lab: HTTP or dry-run contract testing for APIs, webhooks and WhatsApp-style payloads.
 - Algorithm Test Lab: deterministic Python algorithm validation with expected-vs-actual diff.
+- Token Calculator: provider/model cost projection per user, request volume and context savings.
 - Lead Algorithm Lab: deterministic local lead-score module preserved from the first MVP.
 - Logs: observability event table with filters, search, JSON detail and CSV/JSONL export.
 - Context Builder: converts real events into technical context and exports reports.
@@ -166,6 +173,11 @@ The app creates tables automatically on startup when PostgreSQL is online:
 - `algorithm_test_cases`
 - `algorithm_test_runs`
 - `algorithm_test_results`
+- `api_test_suites`
+- `api_test_cases`
+- `api_test_runs`
+- `api_test_results`
+- `token_usage_estimates`
 
 If PostgreSQL is offline, the UI opens in degraded mode and live runs are blocked until the database returns.
 
@@ -248,6 +260,59 @@ Seed cases:
 
 No LLM is used. The lab validates pure deterministic Python logic.
 
+CLI:
+
+```bash
+npm run algorithm:suite
+```
+
+This runs the `lead_score` suite and exports context/suite JSON to `exports/reports/`.
+
+## Generic API Lab
+
+Open:
+
+```txt
+http://localhost:8080/api-test-lab
+```
+
+Use it to validate APIs, webhooks and payload contracts before building an integration.
+
+The seed suite is `whatsapp_validation_pack`, a dry-run pack for:
+
+- valid outbound text payload
+- lead intent webhook payload
+- missing phone contract failure
+- spam-like payload classification
+
+Each result stores request, sanitized headers, response, diff, status, latency and recommendation in PostgreSQL.
+
+Suites can be exported/imported as JSON so examples can live in GitHub and be reused by other users.
+
+## Token Calculator
+
+Open:
+
+```txt
+http://localhost:8080/token-calculator
+```
+
+Use it to estimate:
+
+- cost per request
+- cost per user
+- monthly/projected cost
+- raw prompt vs structured context savings
+
+Pricing seeds include doc links for:
+
+- xAI: https://docs.x.ai/developers/models
+- OpenAI: https://platform.openai.com/docs/pricing
+- Anthropic: https://docs.anthropic.com/en/docs/about-claude/pricing
+- Gemini: https://ai.google.dev/gemini-api/docs/pricing
+
+Always check official pricing before making a financial decision. The calculator is a planning harness, not billing truth.
+
 ## Reports
 
 The Context Builder and Live Dashboard export reports to:
@@ -263,6 +328,8 @@ Formats:
 - HTML
 
 Reports are generated from real runs and events, not from assumptions.
+
+Context Builder also exports a ZIP bundle with Markdown, JSON and HTML.
 
 ## Legacy Lead Logs
 
@@ -317,6 +384,11 @@ The test suite covers:
 - Blueprint Generator output
 - observability repository, metrics and report exports
 - Algorithm Test Lab repository, runner, diff validator and context export
+- Generic API Lab repository, dry-run runner, diff validator, WhatsApp pack and suite import/export
+- Token Calculator cost projection, context savings and persistence
+- Demo Mode
+- report bundle ZIP export
+- Algorithm CLI parser
 - xAI live runner missing-key behavior
 - legacy provider lab contract tests
 

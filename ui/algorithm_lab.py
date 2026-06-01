@@ -9,6 +9,7 @@ from core.algorithm_test_lab import AlgorithmTestRunner, ensure_default_algorith
 from core.database import database_status
 from ui.components.alerts import db_offline, empty_state
 from ui.components.cards import metric_card
+from ui.components.charts import algorithm_score_distribution, result_latency_bar, result_status_donut
 
 
 def render_algorithm_lab(services) -> None:
@@ -29,6 +30,7 @@ def render_algorithm_lab(services) -> None:
 
     metrics_container = ui.grid(columns=4).classes("w-full gap-4")
     editor_container = ui.column().classes("afk-card w-full gap-4").style("padding:18px;")
+    evidence_container = ui.grid(columns=3).classes("w-full gap-4")
     results_container = ui.column().classes("afk-card w-full gap-4").style("padding:18px;")
     context_container = ui.column().classes("afk-card w-full gap-4").style("padding:18px;")
 
@@ -92,6 +94,14 @@ def render_algorithm_lab(services) -> None:
 
     def render_results() -> None:
         results = services.algorithm_repository.list_results(limit=100)
+        evidence_container.clear()
+        with evidence_container:
+            with ui.column().classes("afk-card").style("padding:12px;"):
+                ui.plotly(result_status_donut(results, "Algorithm Pass/Fail")).classes("w-full")
+            with ui.column().classes("afk-card").style("padding:12px;"):
+                ui.plotly(algorithm_score_distribution(results)).classes("w-full")
+            with ui.column().classes("afk-card").style("padding:12px;"):
+                ui.plotly(result_latency_bar(results, title="Latência por Caso")).classes("w-full")
         results_container.clear()
         with results_container:
             ui.label("Resultados e diff").classes("text-xl font-bold afk-title")

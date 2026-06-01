@@ -18,6 +18,8 @@ Logs Estruturados
 ↓
 Evidências
 ↓
+Cálculo de custo/tokens
+↓
 Contexto Técnico
 ↓
 Implementação futura
@@ -52,6 +54,7 @@ Evidence means:
 - latency
 - provider, model, endpoint or SDK path
 - token/cost metadata when available
+- pricing source URL when estimating model cost
 - error details when failed
 - recommendation
 
@@ -93,8 +96,13 @@ The current APIForgeKit Studio focus is observability for APIs and algorithms:
 - Algorithm Test Lab for deterministic Python logic
 - Context Builder from real logs
 - Markdown, JSON and HTML reports
+- Generic API Lab for HTTP/dry-run API contracts
+- WhatsApp validation pack as a seed suite
+- Token Calculator for provider/model/user cost planning
+- report ZIP bundles for portable evidence
 
 Algorithm Test Lab now validates `lead_score` with seed cases, expected output validation and structured PostgreSQL results. Future harnesses should support WhatsApp APIs, webhooks, local algorithms and site/API endpoints using the same evidence pattern.
+Generic API Lab now validates API/webhook contracts with expected output validation, sanitized headers and structured PostgreSQL results.
 
 ## Operating Modes
 
@@ -185,6 +193,41 @@ Open source tutorial:
 README.md -> OPEN_SOURCE_TUTORIAL.md -> Algorithm Test Lab -> Context Builder
 ```
 
+### 4. Generic API Validation Mode
+
+Use when validating APIs, webhooks, SaaS endpoints or payload contracts.
+
+Examples:
+
+- WhatsApp outbound message payload
+- WhatsApp webhook lead intent
+- CRM endpoint payload
+- payment API status handling
+- custom site/API classification endpoint
+
+The agent must:
+
+1. Define method, URL, headers, body and expected output.
+2. Prefer dry-run contract tests until credentials and cost are clear.
+3. Redact secrets before logging.
+4. Compare expected status/body with actual response.
+5. Save structured JSON in PostgreSQL.
+6. Export suite JSON when the test should be shared in GitHub.
+
+### 5. Token Economy Mode
+
+Use when the user asks about provider cost, token usage, cost per user or model choice.
+
+The agent must:
+
+1. Read or cite official provider pricing docs when prices may matter.
+2. Estimate input, cached input and output tokens separately.
+3. Calculate total requests from users, requests per user and days.
+4. Save the estimate when PostgreSQL is online.
+5. Recommend shrinking prompts through Context Builder before implementation.
+
+Never present seeded pricing as billing truth. Always call it an estimate and point to provider docs.
+
 ## xAI Validation Priority
 
 Use official xAI docs as source of truth:
@@ -245,6 +288,8 @@ After each test sequence, generate context containing:
 - expected vs actual behavior for algorithms
 - latency and reliability observations
 - token/cost observations
+- cost per user estimates when available
+- source docs for pricing estimates
 - limitations discovered
 - recommendations
 - implementation blockers
@@ -256,6 +301,7 @@ Reports export to:
 - Markdown
 - JSON
 - HTML
+- ZIP bundle
 
 Each report should include:
 
@@ -276,6 +322,7 @@ Stop and ask before continuing when:
 - docs conflict with observed behavior
 - voice tests require real or private audio not approved by the user
 - a test may generate meaningful cost
+- pricing docs are missing or unclear
 - rate limit or account permission blocks validation
 
 ## Safety Rules

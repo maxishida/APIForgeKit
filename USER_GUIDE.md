@@ -21,6 +21,8 @@ Studio salva JSON estruturado
 ↓
 Dashboard mostra comportamento ao vivo
 ↓
+Token Calculator estima custo quando houver uso de LLM
+↓
 Context Builder transforma evidência em texto técnico
 ↓
 IA recebe contexto real para implementar com menos chute
@@ -40,6 +42,7 @@ Exemplos:
 - CRM
 - webhook
 - qualquer endpoint HTTP
+- contrato dry-run de webhook ou payload
 
 2. Um algoritmo próprio
 
@@ -103,7 +106,9 @@ http://localhost:8080
 
 - Home para a demo limpa e ações rápidas.
 - API Provider Lab para APIs de IA e logs ao vivo.
+- Generic API Lab para APIs, webhooks, contratos e WhatsApp pack.
 - Algorithm Test Lab para validar algoritmo determinístico com input, expected output e diff.
+- Token Calculator para custo por usuário e economia de contexto.
 - Lead Algorithm Lab para algoritmo local.
 - Logs para ver JSON completo.
 - Context Builder para gerar contexto técnico.
@@ -188,6 +193,52 @@ O Studio retorna:
 - JSON estruturado
 
 Isso permite validar se o algoritmo é bom antes de transformar em endpoint, dashboard comercial ou automação.
+
+## Exemplo: WhatsApp API ou webhook
+
+No Generic API Lab, o usuário seleciona `whatsapp_validation_pack` e roda uma suite dry-run.
+
+Ela valida:
+
+- payload de mensagem outbound
+- payload de webhook com intenção de lead
+- erro de contrato sem telefone
+- risco de spam
+
+Cada caso compara:
+
+```txt
+request JSON
+↓
+expected response
+↓
+actual/mock response
+↓
+diff
+↓
+passed/failed
+```
+
+Isso permite desenhar a integração antes de gastar chamadas reais ou pedir para a IA adivinhar o payload.
+
+## Exemplo: custo por usuário
+
+No Token Calculator, o usuário escolhe provider/modelo e informa:
+
+- usuários
+- requests por usuário por dia
+- dias
+- tokens de input por request
+- tokens de output por request
+- tokens em cache, quando existir
+
+O Studio estima:
+
+- requests totais
+- tokens totais
+- custo total
+- custo por usuário
+- economia ao trocar prompt cru por contexto técnico compacto
 
 ## Regra operacional
 

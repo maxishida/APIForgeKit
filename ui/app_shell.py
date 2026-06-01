@@ -5,19 +5,25 @@ from typing import Callable
 
 from nicegui import ui
 from sqlalchemy.engine import Engine
+from sqlalchemy.orm import Session, sessionmaker
 
 from core.algorithm_test_lab import AlgorithmTestRepository
+from core.api_test_lab import ApiTestRepository
 from core.database import database_status
 from core.observability import ObservabilityRepository
 from core.repositories import LeadTestRepository
+from core.token_usage import TokenUsageRepository
 
 
 @dataclass
 class AppServices:
     engine: Engine
+    session_factory: sessionmaker[Session]
     repository: LeadTestRepository
     observability_repository: ObservabilityRepository
     algorithm_repository: AlgorithmTestRepository
+    api_test_repository: ApiTestRepository
+    token_usage_repository: TokenUsageRepository
     log_path: object
     contexts_dir: object
     blueprints_dir: object
@@ -41,7 +47,9 @@ def get_services() -> AppServices:
 NAV_ITEMS = (
     ("Home", "/", "dashboard"),
     ("API Provider Lab", "/live-dashboard", "monitor_heart"),
+    ("Generic API Lab", "/api-test-lab", "api"),
     ("Algorithm Test Lab", "/algorithm-test-lab", "rule"),
+    ("Token Calculator", "/token-calculator", "calculate"),
     ("Lead Algorithm Lab", "/lead-lab", "science"),
     ("Logs", "/logs", "terminal"),
     ("Context Builder", "/context-builder", "integration_instructions"),

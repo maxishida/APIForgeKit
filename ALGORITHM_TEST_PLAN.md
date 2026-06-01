@@ -12,6 +12,9 @@ Status atual:
 - Persistência em PostgreSQL.
 - Diff esperado x recebido.
 - Context Builder integrado.
+- API harness genérico implementado em `/api-test-lab`.
+- Import/export de suites JSON.
+- Dashboard de evidência com pass/fail, score e latência.
 
 O usuário deve conseguir entender:
 
@@ -194,7 +197,7 @@ Critério de aceite:
 
 ## Fase 4 - Testar algoritmo por API
 
-Criar harness genérico HTTP:
+Status: implementado como Generic API Lab para endpoints HTTP ou dry-run contract tests.
 
 Campos:
 
@@ -226,6 +229,7 @@ Exemplo:
 Critério de aceite:
 
 - O Studio valida APIs locais ou remotas sem precisar alterar o código do algoritmo.
+- O usuário pode validar webhook/payload antes de ter credencial real.
 
 ## Fase 5 - Criar comparação esperado x real
 
@@ -396,8 +400,8 @@ Algorithm Validation Lab
 
 Com:
 
-- suporte a algoritmos customizados via API HTTP
-- importação/exportação de suites
-- filtros avançados por status/tag
-- dashboard de taxa de aprovação
-- export de contexto técnico por algoritmo
+- UI para importar suites JSON pelo navegador
+- variáveis seguras por suite
+- validação por JSONPath
+- packs prontos para WhatsApp, Stripe, Supabase e CRMs
+- relatórios comparando custo/token por algoritmo quando usar LLM

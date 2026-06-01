@@ -13,6 +13,8 @@ Logs Estruturados
 ↓
 Evidências
 ↓
+Cálculo de custo/tokens
+↓
 Contexto Técnico
 ↓
 Implementação futura
@@ -31,11 +33,11 @@ NiceGUI App
 ↓
 Core Python Services
 ↓
-xAI Test Runner
+xAI Test Runner / Generic API Runner / Algorithm Runner
 ↓
-PostgreSQL Observability Tables
+PostgreSQL Evidence Tables
 ↓
-Live Dashboard / Logs / Context Builder / Reports
+Live Dashboard / API Lab / Algorithm Lab / Token Calculator / Context Builder / Reports
 ```
 
 The Lead Algorithm Lab remains available as a local deterministic module:
@@ -48,12 +50,12 @@ lead_tests table
 logs/lead_tests.jsonl
 ```
 
-Future generic algorithm/API harness:
+Implemented generic API harness:
 
 ```txt
 User-defined case
 ↓
-HTTP endpoint or Python function
+HTTP endpoint or dry-run contract
 ↓
 Expected vs actual comparison
 ↓
@@ -65,6 +67,8 @@ Dashboard / Logs / Context Builder
 ## Main Directories
 
 - `core/`: database, models, repositories, observability, xAI runner, context and report generation.
+- `core/api_test_lab.py`: generic API suite/case runner, dry-run support, expected output validator and WhatsApp seed pack.
+- `core/token_usage.py`: provider pricing seeds, usage estimates and context savings calculator.
 - `ui/`: NiceGUI shell, live dashboard, logs, context builder, charts, cards, tables and theme.
 - `labs/`: legacy provider validation scripts.
 - `logs/`: local JSONL runtime logs for legacy/local modules.
@@ -84,12 +88,23 @@ Live observability uses PostgreSQL as the source of truth:
 - `agent_tests`: future multi-agent validation metadata.
 - `context_exports`: exported context/report records.
 
-Next algorithm-specific tables should be:
+Algorithm-specific tables:
 
 - `algorithm_definitions`: algorithm name, purpose, input schema and output schema.
 - `algorithm_test_cases`: manual and suite test cases.
 - `algorithm_test_runs`: one execution batch.
 - `algorithm_test_results`: expected vs actual result, diff and recommendation.
+
+Generic API tables:
+
+- `api_test_suites`: reusable API/webhook validation packs.
+- `api_test_cases`: method, URL, headers, body, expected output, dry-run/mock response.
+- `api_test_runs`: one execution batch.
+- `api_test_results`: request/response/diff/status/latency/recommendation.
+
+Token planning table:
+
+- `token_usage_estimates`: provider/model/user volume estimates with source pricing docs.
 
 Implemented Algorithm Test Lab flow:
 
@@ -147,6 +162,7 @@ Reports are generated from real database events:
 exports/reports/*.md
 exports/reports/*.json
 exports/reports/*.html
+exports/reports/*.zip
 ```
 
 The Context Builder summarizes:
@@ -159,6 +175,8 @@ The Context Builder summarizes:
 - latencies
 - limitations
 - recommendations
+- provider/model cost estimates
+- token savings from structured context
 
 For algorithms, Context Builder should also summarize:
 
@@ -169,6 +187,22 @@ For algorithms, Context Builder should also summarize:
 - cases that passed
 - cases that failed
 - examples ready to paste into an implementation AI
+
+For generic APIs, Context Builder should also summarize:
+
+- suite name and provider
+- payloads validated
+- status code expectations
+- failed diffs
+- sanitized request/response evidence
+
+For token usage, Context Builder should also summarize:
+
+- provider/model
+- users and projected request volume
+- total input/output tokens
+- estimated cost
+- official pricing source URL
 
 ## Implementation Boundary
 

@@ -599,6 +599,50 @@ def build_algorithm_context(repository: AlgorithmTestRepository, limit: int = 10
 """
 
 
+def export_algorithm_suite(repository: AlgorithmTestRepository, algorithm_id: str, output_dir: str) -> str:
+    from pathlib import Path
+
+    definition = repository.get_definition(algorithm_id)
+    cases = repository.list_cases(algorithm_id)
+    payload = {"algorithm_definitions": [definition], "algorithm_test_cases": cases}
+    directory = Path(output_dir)
+    directory.mkdir(parents=True, exist_ok=True)
+    path = directory / f"{definition['name']}.json"
+    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    return str(path)
+
+
+def import_algorithm_suite(repository: AlgorithmTestRepository, path: str) -> dict[str, object]:
+    from pathlib import Path
+
+    payload = json.loads(Path(path).read_text(encoding="utf-8"))
+    source_definition = payload["algorithm_definitions"][0]
+    try:
+        definition = repository.get_definition_by_name(str(source_definition["name"]))
+    except ValueError:
+        definition = repository.create_definition(
+            name=str(source_definition["name"]),
+            description=str(source_definition.get("description") or ""),
+            input_schema=dict(source_definition.get("input_schema") or {}),
+            output_schema=dict(source_definition.get("output_schema") or {}),
+            rules=list(source_definition.get("rules") or []),
+            nextjs_files=list(source_definition.get("nextjs_files") or []),
+        )
+    existing = {case["name"] for case in repository.list_cases(str(definition["id"]))}
+    for case in payload.get("algorithm_test_cases", []):
+        if case["name"] in existing:
+            continue
+        repository.create_case(
+            algorithm_id=str(definition["id"]),
+            name=str(case["name"]),
+            input_payload=dict(case.get("input_payload") or {}),
+            expected_output=dict(case.get("expected_output") or {}),
+            tags=list(case.get("tags") or []),
+            enabled=bool(case.get("enabled", True)),
+        )
+    return definition
+
+
 def _render_list(items: list[object]) -> str:
     return "\n".join(f"- {item}" for item in items) if items else "- Nenhum item registrado."
 

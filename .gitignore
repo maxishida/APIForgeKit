@@ -4,6 +4,8 @@
 .pytest_cache/
 __pycache__/
 *.pyc
+*.db
+.smoke-*.log
 outputs/*.json
 logs/*.jsonl
 exports/logs/

@@ -2,6 +2,8 @@
 
 Official documentation is the source of truth. Blogs can help with context, but must not define payloads, SDK usage, compatibility, or pricing decisions.
 
+The Token Calculator uses seeded prices only as planning inputs. Before financial decisions, verify the official pricing docs.
+
 ## Provider Matrix
 
 | Provider | Current Role | Python SDK | TypeScript Path | Status |
@@ -10,6 +12,15 @@ Official documentation is the source of truth. Blogs can help with context, but 
 | OpenAI | Legacy comparison provider | `openai` | `openai` | Compact lab scaffolded |
 | Gemini | Legacy comparison provider | `google-genai` | `@google/genai` | Compact lab scaffolded |
 | Anthropic | Legacy comparison provider | `anthropic` | `@anthropic-ai/sdk` | Compact lab scaffolded |
+
+## Pricing Docs Used By Token Calculator
+
+- xAI: https://docs.x.ai/developers/models
+- OpenAI: https://platform.openai.com/docs/pricing
+- Gemini: https://ai.google.dev/gemini-api/docs/pricing
+- Anthropic: https://docs.anthropic.com/en/docs/about-claude/pricing
+
+When a provider changes pricing, update `core/token_usage.py` and add/adjust tests in `tests/test_token_usage.py`.
 
 ## xAI / Grok
 

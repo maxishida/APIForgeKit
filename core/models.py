@@ -194,6 +194,165 @@ class ContextExport(Base):
     summary: Mapped[dict[str, object]] = mapped_column(JSON, default=dict)
 
 
+class ApiTestSuite(Base):
+    __tablename__ = "api_test_suites"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC), index=True)
+    name: Mapped[str] = mapped_column(String(160), unique=True, index=True)
+    provider: Mapped[str] = mapped_column(String(80), index=True)
+    description: Mapped[str] = mapped_column(Text, default="")
+    docs_url: Mapped[str] = mapped_column(String(500), default="")
+    tags: Mapped[list[str]] = mapped_column(JSON, default=list)
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "id": self.id,
+            "created_at": self.created_at.isoformat() if self.created_at else "",
+            "name": self.name,
+            "provider": self.provider,
+            "description": self.description,
+            "docs_url": self.docs_url,
+            "tags": self.tags,
+        }
+
+
+class ApiTestCase(Base):
+    __tablename__ = "api_test_cases"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC), index=True)
+    suite_id: Mapped[str] = mapped_column(String(64), index=True)
+    name: Mapped[str] = mapped_column(String(180), index=True)
+    method: Mapped[str] = mapped_column(String(20), default="POST")
+    url: Mapped[str] = mapped_column(String(1000), default="")
+    headers: Mapped[dict[str, object]] = mapped_column(JSON, default=dict)
+    body: Mapped[dict[str, object]] = mapped_column(JSON, default=dict)
+    expected: Mapped[dict[str, object]] = mapped_column(JSON, default=dict)
+    dry_run: Mapped[bool] = mapped_column(Boolean, default=True, index=True)
+    mock_response: Mapped[dict[str, object]] = mapped_column(JSON, default=dict)
+    timeout_seconds: Mapped[int] = mapped_column(Integer, default=20)
+    tags: Mapped[list[str]] = mapped_column(JSON, default=list)
+    enabled: Mapped[bool] = mapped_column(Boolean, default=True, index=True)
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "id": self.id,
+            "created_at": self.created_at.isoformat() if self.created_at else "",
+            "suite_id": self.suite_id,
+            "name": self.name,
+            "method": self.method,
+            "url": self.url,
+            "headers": self.headers,
+            "body": self.body,
+            "expected": self.expected,
+            "dry_run": self.dry_run,
+            "mock_response": self.mock_response,
+            "timeout_seconds": self.timeout_seconds,
+            "tags": self.tags,
+            "enabled": self.enabled,
+        }
+
+
+class ApiTestRun(Base):
+    __tablename__ = "api_test_runs"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC), index=True)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    suite_id: Mapped[str] = mapped_column(String(64), index=True)
+    status: Mapped[str] = mapped_column(String(40), default="running", index=True)
+    total_cases: Mapped[int] = mapped_column(Integer, default=0)
+    passed: Mapped[int] = mapped_column(Integer, default=0)
+    failed: Mapped[int] = mapped_column(Integer, default=0)
+    summary: Mapped[dict[str, object]] = mapped_column(JSON, default=dict)
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "id": self.id,
+            "created_at": self.created_at.isoformat() if self.created_at else "",
+            "completed_at": self.completed_at.isoformat() if self.completed_at else "",
+            "suite_id": self.suite_id,
+            "status": self.status,
+            "total_cases": self.total_cases,
+            "passed": self.passed,
+            "failed": self.failed,
+            "summary": self.summary,
+        }
+
+
+class ApiTestResult(Base):
+    __tablename__ = "api_test_results"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC), index=True)
+    run_id: Mapped[str] = mapped_column(String(64), index=True)
+    suite_id: Mapped[str] = mapped_column(String(64), index=True)
+    case_id: Mapped[str] = mapped_column(String(64), index=True)
+    status: Mapped[str] = mapped_column(String(40), index=True)
+    request: Mapped[dict[str, object]] = mapped_column(JSON, default=dict)
+    response: Mapped[dict[str, object]] = mapped_column(JSON, default=dict)
+    diff: Mapped[dict[str, object]] = mapped_column(JSON, default=dict)
+    latency_ms: Mapped[float] = mapped_column(Float, default=0)
+    structured_log: Mapped[dict[str, object]] = mapped_column(JSON, default=dict)
+    error: Mapped[str | None] = mapped_column(Text, nullable=True)
+    recommendation: Mapped[str] = mapped_column(Text, default="")
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "id": self.id,
+            "created_at": self.created_at.isoformat() if self.created_at else "",
+            "run_id": self.run_id,
+            "suite_id": self.suite_id,
+            "case_id": self.case_id,
+            "status": self.status,
+            "request": self.request,
+            "response": self.response,
+            "diff": self.diff,
+            "latency_ms": self.latency_ms,
+            "structured_log": self.structured_log,
+            "error": self.error,
+            "recommendation": self.recommendation,
+        }
+
+
+class TokenUsageEstimate(Base):
+    __tablename__ = "token_usage_estimates"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC), index=True)
+    provider: Mapped[str] = mapped_column(String(80), index=True)
+    model: Mapped[str] = mapped_column(String(160), index=True)
+    users: Mapped[int] = mapped_column(Integer, default=1)
+    requests_per_user_per_day: Mapped[int] = mapped_column(Integer, default=1)
+    days: Mapped[int] = mapped_column(Integer, default=30)
+    input_tokens_per_request: Mapped[int] = mapped_column(Integer, default=0)
+    output_tokens_per_request: Mapped[int] = mapped_column(Integer, default=0)
+    cached_input_tokens_per_request: Mapped[int] = mapped_column(Integer, default=0)
+    total_tokens: Mapped[int] = mapped_column(Integer, default=0)
+    estimated_cost_usd: Mapped[float] = mapped_column(Float, default=0)
+    source_url: Mapped[str] = mapped_column(String(500), default="")
+    summary: Mapped[dict[str, object]] = mapped_column(JSON, default=dict)
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "id": self.id,
+            "created_at": self.created_at.isoformat() if self.created_at else "",
+            "provider": self.provider,
+            "model": self.model,
+            "users": self.users,
+            "requests_per_user_per_day": self.requests_per_user_per_day,
+            "days": self.days,
+            "input_tokens_per_request": self.input_tokens_per_request,
+            "output_tokens_per_request": self.output_tokens_per_request,
+            "cached_input_tokens_per_request": self.cached_input_tokens_per_request,
+            "total_tokens": self.total_tokens,
+            "estimated_cost_usd": self.estimated_cost_usd,
+            "source_url": self.source_url,
+            "summary": self.summary,
+        }
+
+
 class AlgorithmDefinition(Base):
     __tablename__ = "algorithm_definitions"
 

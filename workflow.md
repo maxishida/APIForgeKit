@@ -13,6 +13,8 @@ Logs Estruturados
 ↓
 Evidências
 ↓
+Cálculo de custo/tokens quando houver LLM
+↓
 Contexto Técnico
 ↓
 Implementação futura
@@ -49,6 +51,8 @@ Use this for:
 - live event stream
 - PostgreSQL event persistence
 - dashboard metrics
+- Generic API Lab
+- Token Calculator
 - logs table
 - report export
 - Context Builder
@@ -65,7 +69,7 @@ Use this for:
 
 ### Generic Algorithm/API Harness Track
 
-This track is now started with Algorithm Test Lab.
+This track is implemented with Algorithm Test Lab and Generic API Lab.
 
 Use it when the user wants to validate:
 
@@ -92,10 +96,24 @@ Context Builder creates AI-ready context
 Current implementation:
 
 - Route: `/algorithm-test-lab`
+- Route: `/api-test-lab`
 - Algorithm: `lead_score`
+- API suite: `whatsapp_validation_pack`
 - Tables: `algorithm_definitions`, `algorithm_test_cases`, `algorithm_test_runs`, `algorithm_test_results`
+- Tables: `api_test_suites`, `api_test_cases`, `api_test_runs`, `api_test_results`
 - Validation: expected JSON vs actual JSON with structured diff
 - Context: generated in Algorithm Test Lab and Context Builder
+
+### Token Economy Track
+
+Use Token Calculator before choosing an LLM model or asking an implementation agent to process large context.
+
+Current implementation:
+
+- Route: `/token-calculator`
+- Table: `token_usage_estimates`
+- Calculates requests, total tokens, cost per request, cost per user and context savings.
+- Uses seeded provider prices with official docs links.
 
 ### Legacy Provider Track
 
@@ -130,6 +148,24 @@ The existing CLI runner is intentionally small. Expanded xAI validation phases a
 7. Add the case to a repeatable suite.
 8. Generate context only from observed behavior.
 
+## Required Generic API Flow
+
+1. Define suite and case name.
+2. Define method, URL, sanitized headers, body and expected output.
+3. Start in dry-run if credentials or cost are uncertain.
+4. Run one case.
+5. Compare expected status/body with actual status/body.
+6. Save structured JSON.
+7. Export suite JSON when it should be shared.
+
+## Required Token Flow
+
+1. Choose provider/model.
+2. Estimate input/output/cached tokens per request.
+3. Enter users, requests per user and days.
+4. Save estimate.
+5. Use context savings to shrink prompts before implementation.
+
 ## Output Rules
 
 Live Studio outputs use PostgreSQL:
@@ -142,6 +178,11 @@ api_responses
 voice_tests
 agent_tests
 context_exports
+api_test_suites
+api_test_cases
+api_test_runs
+api_test_results
+token_usage_estimates
 ```
 
 Reports use:

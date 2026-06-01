@@ -10,16 +10,31 @@
 - xAI compact runner acionado pela UI.
 - Live Event Stream com atualização periódica.
 - Algorithm Test Lab em `/algorithm-test-lab`.
+- Generic API Lab em `/api-test-lab`.
+- Token Calculator em `/token-calculator`.
 - Tabelas: `algorithm_definitions`, `algorithm_test_cases`, `algorithm_test_runs`, `algorithm_test_results`.
+- Tabelas: `api_test_suites`, `api_test_cases`, `api_test_runs`, `api_test_results`.
+- Tabela: `token_usage_estimates`.
 - Suíte `lead_score` com 8 casos prontos.
+- Suite `whatsapp_validation_pack` com casos dry-run prontos.
 - Validador esperado x recebido com diff estruturado.
+- API harness genérico com método, URL, headers, body, expected output, dry-run e HTTP real.
+- Import/export de suites JSON para algoritmo e API.
+- Demo Mode para rodar algoritmo, API pack e estimativa de tokens.
+- Calculadora de tokens/custo por usuário com preços seedados de docs oficiais.
+- Context savings calculator para comparar prompt cru vs contexto técnico.
 - Context Builder integrado aos resultados de algoritmo.
+- Context Builder integrado a API Lab e Token Calculator.
 - Gráficos Plotly para status, módulos, latência e volume de eventos.
+- Gráficos de evidência para pass/fail, latência e score no Algorithm/API Lab.
 - PostgreSQL Docker com SQLAlchemy.
 - Tabelas de observabilidade: `test_runs`, `test_events`, `api_requests`, `api_responses`, `voice_tests`, `agent_tests`, `context_exports`.
 - Tela Logs baseada em eventos de observabilidade, com filtros, busca, AG Grid, JSON completo e export CSV/JSONL.
 - Context Builder baseado em logs reais.
 - Exportação de relatórios Markdown, JSON e HTML.
+- Exportação de bundle ZIP com Markdown, JSON e HTML.
+- CLI `run_algorithm_lab.py`.
+- Configuração Alembic opcional.
 - Lead Algorithm Lab preservado.
 - Blueprint Archive preservado como referência legada.
 - `USER_GUIDE.md` criado para explicar o uso da ferramenta.
@@ -50,6 +65,7 @@ Abra `http://localhost:8080`.
 - `loguru`
 - `pytest`
 - `xai-sdk`
+- `alembic`
 
 ## Como testar
 
@@ -61,6 +77,12 @@ Testes focados:
 
 ```bash
 python -m pytest tests/test_observability.py tests/test_xai_live_runner.py -q
+```
+
+CLI de algoritmo:
+
+```bash
+npm run algorithm:suite
 ```
 
 ## Como ver o dashboard live
@@ -113,6 +135,29 @@ Arquivos gerados:
 5. Veja passed/failed, score, classificação, latência e diff.
 6. Abra Context Builder para gerar contexto técnico para IA.
 
+## Como usar o Generic API Lab
+
+1. Abra `http://localhost:8080/api-test-lab`.
+2. Selecione `whatsapp_validation_pack`.
+3. Clique em `Executar Suite`.
+4. Veja pass/fail, status HTTP, latência, diff e JSON estruturado.
+5. Exporte a suite JSON para compartilhar no GitHub.
+
+## Como usar o Token Calculator
+
+1. Abra `http://localhost:8080/token-calculator`.
+2. Escolha provider e modelo.
+3. Informe usuários, requests por usuário/dia, dias, input tokens e output tokens.
+4. Clique em `Calcular e salvar`.
+5. Use `Context Savings` para comparar prompt cru versus contexto técnico.
+
+## Como usar Demo Mode
+
+1. Abra Home.
+2. Clique em `Run Full Demo`.
+3. O app executa `lead_score`, `whatsapp_validation_pack` e salva uma estimativa de custo.
+4. Abra Context Builder para exportar o bundle.
+
 ## Como entender a ferramenta
 
 Leia:
@@ -120,6 +165,8 @@ Leia:
 - `USER_GUIDE.md`
 - `OPEN_SOURCE_TUTORIAL.md`
 - `ALGORITHM_TEST_PLAN.md`
+- Generic API Lab
+- Token Calculator
 
 Resumo:
 
@@ -152,11 +199,14 @@ Implementação mais rápida
 - Separar runner xAI em fases executáveis: connectivity, chat, structured outputs, streaming, agents, voice e benchmark.
 - Expandir Algorithm Test Lab para algoritmos customizados por API HTTP.
 - Criar harness HTTP para testar APIs de WhatsApp, webhooks e endpoints de SaaS.
+- Expandir o Generic API Lab com variáveis de ambiente seguras e autenticação guiada.
+- Adicionar provider pricing refresh manual com confirmação do usuário.
 - Criar dashboard de taxa de aprovação por algoritmo.
 - Adicionar teste real de `/v1/models` e endpoints REST de Responses API.
 - Implementar Voice Lab com áudio sintético, STT, TTS, Voice Agent WebSocket e métricas.
 - Implementar benchmark com repetições, p95, erro, custo e reliability score.
 - Adicionar migrations formais com Alembic.
+- Evoluir Alembic para cobrir todas as tabelas antigas como baseline versionada.
 - Adicionar paginação server-side para volumes altos.
 - Adicionar screenshots/e2e de UI.
 
@@ -165,6 +215,8 @@ Implementação mais rápida
 - A UI depende do PostgreSQL para executar live runs; sem banco, abre em modo degradado.
 - Export CSV/JSONL grava arquivo local e mostra o caminho, sem download automático pelo navegador.
 - O runner compacto usa `xai-sdk`; endpoints REST completos ainda ficam para V2.
+- Os preços do Token Calculator são seeds de documentação e devem ser conferidos antes de decisões financeiras.
+- O WhatsApp pack é dry-run por padrão; chamadas reais dependem de credenciais e setup do usuário.
 - Agents e Voice aparecem como fases bloqueadas até haver fixtures, orçamento e critérios próprios.
 
 ## Pendências
@@ -173,4 +225,6 @@ Implementação mais rápida
 - Definir orçamento máximo de chamadas antes dos benchmarks.
 - Criar fixture sintética de áudio para Voice Lab.
 - Registrar custo real quando a API retornar metadados suficientes.
+- Adicionar override de preços por provider/model pela UI.
+- Adicionar import de suites pela UI além das funções core.
 - Adicionar retenção/limpeza de eventos antigos.

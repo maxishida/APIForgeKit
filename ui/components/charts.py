@@ -162,3 +162,54 @@ def event_volume_area(events: list[dict[str, object]]) -> go.Figure:
     counts = frame.groupby("minute").size().reset_index(name="events")
     fig = px.area(counts, x="minute", y="events", title="Volume de Eventos", color_discrete_sequence=["#00D4FF"])
     return _style(fig)
+
+
+def result_status_donut(results: list[dict[str, object]], title: str = "Passed vs Failed") -> go.Figure:
+    if not results:
+        return empty_figure(title)
+    frame = pd.DataFrame(results)
+    counts = frame["status"].fillna("unknown").value_counts().reset_index()
+    counts.columns = ["status", "count"]
+    fig = go.Figure(
+        data=[
+            go.Pie(
+                labels=counts["status"],
+                values=counts["count"],
+                hole=0.62,
+                marker={"colors": [OBS_STATUS_COLORS.get(str(status), "#00D4FF") for status in counts["status"]]},
+            )
+        ]
+    )
+    fig.update_layout(title=title)
+    return _style(fig)
+
+
+def result_latency_bar(results: list[dict[str, object]], label_field: str = "case", title: str = "Latência por Caso") -> go.Figure:
+    if not results:
+        return empty_figure(title)
+    rows = []
+    for result in results[:30]:
+        log = result.get("structured_log") or {}
+        rows.append(
+            {
+                "label": log.get("case_name") or log.get("test_name") or result.get(label_field) or result.get("id"),
+                "latency_ms": float(result.get("latency_ms") or 0),
+                "status": result.get("status") or "unknown",
+            }
+        )
+    frame = pd.DataFrame(rows)
+    fig = px.bar(frame, x="label", y="latency_ms", color="status", title=title, color_discrete_map=OBS_STATUS_COLORS)
+    return _style(fig)
+
+
+def algorithm_score_distribution(results: list[dict[str, object]]) -> go.Figure:
+    rows = []
+    for result in results:
+        actual = result.get("actual_output") or {}
+        if isinstance(actual.get("score"), (int, float)):
+            rows.append({"score": actual["score"], "status": result.get("status")})
+    if not rows:
+        return empty_figure("Distribuição de Score dos Casos")
+    frame = pd.DataFrame(rows)
+    fig = px.histogram(frame, x="score", color="status", nbins=10, title="Distribuição de Score dos Casos", color_discrete_map=OBS_STATUS_COLORS)
+    return _style(fig)

@@ -5,6 +5,8 @@ from core.algorithm_test_lab import (
     AlgorithmTestRunner,
     build_algorithm_context,
     ensure_default_algorithms,
+    export_algorithm_suite,
+    import_algorithm_suite,
     validate_expected_output,
 )
 from core.database import build_session_factory, init_db
@@ -116,3 +118,16 @@ def test_algorithm_context_export_is_persisted_without_provider_run(tmp_path):
     record = repository.record_context_export("markdown", str(export_path), {"source": "algorithm_test_lab"})
 
     assert record["path"] == str(export_path)
+
+
+def test_algorithm_suite_export_and_import_roundtrip(tmp_path):
+    repository = _repository()
+    ensure_default_algorithms(repository)
+    definition = repository.get_definition_by_name("lead_score")
+
+    export_path = export_algorithm_suite(repository, definition["id"], tmp_path)
+    imported_repository = _repository()
+    imported = import_algorithm_suite(imported_repository, export_path)
+
+    assert imported["name"] == "lead_score"
+    assert len(imported_repository.list_cases(imported["id"])) == len(repository.list_cases(definition["id"]))

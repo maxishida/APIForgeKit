@@ -29,6 +29,7 @@ Com o lab, o desenvolvedor entrega para a IA um contexto menor:
 - erro real
 - latência
 - diff esperado x recebido
+- custo estimado por usuário
 - recomendações
 - arquivos sugeridos
 
@@ -99,7 +100,47 @@ Context Builder
 5. Exporte relatório.
 6. Use o relatório como contexto para futura implementação.
 
-## Tutorial 3 - Usar contexto em uma LLM
+## Tutorial 3 - Testar API ou webhook
+
+1. Abra `Generic API Lab`.
+2. Selecione `whatsapp_validation_pack`.
+3. Clique em `Executar Suite`.
+4. Abra o JSON estruturado de cada caso.
+5. Confira request, response, status HTTP, diff e recomendação.
+6. Exporte a suite JSON para versionar no GitHub.
+
+Fluxo:
+
+```txt
+API Test Case
+↓
+HTTP/Dry-run Runner
+↓
+Expected Output Validator
+↓
+Structured Log
+↓
+PostgreSQL
+↓
+Context Builder
+```
+
+## Tutorial 4 - Calcular custo antes de implementar
+
+1. Abra `Token Calculator`.
+2. Escolha provider e modelo.
+3. Informe usuários, requests por usuário/dia, dias, input tokens e output tokens.
+4. Clique em `Calcular e salvar`.
+5. Use `Context Savings` para comparar prompt cru versus contexto técnico.
+
+Essa tela ajuda a responder:
+
+- quanto custa por usuário?
+- quanto custa repetir esse prompt por mês?
+- quanto o Context Builder economiza em tokens?
+- vale usar modelo maior ou menor?
+
+## Tutorial 5 - Usar contexto em uma LLM
 
 Depois de gerar contexto, use um prompt curto:
 
@@ -129,6 +170,8 @@ Boas primeiras issues:
 - Criar harness HTTP genérico.
 - Adicionar import/export de suites.
 - Melhorar gráficos do Algorithm Test Lab.
+- Adicionar novos API packs: WhatsApp, Stripe, Supabase, CRM.
+- Adicionar presets de preço por provider/model.
 - Criar fixtures sintéticas para Voice Lab.
 - Adicionar exemplos de WhatsApp API.
 
