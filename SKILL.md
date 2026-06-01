@@ -153,7 +153,7 @@ The current APIForgeKit Studio focus is observability for APIs and algorithms:
 - Markdown, JSON and HTML reports
 - Generic API Lab for HTTP/dry-run API contracts
 - WhatsApp validation pack as a seed suite
-- Token Calculator for provider/model/user cost planning
+- Token Calculator for provider/model/user cost planning, presets and context savings
 - report ZIP bundles for portable evidence
 
 Algorithm Test Lab now validates `lead_score` with seed cases, expected output validation and structured PostgreSQL results. Future harnesses should support WhatsApp APIs, webhooks, local algorithms and site/API endpoints using the same evidence pattern.
@@ -319,8 +319,9 @@ Minimum score test matrix:
 - spam message
 - no contact penalty
 - previous customer with high intent
-- boundary scores: 30, 31, 60, 61, 80, 81
+- boundary transitions around 30/31, 60/61 and 80/81 using reachable deterministic scores
 - conflicting signals: high intent but no contact, low intent but previous customer
+- invalid payload types recorded as structured failed evidence
 
 Score invariants:
 
@@ -411,7 +412,8 @@ The agent must:
 2. Estimate input, cached input and output tokens separately.
 3. Calculate total requests from users, requests per user and days.
 4. Save the estimate when PostgreSQL is online.
-5. Recommend shrinking prompts through Context Builder before implementation.
+5. Compare raw prompt cost against APIForgeKit structured context cost.
+6. Recommend shrinking prompts through Context Builder before implementation.
 
 Required pricing sources:
 

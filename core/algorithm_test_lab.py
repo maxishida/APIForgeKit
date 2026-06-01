@@ -202,6 +202,150 @@ DEFAULT_LEAD_SCORE_CASES = [
         "expected_output": {"classification": "urgent_lead", "min_score": 81},
         "tags": ["urgent", "previous_customer"],
     },
+    {
+        "name": "boundary score 30 cold",
+        "input_payload": {
+            "lead_name": "Boundary cold",
+            "source": "LinkedIn",
+            "message": "Mensagem neutra para avaliar limite",
+            "budget": "",
+            "urgency": "baixa",
+            "interest": "baixo",
+            "has_phone": True,
+            "has_email": False,
+            "previous_customer": False,
+        },
+        "expected_output": {"classification": "cold_lead", "score": 30},
+        "tags": ["boundary", "cold"],
+    },
+    {
+        "name": "boundary score 35 warm",
+        "input_payload": {
+            "lead_name": "Boundary warm",
+            "source": "Instagram",
+            "message": "Mensagem neutra para avaliar limite",
+            "budget": "",
+            "urgency": "baixa",
+            "interest": "baixo",
+            "has_phone": True,
+            "has_email": False,
+            "previous_customer": False,
+        },
+        "expected_output": {"classification": "warm_lead", "score": 35},
+        "tags": ["boundary", "warm"],
+    },
+    {
+        "name": "boundary score 60 warm",
+        "input_payload": {
+            "lead_name": "Boundary warm max",
+            "source": "Landing Page",
+            "message": "Mensagem neutra para avaliar limite",
+            "budget": "",
+            "urgency": "média",
+            "interest": "médio",
+            "has_phone": True,
+            "has_email": False,
+            "previous_customer": False,
+        },
+        "expected_output": {"classification": "warm_lead", "score": 60},
+        "tags": ["boundary", "warm"],
+    },
+    {
+        "name": "boundary score 65 hot",
+        "input_payload": {
+            "lead_name": "Boundary hot",
+            "source": "WhatsApp",
+            "message": "Mensagem neutra para avaliar limite",
+            "budget": "",
+            "urgency": "média",
+            "interest": "médio",
+            "has_phone": True,
+            "has_email": False,
+            "previous_customer": False,
+        },
+        "expected_output": {"classification": "hot_lead", "score": 65},
+        "tags": ["boundary", "hot"],
+    },
+    {
+        "name": "boundary score 80 hot",
+        "input_payload": {
+            "lead_name": "Boundary hot max",
+            "source": "WhatsApp",
+            "message": "Mensagem neutra para avaliar limite",
+            "budget": "",
+            "urgency": "alta",
+            "interest": "médio",
+            "has_phone": True,
+            "has_email": True,
+            "previous_customer": False,
+        },
+        "expected_output": {"classification": "hot_lead", "score": 80},
+        "tags": ["boundary", "hot"],
+    },
+    {
+        "name": "boundary score 85 urgent",
+        "input_payload": {
+            "lead_name": "Boundary urgent",
+            "source": "Ligação",
+            "message": "Mensagem neutra para avaliar limite",
+            "budget": "",
+            "urgency": "alta",
+            "interest": "alto",
+            "has_phone": False,
+            "has_email": True,
+            "previous_customer": False,
+        },
+        "expected_output": {"classification": "urgent_lead", "score": 85},
+        "tags": ["boundary", "urgent"],
+    },
+    {
+        "name": "alta intenção sem contato",
+        "input_payload": {
+            "lead_name": "Alta intenção sem contato",
+            "source": "WhatsApp",
+            "message": "Tenho muito interesse na solução para minha empresa",
+            "budget": "",
+            "urgency": "alta",
+            "interest": "alto",
+            "has_phone": False,
+            "has_email": False,
+            "previous_customer": False,
+        },
+        "expected_output": {"classification": "warm_lead", "score": 55},
+        "tags": ["edge", "no_contact", "conflicting_signal"],
+    },
+    {
+        "name": "cliente anterior baixa intenção",
+        "input_payload": {
+            "lead_name": "Cliente anterior baixa intenção",
+            "source": "LinkedIn",
+            "message": "Mensagem neutra para avaliar cliente anterior",
+            "budget": "",
+            "urgency": "baixa",
+            "interest": "baixo",
+            "has_phone": False,
+            "has_email": True,
+            "previous_customer": True,
+        },
+        "expected_output": {"classification": "warm_lead", "score": 45},
+        "tags": ["edge", "previous_customer", "conflicting_signal"],
+    },
+    {
+        "name": "mensagem vazia sobrescreve score",
+        "input_payload": {
+            "lead_name": "Mensagem vazia high signal",
+            "source": "Ligação",
+            "message": "",
+            "budget": "",
+            "urgency": "alta",
+            "interest": "alto",
+            "has_phone": True,
+            "has_email": True,
+            "previous_customer": True,
+        },
+        "expected_output": {"classification": "invalid_lead", "score": 0},
+        "tags": ["invalid", "edge", "override"],
+    },
 ]
 
 
@@ -444,10 +588,19 @@ class AlgorithmTestRunner:
     def _execute_case(self, run_id: str, case: dict[str, object]) -> dict[str, object]:
         definition = self.repository.get_definition(str(case["algorithm_id"]))
         started = perf_counter()
-        actual = run_algorithm(str(definition["name"]), dict(case["input_payload"]))
+        error = None
+        try:
+            actual = run_algorithm(str(definition["name"]), dict(case["input_payload"]))
+            diff = validate_expected_output(dict(case["expected_output"]), actual)
+        except Exception as exc:  # noqa: BLE001 - invalid algorithm input is evidence, not a crash
+            actual = {}
+            error = str(exc)
+            diff = {
+                "passed": False,
+                "mismatches": [{"field": "input_payload", "expected": "valid lead_score payload", "actual": error}],
+            }
         latency = round((perf_counter() - started) * 1000, 2)
-        diff = validate_expected_output(dict(case["expected_output"]), actual)
-        status = "passed" if diff["passed"] else "failed"
+        status = "passed" if diff["passed"] and error is None else "failed"
         recommendation = _recommendation(status, diff)
         structured_log = {
             "id": str(uuid4()),
@@ -463,7 +616,7 @@ class AlgorithmTestRunner:
             "actual": actual,
             "diff": diff,
             "recommendation": recommendation,
-            "error": None if status == "passed" else "Expected output mismatch",
+            "error": error if error else (None if status == "passed" else "Expected output mismatch"),
         }
         return self.repository.record_result(
             run_id=run_id,
@@ -502,20 +655,53 @@ def ensure_default_algorithms(repository: AlgorithmTestRepository) -> None:
 def run_algorithm(name: str, input_payload: dict[str, object]) -> dict[str, object]:
     if name != "lead_score":
         raise ValueError(f"Unsupported algorithm: {name}")
+    _validate_required_fields(input_payload, LEAD_SCORE_INPUT_SCHEMA["required"])
     lead = LeadInput(
-        lead_name=str(input_payload.get("lead_name", "")),
-        source=str(input_payload.get("source", "")),
-        message=str(input_payload.get("message", "")),
-        budget=str(input_payload.get("budget", "")),
-        urgency=str(input_payload.get("urgency", "")),
-        interest=str(input_payload.get("interest", "")),
-        has_phone=bool(input_payload.get("has_phone", False)),
-        has_email=bool(input_payload.get("has_email", False)),
-        previous_customer=bool(input_payload.get("previous_customer", False)),
+        lead_name=_optional_string(input_payload.get("lead_name", ""), "lead_name"),
+        source=_required_string(input_payload.get("source"), "source"),
+        message=_required_string(input_payload.get("message"), "message"),
+        budget=_optional_string(input_payload.get("budget", ""), "budget"),
+        urgency=_required_string(input_payload.get("urgency"), "urgency"),
+        interest=_required_string(input_payload.get("interest"), "interest"),
+        has_phone=_required_bool(input_payload.get("has_phone"), "has_phone"),
+        has_email=_required_bool(input_payload.get("has_email"), "has_email"),
+        previous_customer=_required_bool(input_payload.get("previous_customer"), "previous_customer"),
     )
     result = calculate_lead_score(lead).to_dict()
     result["classification"] = result["status"]
     return result
+
+
+def _validate_required_fields(payload: dict[str, object], required_fields: list[object]) -> None:
+    missing = [str(field) for field in required_fields if str(field) not in payload]
+    if missing:
+        raise ValueError(f"Missing required lead_score field(s): {', '.join(missing)}")
+
+
+def _required_string(value: object, field: str) -> str:
+    if not isinstance(value, str):
+        raise ValueError(f"{field} must be a string")
+    return value
+
+
+def _optional_string(value: object, field: str) -> str:
+    if value is None:
+        return ""
+    if not isinstance(value, str):
+        raise ValueError(f"{field} must be a string")
+    return value
+
+
+def _required_bool(value: object, field: str) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        normalized = value.strip().lower()
+        if normalized in {"true", "1", "yes", "sim"}:
+            return True
+        if normalized in {"false", "0", "no", "nao", "não"}:
+            return False
+    raise ValueError(f"{field} must be a boolean")
 
 
 def validate_expected_output(expected: dict[str, object], actual: dict[str, object]) -> dict[str, object]:

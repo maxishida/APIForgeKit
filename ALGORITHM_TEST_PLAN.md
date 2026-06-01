@@ -8,9 +8,11 @@ Status atual:
 
 - Algorithm Test Lab implementado em `/algorithm-test-lab`.
 - Primeiro algoritmo: `lead_score`.
-- 8 casos seed prontos.
+- 17 casos seed prontos, incluindo casos base, bordas, conflitos e overrides inválidos.
 - Persistência em PostgreSQL.
 - Diff esperado x recebido.
+- Validação forte de payload antes de executar o algoritmo.
+- Erros de input são gravados como evidência estruturada, sem derrubar a suíte.
 - Context Builder integrado.
 - API harness genérico implementado em `/api-test-lab`.
 - Import/export de suites JSON.
@@ -220,14 +222,14 @@ Casos iniciais para Lead Score:
 - lead de WhatsApp
 - cliente recorrente
 
-Casos de borda obrigatórios para V2:
+Casos de borda cobertos no seed atual:
 
 - score 30 deve continuar `cold_lead`
-- score 31 deve virar `warm_lead`
+- primeiro score prático acima de 30 deve virar `warm_lead`
 - score 60 deve continuar `warm_lead`
-- score 61 deve virar `hot_lead`
+- primeiro score prático acima de 60 deve virar `hot_lead`
 - score 80 deve continuar `hot_lead`
-- score 81 deve virar `urgent_lead`
+- primeiro score prático acima de 80 deve virar `urgent_lead`
 - alta intenção sem contato deve aplicar penalidade
 - cliente anterior com baixa intenção deve continuar explicável pelos motivos
 - mensagem inválida deve sobrescrever qualquer score
@@ -377,6 +379,7 @@ Invariantes obrigatórios:
 - `invalid_lead` tem prioridade sobre qualquer pontuação
 - cada ponto positivo ou penalidade aparece em `reasons`
 - diff esperado x recebido reprova o caso
+- payload inválido reprova o caso e gera erro estruturado
 - nenhuma LLM decide o score no MVP determinístico
 
 ### Caso 1 - Lead quente
@@ -472,10 +475,10 @@ Com:
 
 ## Próxima entrega recomendada para ficar 100%
 
-1. Adicionar os casos de borda da classificação no seed `lead_score`.
-2. Exibir invariantes no dashboard do Algorithm Test Lab.
-3. Criar comando ACP dedicado `/validate-lead-score`.
-4. Adicionar export "Lead Score Evidence Pack".
-5. Criar tela comparativa de regras: origem, urgência, interesse, contato, histórico e penalidades.
-6. Adicionar benchmark local com média, p95 e maior latência.
-7. Publicar exemplos JSON em GitHub para usuários copiarem e adaptarem.
+1. Exibir invariantes no dashboard do Algorithm Test Lab.
+2. Criar comando ACP dedicado `/validate-lead-score`.
+3. Adicionar export "Lead Score Evidence Pack".
+4. Criar tela comparativa de regras: origem, urgência, interesse, contato, histórico e penalidades.
+5. Adicionar benchmark local com média, p95 e maior latência.
+6. Publicar exemplos JSON em GitHub para usuários copiarem e adaptarem.
+7. Adicionar import/export pela UI, não apenas pelas funções core/CLI.

@@ -7,6 +7,7 @@ from core.token_usage import (
     calculate_token_cost,
     estimate_context_savings,
     get_pricing_catalog,
+    get_usage_presets,
 )
 
 
@@ -37,6 +38,15 @@ def test_token_cost_calculator_projects_per_user_monthly_usage():
     assert estimate["estimated_cost_usd"] == 15.0
     assert estimate["cost_per_user_usd"] == 1.5
     assert estimate["source_url"] == "https://docs.x.ai/developers/models"
+
+
+def test_usage_presets_include_human_scale_defaults():
+    presets = get_usage_presets()
+
+    assert presets["dev_solo"]["users"] == 1
+    assert presets["saas_small"]["requests_per_user_per_day"] >= 10
+    assert presets["agency"]["raw_context_tokens"] > presets["agency"]["structured_context_tokens"]
+    assert presets["high_volume"]["users"] > presets["saas_small"]["users"]
 
 
 def test_context_savings_estimate_compares_raw_prompt_with_structured_context():

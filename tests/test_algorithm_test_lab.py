@@ -7,6 +7,7 @@ from core.algorithm_test_lab import (
     ensure_default_algorithms,
     export_algorithm_suite,
     import_algorithm_suite,
+    run_algorithm,
     validate_expected_output,
 )
 from core.database import build_session_factory, init_db
@@ -45,12 +46,12 @@ def test_default_lead_score_suite_runs_all_seed_cases_and_persists_results():
     run = runner.run_suite(definition["id"])
     results = repository.list_results(limit=20)
 
-    assert len(cases) == 8
+    assert len(cases) >= 17
     assert run["status"] == "passed"
-    assert run["total_cases"] == 8
-    assert run["passed"] == 8
+    assert run["total_cases"] == len(cases)
+    assert run["passed"] == len(cases)
     assert run["failed"] == 0
-    assert len(results) == 8
+    assert len(results) == len(cases)
     assert all(result["structured_log"]["algorithm"] == "lead_score" for result in results)
     assert {result["actual_output"]["classification"] for result in results} >= {
         "cold_lead",
@@ -92,6 +93,56 @@ def test_single_case_execution_records_diff_when_expected_output_is_wrong():
     assert result["status"] == "failed"
     assert result["diff"]["passed"] is False
     assert result["structured_log"]["status"] == "failed"
+
+
+def test_run_algorithm_coerces_boolean_strings_before_scoring():
+    actual = run_algorithm(
+        "lead_score",
+        {
+            "source": "LinkedIn",
+            "message": "Mensagem longa sem intenção forte",
+            "urgency": "baixa",
+            "interest": "baixo",
+            "has_phone": "false",
+            "has_email": "false",
+            "previous_customer": "false",
+        },
+    )
+
+    assert actual["score"] == 0
+    assert actual["classification"] == "cold_lead"
+    assert any("sem telefone" in reason for reason in actual["reasons"])
+
+
+def test_single_case_execution_records_validation_error_without_crashing():
+    repository = _repository()
+    ensure_default_algorithms(repository)
+    runner = AlgorithmTestRunner(repository)
+
+    definition = repository.get_definition_by_name("lead_score")
+    case = repository.create_case(
+        algorithm_id=definition["id"],
+        name="invalid boolean input",
+        input_payload={
+            "source": "LinkedIn",
+            "message": "Mensagem longa sem intenção forte",
+            "urgency": "baixa",
+            "interest": "baixo",
+            "has_phone": "talvez",
+            "has_email": False,
+            "previous_customer": False,
+        },
+        expected_output={"classification": "cold_lead"},
+        tags=["validation"],
+    )
+
+    run = runner.run_single_case(case["id"])
+    result = repository.list_results(run_id=run["id"], limit=1)[0]
+
+    assert run["status"] == "failed"
+    assert result["status"] == "failed"
+    assert result["structured_log"]["error"]
+    assert result["diff"]["mismatches"][0]["field"] == "input_payload"
 
 
 def test_algorithm_context_includes_rules_results_edge_cases_and_nextjs_files():

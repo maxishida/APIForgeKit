@@ -99,9 +99,64 @@ DEFAULT_PRICING = (
     ),
 )
 
+USAGE_PRESETS: dict[str, dict[str, object]] = {
+    "dev_solo": {
+        "label": "Dev solo",
+        "users": 1,
+        "requests_per_user_per_day": 12,
+        "days": 30,
+        "input_tokens_per_request": 1800,
+        "output_tokens_per_request": 600,
+        "cached_input_tokens_per_request": 0,
+        "raw_context_tokens": 40_000,
+        "structured_context_tokens": 8_000,
+        "repeated_calls": 4,
+    },
+    "saas_small": {
+        "label": "SaaS pequeno",
+        "users": 50,
+        "requests_per_user_per_day": 15,
+        "days": 30,
+        "input_tokens_per_request": 1400,
+        "output_tokens_per_request": 500,
+        "cached_input_tokens_per_request": 200,
+        "raw_context_tokens": 80_000,
+        "structured_context_tokens": 12_000,
+        "repeated_calls": 8,
+    },
+    "agency": {
+        "label": "Agência",
+        "users": 120,
+        "requests_per_user_per_day": 8,
+        "days": 30,
+        "input_tokens_per_request": 2200,
+        "output_tokens_per_request": 900,
+        "cached_input_tokens_per_request": 400,
+        "raw_context_tokens": 120_000,
+        "structured_context_tokens": 18_000,
+        "repeated_calls": 12,
+    },
+    "high_volume": {
+        "label": "High volume",
+        "users": 1000,
+        "requests_per_user_per_day": 25,
+        "days": 30,
+        "input_tokens_per_request": 900,
+        "output_tokens_per_request": 350,
+        "cached_input_tokens_per_request": 300,
+        "raw_context_tokens": 200_000,
+        "structured_context_tokens": 30_000,
+        "repeated_calls": 30,
+    },
+}
+
 
 def get_pricing_catalog() -> dict[str, ProviderPricing]:
     return {pricing.key: pricing for pricing in DEFAULT_PRICING}
+
+
+def get_usage_presets() -> dict[str, dict[str, object]]:
+    return {key: dict(value) for key, value in USAGE_PRESETS.items()}
 
 
 def provider_options() -> dict[str, list[str]]:

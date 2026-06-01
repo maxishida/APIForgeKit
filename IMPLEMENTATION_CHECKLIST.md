@@ -15,13 +15,16 @@
 - Tabelas: `algorithm_definitions`, `algorithm_test_cases`, `algorithm_test_runs`, `algorithm_test_results`.
 - Tabelas: `api_test_suites`, `api_test_cases`, `api_test_runs`, `api_test_results`.
 - Tabela: `token_usage_estimates`.
-- Suíte `lead_score` com 8 casos prontos.
+- Suíte `lead_score` com 17 casos prontos, incluindo bordas, conflitos e overrides inválidos.
+- Validação forte de payload no Algorithm Test Lab.
+- Erros de input do algoritmo registrados como evidência estruturada.
 - Suite `whatsapp_validation_pack` com casos dry-run prontos.
 - Validador esperado x recebido com diff estruturado.
 - API harness genérico com método, URL, headers, body, expected output, dry-run e HTTP real.
 - Import/export de suites JSON para algoritmo e API.
 - Demo Mode para rodar algoritmo, API pack e estimativa de tokens.
 - Calculadora de tokens/custo por usuário com preços seedados de docs oficiais.
+- Token Calculator com presets de uso, cards de pricing, economia de contexto e histórico.
 - Context savings calculator para comparar prompt cru vs contexto técnico.
 - Context Builder integrado aos resultados de algoritmo.
 - Context Builder integrado a API Lab e Token Calculator.

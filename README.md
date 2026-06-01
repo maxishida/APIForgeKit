@@ -249,7 +249,7 @@ The lab supports:
 - saving structured logs in PostgreSQL
 - generating technical context for AI
 
-Seed cases:
+Seed cases include base behavior plus boundary and conflict coverage:
 
 1. lead frio Instagram
 2. lead morno Landing Page
@@ -259,6 +259,12 @@ Seed cases:
 6. lead spam
 7. lead sem contato
 8. cliente anterior com alta intenção
+9. classification boundaries around cold/warm/hot/urgent
+10. high intent without contact
+11. previous customer with low intent
+12. invalid message overriding strong business signals
+
+Invalid payloads are recorded as failed structured evidence instead of crashing the suite.
 
 No LLM is used. The lab validates pure deterministic Python logic.
 
@@ -305,6 +311,8 @@ Use it to estimate:
 - cost per user
 - monthly/projected cost
 - raw prompt vs structured context savings
+
+The page includes presets for solo developers, small SaaS, agencies and high-volume products. It also shows a planning checklist, pricing source cards, saved estimate history and the full JSON estimate for AI-ready context.
 
 Pricing seeds include doc links for:
 

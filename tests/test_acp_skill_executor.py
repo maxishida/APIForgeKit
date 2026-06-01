@@ -35,7 +35,7 @@ def test_validate_algorithm_runs_lead_score_suite_and_exports_context(tmp_path):
     assert result["status"] == "success"
     assert result["mode"] == "algorithm_validation"
     assert result["run"]["status"] == "passed"
-    assert result["evidence"]["passed"] == 8
+    assert result["evidence"]["passed"] >= 17
     assert result["exports"]["context"].endswith("lead_score_context.md")
 
 

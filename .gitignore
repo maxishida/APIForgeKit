@@ -10,6 +10,8 @@ outputs/*.json
 logs/*.jsonl
 exports/logs/
 exports/reports/
+exports/blueprints/
+exports/contexts/
 api-lab-kit/.env
 api-lab-kit/.venv/
 api-lab-kit/__pycache__/
