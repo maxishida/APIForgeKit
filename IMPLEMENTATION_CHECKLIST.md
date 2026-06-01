@@ -17,6 +17,7 @@
 - Tabela: `token_usage_estimates`.
 - Suíte `lead_score` com 17 casos prontos, incluindo bordas, conflitos e overrides inválidos.
 - Validação forte de payload no Algorithm Test Lab.
+- Invariantes de `lead_score` registradas nos logs estruturados.
 - Erros de input do algoritmo registrados como evidência estruturada.
 - Suite `whatsapp_validation_pack` com casos dry-run prontos.
 - Validador esperado x recebido com diff estruturado.
@@ -40,6 +41,7 @@
 - ACP Skill Executor em `python -m agents.acp_agent`.
 - npm helper `npm run acp`.
 - ACP `session/new` com comandos disponíveis, `plan`, `agent_message_chunk`, `_meta` e `session/request_permission`.
+- ACP `/validate-lead-score` para suite canônica, invariantes e evidence pack.
 - Configuração Alembic opcional.
 - Lead Algorithm Lab preservado.
 - Blueprint Archive preservado como referência legada.
@@ -178,6 +180,7 @@ Arquivos gerados:
 3. Envie `initialize`.
 4. Crie sessão com `session/new` usando `cwd` absoluto.
 5. Execute comandos em `session/prompt`, por exemplo `/validate-algorithm lead_score`.
+6. Para lead score, prefira `/validate-lead-score` para gerar contexto e bundle de evidências.
 
 O executor segue o `SKILL.md`, grava evidências pelos repositórios existentes e não gera código de produto.
 

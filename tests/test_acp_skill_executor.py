@@ -39,6 +39,17 @@ def test_validate_algorithm_runs_lead_score_suite_and_exports_context(tmp_path):
     assert result["exports"]["context"].endswith("lead_score_context.md")
 
 
+def test_validate_lead_score_exports_evidence_bundle(tmp_path):
+    result = _executor(tmp_path).execute("/validate-lead-score")
+
+    assert result["status"] == "success"
+    assert result["mode"] == "lead_score_validation"
+    assert result["evidence"]["algorithm"] == "lead_score"
+    assert result["evidence"]["passed"] >= 17
+    assert result["exports"]["context"].endswith("lead_score_context.md")
+    assert result["exports"]["zip"].endswith(".zip")
+
+
 def test_validate_unknown_algorithm_returns_safe_not_validated(tmp_path):
     result = _executor(tmp_path).execute("/validate-algorithm missing_algorithm")
 

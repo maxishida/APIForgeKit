@@ -246,6 +246,7 @@ The lab supports:
 - running the full suite
 - viewing passed/failed status
 - viewing expected-vs-actual diff
+- validating lead score invariants
 - saving structured logs in PostgreSQL
 - generating technical context for AI
 
@@ -265,6 +266,13 @@ Seed cases include base behavior plus boundary and conflict coverage:
 12. invalid message overriding strong business signals
 
 Invalid payloads are recorded as failed structured evidence instead of crashing the suite.
+
+Each `lead_score` result also stores invariants in the structured log:
+
+- payload was validated before execution
+- output is deterministic for the same input
+- score is clamped between 0 and 100
+- invalid/spam overrides force `invalid_lead` with score `0`
 
 No LLM is used. The lab validates pure deterministic Python logic.
 
@@ -360,11 +368,14 @@ Prompt commands:
 
 ```txt
 /validate-api-suite whatsapp_validation_pack
+/validate-lead-score
 /validate-algorithm lead_score
 /token-cost provider=xai model=grok-4.3 users=10 requests=20
 /build-context
 /export-evidence
 ```
+
+Use `/validate-lead-score` when the goal is specifically lead qualification. It runs the canonical `lead_score` suite, checks invariants, writes PostgreSQL evidence and exports a `lead_score_evidence_pack` bundle.
 
 The ACP executor follows `SKILL.md` gates and does not generate production code. HTTP real/provider calls require permission before execution.
 

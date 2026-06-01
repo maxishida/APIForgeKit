@@ -44,6 +44,7 @@ def test_session_new_registers_mcp_stdio_servers(tmp_path):
     assert response["result"]["_meta"]["apiforgekit.sessionId"] == session_id
     notification = next(update for update in agent.outbox if update["params"]["update"]["sessionUpdate"] == "available_commands_update")
     assert notification["params"]["update"]["availableCommands"][0]["name"] == "/validate-api-suite"
+    assert any(command["name"] == "/validate-lead-score" for command in notification["params"]["update"]["availableCommands"])
     schema.SessionNotification.model_validate(notification["params"])
 
 
@@ -89,3 +90,26 @@ def test_session_prompt_streams_plan_and_result_updates(tmp_path):
     assert "status" in message["params"]["update"]["content"]["text"]
     assert message["params"]["_meta"]["apiforgekit.sessionId"] == session.session_id
     schema.SessionNotification.model_validate(message["params"])
+
+
+def test_session_prompt_validate_lead_score_runs_canonical_plan(tmp_path):
+    agent = AcpAgent(database_url="sqlite+pysqlite:///:memory:", reports_dir=tmp_path)
+    session = agent.new_session(cwd=str(tmp_path.resolve()), mcp_servers=[])
+
+    response = agent.handle_request(
+        {
+            "jsonrpc": "2.0",
+            "id": 6,
+            "method": "session/prompt",
+            "params": {"sessionId": session.session_id, "prompt": "/validate-lead-score"},
+        }
+    )
+
+    assert response["result"]["stopReason"] == "end_turn"
+    result = response["result"]["result"]
+    assert result["mode"] == "lead_score_validation"
+    assert result["evidence"]["failed"] == 0
+    assert result["exports"]["zip"].endswith(".zip")
+    plan = next(update for update in agent.outbox if update["params"]["update"]["sessionUpdate"] == "plan")
+    steps = [entry["content"] for entry in plan["params"]["update"]["entries"]]
+    assert "Verificar invariantes" in steps

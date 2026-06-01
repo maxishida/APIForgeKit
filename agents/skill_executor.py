@@ -34,6 +34,8 @@ class SkillExecutor:
             return self._not_validated()
         command = tokens[0]
         args = tokens[1:]
+        if command == "/validate-lead-score":
+            return self._validate_lead_score()
         if command == "/validate-algorithm":
             return self._validate_algorithm(args)
         if command == "/validate-api-suite":
@@ -72,6 +74,28 @@ class SkillExecutor:
             "exports": {"context": str(context_path)},
             "message": "Algorithm suite validated through SKILL.md gates.",
         }
+
+    def _validate_lead_score(self) -> dict[str, object]:
+        result = self._validate_algorithm(["lead_score"])
+        if result.get("status") not in {"success", "failed"}:
+            return result
+        bundle = create_report_bundle(
+            output_dir=self.reports_dir,
+            name="lead_score_evidence_pack",
+            markdown=self.last_context,
+            payload={
+                "generated_at": datetime.now(UTC).isoformat(),
+                "source": "validate_lead_score",
+                "evidence": result.get("evidence", {}),
+                "run": result.get("run", {}),
+            },
+        )
+        exports = dict(result.get("exports") or {})
+        exports.update(bundle)
+        result["mode"] = "lead_score_validation"
+        result["exports"] = exports
+        result["message"] = "Lead score suite validated and evidence pack exported."
+        return result
 
     def _validate_api_suite(self, args: list[str]) -> dict[str, object]:
         suite_name = args[0] if args else "whatsapp_validation_pack"
@@ -186,6 +210,7 @@ class SkillExecutor:
             "permission_required": False,
             "message": message,
             "suggested_commands": [
+                "/validate-lead-score",
                 "/validate-algorithm lead_score",
                 "/validate-api-suite whatsapp_validation_pack",
                 "/token-cost provider=xai model=grok-4.3 users=10 requests=20",

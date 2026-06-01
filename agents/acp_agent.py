@@ -26,6 +26,10 @@ AVAILABLE_COMMANDS: list[dict[str, str]] = [
         "description": "Executa uma suite determinística do Algorithm Test Lab e salva evidências.",
     },
     {
+        "name": "/validate-lead-score",
+        "description": "Executa a suite lead_score, verifica invariantes e exporta evidence pack.",
+    },
+    {
         "name": "/token-cost",
         "description": "Calcula estimativa de uso/custo com fonte de pricing documentada.",
     },
@@ -238,7 +242,14 @@ def _normalize_mcp_servers(value: object) -> list[dict[str, object]]:
 
 def _plan_for_prompt(prompt: str) -> list[dict[str, str]]:
     command = prompt.strip().split(" ", 1)[0] if prompt.strip() else "unknown"
-    if command == "/validate-algorithm":
+    if command == "/validate-lead-score":
+        steps = [
+            "Classificar pedido como lead score",
+            "Executar suite lead_score",
+            "Verificar invariantes",
+            "Exportar evidence pack",
+        ]
+    elif command == "/validate-algorithm":
         steps = ["Classificar pedido como algoritmo", "Executar suite", "Salvar evidência", "Exportar contexto"]
     elif command == "/validate-api-suite":
         steps = ["Classificar pedido como API", "Verificar permissão", "Executar dry-run", "Exportar contexto"]

@@ -193,6 +193,7 @@ Suggested ACP-facing capabilities:
 Implemented ACP prompt commands:
 
 - `/validate-api-suite whatsapp_validation_pack`
+- `/validate-lead-score`
 - `/validate-algorithm lead_score`
 - `/token-cost provider=xai model=grok-4.3 users=10 requests=20`
 - `/build-context`
@@ -296,18 +297,19 @@ Preferred output:
 
 ### Lead/Score Algorithm ACP Practice
 
-Use this stricter path whenever the prompt mentions lead score, score-based routing, WhatsApp lead qualification, lead status, conversion score or `/validate-algorithm lead_score`.
+Use this stricter path whenever the prompt mentions lead score, score-based routing, WhatsApp lead qualification, lead status, conversion score, `/validate-lead-score` or `/validate-algorithm lead_score`.
 
 The ACP agent must treat score algorithms as deterministic validation targets, not as creative generation tasks.
 
 Required ACP flow:
 
-1. Advertise `/validate-algorithm lead_score` through `available_commands_update`.
-2. Emit a `plan` with these gates: classify scoring objective, load canonical rules, run required cases, compare expected vs actual, export context.
-3. Execute the suite through Algorithm Test Lab.
-4. Stream result summary through `agent_message_chunk`.
-5. Persist run/results in PostgreSQL.
-6. Return evidence paths and context paths.
+1. Advertise `/validate-lead-score` and `/validate-algorithm lead_score` through `available_commands_update`.
+2. Prefer `/validate-lead-score` for canonical lead qualification validation.
+3. Emit a `plan` with these gates: classify scoring objective, load canonical rules, run required cases, verify invariants, compare expected vs actual, export evidence pack.
+4. Execute the suite through Algorithm Test Lab.
+5. Stream result summary through `agent_message_chunk`.
+6. Persist run/results in PostgreSQL.
+7. Return evidence paths, ZIP bundle path and context paths.
 
 Minimum score test matrix:
 
@@ -325,6 +327,7 @@ Minimum score test matrix:
 
 Score invariants:
 
+- payload is validated before execution
 - score is deterministic for the same input
 - score is clamped between 0 and 100
 - invalid lead status overrides score classification
@@ -351,6 +354,7 @@ Recommended result contract:
   },
   "diff": {},
   "invariants": {
+    "payload_validated": true,
     "deterministic": true,
     "score_clamped": true,
     "invalid_override_checked": true

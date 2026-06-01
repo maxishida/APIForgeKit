@@ -8,7 +8,7 @@ from uuid import uuid4
 from sqlalchemy import desc, select
 from sqlalchemy.orm import Session, sessionmaker
 
-from core.lead_algorithm import LeadInput, calculate_lead_score
+from core.lead_algorithm import LeadInput, SPAM_PATTERNS, calculate_lead_score
 from core.models import AlgorithmDefinition, AlgorithmTestCase, AlgorithmTestResult, AlgorithmTestRun
 
 
@@ -589,12 +589,18 @@ class AlgorithmTestRunner:
         definition = self.repository.get_definition(str(case["algorithm_id"]))
         started = perf_counter()
         error = None
+        invariants: dict[str, object] = _failed_invariants()
         try:
             actual = run_algorithm(str(definition["name"]), dict(case["input_payload"]))
             diff = validate_expected_output(dict(case["expected_output"]), actual)
+            invariants = _algorithm_invariants(str(definition["name"]), dict(case["input_payload"]), actual)
+            invariant_mismatches = _invariant_mismatches(invariants)
+            if invariant_mismatches:
+                diff = {"passed": False, "mismatches": [*diff.get("mismatches", []), *invariant_mismatches]}
         except Exception as exc:  # noqa: BLE001 - invalid algorithm input is evidence, not a crash
             actual = {}
             error = str(exc)
+            invariants = _failed_invariants()
             diff = {
                 "passed": False,
                 "mismatches": [{"field": "input_payload", "expected": "valid lead_score payload", "actual": error}],
@@ -615,6 +621,7 @@ class AlgorithmTestRunner:
             "expected": case["expected_output"],
             "actual": actual,
             "diff": diff,
+            "invariants": invariants,
             "recommendation": recommendation,
             "error": error if error else (None if status == "passed" else "Expected output mismatch"),
         }
@@ -670,6 +677,46 @@ def run_algorithm(name: str, input_payload: dict[str, object]) -> dict[str, obje
     result = calculate_lead_score(lead).to_dict()
     result["classification"] = result["status"]
     return result
+
+
+def _algorithm_invariants(name: str, input_payload: dict[str, object], actual: dict[str, object]) -> dict[str, object]:
+    if name != "lead_score":
+        return {}
+    second = run_algorithm(name, dict(input_payload))
+    stable_fields = ("score", "status", "classification", "reasons", "recommended_action", "nextjs_impact")
+    deterministic = {field: actual.get(field) for field in stable_fields} == {
+        field: second.get(field) for field in stable_fields
+    }
+    score = actual.get("score")
+    message = str(input_payload.get("message") or "")
+    normalized_message = message.strip().lower()
+    invalid_expected = not message.strip() or any(pattern in normalized_message for pattern in SPAM_PATTERNS)
+    invalid_override_checked = not invalid_expected or (
+        actual.get("classification") == "invalid_lead" and actual.get("score") == 0
+    )
+    return {
+        "payload_validated": True,
+        "deterministic": deterministic,
+        "score_clamped": isinstance(score, int) and 0 <= score <= 100,
+        "invalid_override_checked": invalid_override_checked,
+    }
+
+
+def _failed_invariants() -> dict[str, object]:
+    return {
+        "payload_validated": False,
+        "deterministic": False,
+        "score_clamped": False,
+        "invalid_override_checked": False,
+    }
+
+
+def _invariant_mismatches(invariants: dict[str, object]) -> list[dict[str, object]]:
+    return [
+        {"field": f"invariant.{name}", "expected": True, "actual": value}
+        for name, value in invariants.items()
+        if value is not True
+    ]
 
 
 def _validate_required_fields(payload: dict[str, object], required_fields: list[object]) -> None:

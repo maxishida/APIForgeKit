@@ -53,6 +53,9 @@ def test_default_lead_score_suite_runs_all_seed_cases_and_persists_results():
     assert run["failed"] == 0
     assert len(results) == len(cases)
     assert all(result["structured_log"]["algorithm"] == "lead_score" for result in results)
+    assert all(result["structured_log"]["invariants"]["payload_validated"] is True for result in results)
+    assert all(result["structured_log"]["invariants"]["score_clamped"] is True for result in results)
+    assert all(result["structured_log"]["invariants"]["deterministic"] is True for result in results)
     assert {result["actual_output"]["classification"] for result in results} >= {
         "cold_lead",
         "warm_lead",
@@ -142,6 +145,7 @@ def test_single_case_execution_records_validation_error_without_crashing():
     assert run["status"] == "failed"
     assert result["status"] == "failed"
     assert result["structured_log"]["error"]
+    assert result["structured_log"]["invariants"]["payload_validated"] is False
     assert result["diff"]["mismatches"][0]["field"] == "input_payload"
 
 

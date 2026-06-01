@@ -52,13 +52,13 @@ Gera relatório técnico
 Quando o usuário validar score de leads via agente/editor, o fluxo deve ser:
 
 ```txt
-/validate-algorithm lead_score
+/validate-lead-score
 ↓
 ACP session/new com cwd absoluto
 ↓
 available_commands_update
 ↓
-plan: classificar, rodar suite, comparar, exportar contexto
+plan: classificar, rodar suite, verificar invariantes, comparar, exportar evidence pack
 ↓
 Algorithm Test Lab
 ↓
@@ -66,7 +66,7 @@ PostgreSQL evidence
 ↓
 agent_message_chunk com resumo
 ↓
-Context Builder
+Context Builder + Lead Score Evidence Pack
 ```
 
 Regra:
@@ -476,9 +476,8 @@ Com:
 ## Próxima entrega recomendada para ficar 100%
 
 1. Exibir invariantes no dashboard do Algorithm Test Lab.
-2. Criar comando ACP dedicado `/validate-lead-score`.
-3. Adicionar export "Lead Score Evidence Pack".
-4. Criar tela comparativa de regras: origem, urgência, interesse, contato, histórico e penalidades.
-5. Adicionar benchmark local com média, p95 e maior latência.
-6. Publicar exemplos JSON em GitHub para usuários copiarem e adaptarem.
-7. Adicionar import/export pela UI, não apenas pelas funções core/CLI.
+2. Criar tela comparativa de regras: origem, urgência, interesse, contato, histórico e penalidades.
+3. Adicionar benchmark local com média, p95 e maior latência.
+4. Publicar exemplos JSON em GitHub para usuários copiarem e adaptarem.
+5. Adicionar import/export pela UI, não apenas pelas funções core/CLI.
+6. Criar versionamento de pesos para comparar `lead_score` V1, V2 e experimentos.

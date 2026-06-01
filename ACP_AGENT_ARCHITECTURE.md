@@ -152,6 +152,7 @@ Protocol behavior implemented in the seed:
 Supported prompt commands:
 
 - `/validate-api-suite whatsapp_validation_pack`
+- `/validate-lead-score`
 - `/validate-algorithm lead_score`
 - `/token-cost provider=xai model=grok-4.3 users=10 requests=20 input=1000 output=500 days=30`
 - `/build-context`
@@ -162,11 +163,11 @@ Supported prompt commands:
 For score-based lead algorithms, ACP should behave like a validation harness:
 
 ```txt
-/validate-algorithm lead_score
+/validate-lead-score
 ↓
 available_commands_update
 ↓
-plan: classify, run suite, compare, export context
+plan: classify, run suite, verify invariants, compare, export evidence pack
 ↓
 Algorithm Test Lab
 ↓
@@ -183,10 +184,11 @@ Required evidence:
 - expected output JSON
 - actual output JSON
 - diff
+- invariants: payload validated, deterministic output, clamped score and invalid override
 - pass/fail status
 - deterministic score and classification
 - reasons for every score contribution or penalty
-- context path for future implementation
+- context path and evidence pack path for future implementation
 
 Permission rules:
 
