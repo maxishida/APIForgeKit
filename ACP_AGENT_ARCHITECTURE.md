@@ -157,6 +157,43 @@ Supported prompt commands:
 - `/build-context`
 - `/export-evidence`
 
+## Lead Score ACP Best Practice
+
+For score-based lead algorithms, ACP should behave like a validation harness:
+
+```txt
+/validate-algorithm lead_score
+↓
+available_commands_update
+↓
+plan: classify, run suite, compare, export context
+↓
+Algorithm Test Lab
+↓
+PostgreSQL evidence
+↓
+agent_message_chunk with summary
+↓
+Context Builder output
+```
+
+Required evidence:
+
+- input JSON
+- expected output JSON
+- actual output JSON
+- diff
+- pass/fail status
+- deterministic score and classification
+- reasons for every score contribution or penalty
+- context path for future implementation
+
+Permission rules:
+
+- no permission needed for local deterministic suite execution
+- permission required for external APIs, provider calls, private PII enrichment or file writes outside `exports/`
+- Next.js implementation remains blocked until Context Builder has evidence
+
 Safety defaults:
 
 - HTTP real requires permission.

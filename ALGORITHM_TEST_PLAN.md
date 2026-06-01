@@ -15,6 +15,8 @@ Status atual:
 - API harness genérico implementado em `/api-test-lab`.
 - Import/export de suites JSON.
 - Dashboard de evidência com pass/fail, score e latência.
+- ACP Skill Executor disponível em `npm run acp`.
+- Boas práticas ACP para score/leads documentadas em `SKILL.md` e `ACP_AGENT_ARCHITECTURE.md`.
 
 O usuário deve conseguir entender:
 
@@ -41,6 +43,35 @@ Vê motivos e JSON completo
 Compara comportamento esperado x real
 ↓
 Gera relatório técnico
+```
+
+## Fluxo ACP para lead score
+
+Quando o usuário validar score de leads via agente/editor, o fluxo deve ser:
+
+```txt
+/validate-algorithm lead_score
+↓
+ACP session/new com cwd absoluto
+↓
+available_commands_update
+↓
+plan: classificar, rodar suite, comparar, exportar contexto
+↓
+Algorithm Test Lab
+↓
+PostgreSQL evidence
+↓
+agent_message_chunk com resumo
+↓
+Context Builder
+```
+
+Regra:
+
+```txt
+ACP não implementa Next.js.
+ACP executa validação, coleta evidência e entrega contexto técnico.
 ```
 
 ## Tipos de algoritmo que o Studio deve suportar
@@ -189,6 +220,19 @@ Casos iniciais para Lead Score:
 - lead de WhatsApp
 - cliente recorrente
 
+Casos de borda obrigatórios para V2:
+
+- score 30 deve continuar `cold_lead`
+- score 31 deve virar `warm_lead`
+- score 60 deve continuar `warm_lead`
+- score 61 deve virar `hot_lead`
+- score 80 deve continuar `hot_lead`
+- score 81 deve virar `urgent_lead`
+- alta intenção sem contato deve aplicar penalidade
+- cliente anterior com baixa intenção deve continuar explicável pelos motivos
+- mensagem inválida deve sobrescrever qualquer score
+- spam deve sobrescrever qualquer score
+
 Critério de aceite:
 
 - A suíte gera múltiplos eventos.
@@ -279,6 +323,17 @@ Critério de aceite:
 
 - O usuário consegue decidir se o algoritmo está pronto.
 
+Métricas que devem aparecer para uma demo gravável:
+
+- total de testes executados
+- total passed/failed
+- taxa de aprovação
+- score médio
+- latência média
+- última execução
+- distribuição por classificação
+- casos com diff
+
 ## Fase 7 - Context Builder para algoritmo
 
 Gerar contexto técnico com:
@@ -314,6 +369,15 @@ Critério de aceite:
 - O contexto pode ser colado em uma IA para pedir implementação de site, API ou SaaS.
 
 ## Primeira suíte recomendada: Lead Score
+
+Invariantes obrigatórios:
+
+- mesmo input gera mesmo output
+- score fica entre 0 e 100
+- `invalid_lead` tem prioridade sobre qualquer pontuação
+- cada ponto positivo ou penalidade aparece em `reasons`
+- diff esperado x recebido reprova o caso
+- nenhuma LLM decide o score no MVP determinístico
 
 ### Caso 1 - Lead quente
 
@@ -405,3 +469,13 @@ Com:
 - validação por JSONPath
 - packs prontos para WhatsApp, Stripe, Supabase e CRMs
 - relatórios comparando custo/token por algoritmo quando usar LLM
+
+## Próxima entrega recomendada para ficar 100%
+
+1. Adicionar os casos de borda da classificação no seed `lead_score`.
+2. Exibir invariantes no dashboard do Algorithm Test Lab.
+3. Criar comando ACP dedicado `/validate-lead-score`.
+4. Adicionar export "Lead Score Evidence Pack".
+5. Criar tela comparativa de regras: origem, urgência, interesse, contato, histórico e penalidades.
+6. Adicionar benchmark local com média, p95 e maior latência.
+7. Publicar exemplos JSON em GitHub para usuários copiarem e adaptarem.

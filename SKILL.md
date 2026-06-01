@@ -294,6 +294,86 @@ Preferred output:
 }
 ```
 
+### Lead/Score Algorithm ACP Practice
+
+Use this stricter path whenever the prompt mentions lead score, score-based routing, WhatsApp lead qualification, lead status, conversion score or `/validate-algorithm lead_score`.
+
+The ACP agent must treat score algorithms as deterministic validation targets, not as creative generation tasks.
+
+Required ACP flow:
+
+1. Advertise `/validate-algorithm lead_score` through `available_commands_update`.
+2. Emit a `plan` with these gates: classify scoring objective, load canonical rules, run required cases, compare expected vs actual, export context.
+3. Execute the suite through Algorithm Test Lab.
+4. Stream result summary through `agent_message_chunk`.
+5. Persist run/results in PostgreSQL.
+6. Return evidence paths and context paths.
+
+Minimum score test matrix:
+
+- cold lead
+- warm lead
+- hot lead
+- urgent lead
+- invalid empty message
+- spam message
+- no contact penalty
+- previous customer with high intent
+- boundary scores: 30, 31, 60, 61, 80, 81
+- conflicting signals: high intent but no contact, low intent but previous customer
+
+Score invariants:
+
+- score is deterministic for the same input
+- score is clamped between 0 and 100
+- invalid lead status overrides score classification
+- every score contribution has a reason
+- penalties are visible in reasons and diff
+- expected vs actual mismatch is a failed test, not a warning
+- no LLM decides classification
+
+Recommended result contract:
+
+```json
+{
+  "algorithm": "lead_score",
+  "status": "passed",
+  "input": {},
+  "expected": {
+    "score": 85,
+    "classification": "urgent_lead"
+  },
+  "actual": {
+    "score": 85,
+    "classification": "urgent_lead",
+    "reasons": []
+  },
+  "diff": {},
+  "invariants": {
+    "deterministic": true,
+    "score_clamped": true,
+    "invalid_override_checked": true
+  },
+  "recommendation": "Ready for Context Builder"
+}
+```
+
+ACP metadata should include:
+
+- `_meta.apiforgekit.sessionId`
+- `_meta.apiforgekit.algorithm`
+- `_meta.apiforgekit.runId` when available
+- `_meta.apiforgekit.evidencePath` when available
+
+Stop conditions for lead/score work:
+
+- expected output is missing
+- case cannot be reproduced
+- rules are ambiguous
+- PostgreSQL is offline for a run that must be persisted
+- user asks for Next.js implementation before context exists
+- user asks for model/LLM scoring in the deterministic MVP
+
 Open source tutorial:
 
 ```txt
