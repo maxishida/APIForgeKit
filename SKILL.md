@@ -152,7 +152,7 @@ Rules:
 - use `seeded_estimate` for local catalog estimates
 - use `docs_verified` only after checking current official pricing docs
 - never present seeded pricing as billing truth
-- include source URL
+- include source URL and verification timestamp when `docs_verified`
 - recommend Context Builder to shrink prompts before implementation
 
 Provider pricing docs:

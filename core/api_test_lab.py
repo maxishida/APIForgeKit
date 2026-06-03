@@ -462,6 +462,10 @@ def export_api_suite(repository: ApiTestRepository, suite_id: str, output_dir: s
 
 def import_api_suite(repository: ApiTestRepository, path: str | Path) -> dict[str, object]:
     payload = json.loads(Path(path).read_text(encoding="utf-8"))
+    return import_api_suite_payload(repository, payload)
+
+
+def import_api_suite_payload(repository: ApiTestRepository, payload: dict[str, object]) -> dict[str, object]:
     source_suite = payload["api_test_suites"][0]
     try:
         suite = repository.get_suite_by_name(str(source_suite["name"]))

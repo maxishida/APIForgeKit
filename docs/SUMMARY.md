@@ -15,9 +15,10 @@ A raiz do repositório deve ficar simples:
 4. [MVP 100% Checklist](./MVP_100_PERCENT_CHECKLIST.md): checklist antes de apresentação/release.
 5. [MVP Feature Test Report](./MVP_FEATURE_TEST_REPORT.md): sequência de testes e backlog de otimização.
 6. [System Diagram](./SYSTEM_DIAGRAM.md): fluxo completo de ACP/SKILL até Evidence Pack.
-7. [Workflow](./workflow.md): fluxo `teste -> logs -> evidências -> contexto`.
-8. [Architecture](./architecture.md): arquitetura local-first com NiceGUI, PostgreSQL e labs.
-9. [Implementation Checklist](./IMPLEMENTATION_CHECKLIST.md): o que já existe e como testar.
+7. [Demo Script](./DEMO_SCRIPT.md): roteiro curto para vídeo, onboarding e validação visual.
+8. [Workflow](./workflow.md): fluxo `teste -> logs -> evidências -> contexto`.
+9. [Architecture](./architecture.md): arquitetura local-first com NiceGUI, PostgreSQL e labs.
+10. [Implementation Checklist](./IMPLEMENTATION_CHECKLIST.md): o que já existe e como testar.
 
 ## Labs
 
@@ -63,6 +64,14 @@ O `Context Builder` agora mostra readiness antes do export:
 - `Has failures`: existem diffs ou erros a corrigir.
 
 Use `Algorithm + API` quando quiser validar uma futura feature de SaaS com regra de negócio e payload externo; use `Algorithm only` para score/regras determinísticas; use `API only` para webhooks/endpoints.
+
+Para conferir a UI durante release local, rode a app e execute:
+
+```bash
+npm run ui:smoke
+```
+
+Para custo de tokens, `docs_verified` exige conferência manual na fonte oficial e salva `pricing_verified_at` + `pricing_verified_source_url` no histórico.
 
 ## Fluxo recomendado para agentes
 

@@ -15,6 +15,7 @@ Use este checklist antes de apresentação, release ou gravação.
 - [ ] `python -m compileall app.py core ui agents run_algorithm_lab.py run_acp_prompt.py` passa.
 - [ ] `git diff --check` passa.
 - [ ] `npm run algorithm:suite` passa com 17/17 casos.
+- [ ] Com a UI rodando, `npm run ui:smoke` retorna HTTP 200 para as páginas principais.
 
 ## Labs
 
@@ -23,7 +24,10 @@ Use este checklist antes de apresentação, release ou gravação.
 - [ ] Generic API Lab separa `Run Contract Dry-run` de `Run Real HTTP`.
 - [ ] `Run Real HTTP` exige confirmação e URL `http://` ou `https://`.
 - [ ] Token Calculator mostra `pricing_mode=seeded_estimate` ou `docs_verified`.
+- [ ] `docs_verified` grava `pricing_verified_at` e `pricing_verified_source_url`.
+- [ ] Generic API Lab importa suite JSON pelo wizard visual.
 - [ ] Live Dashboard registra `real_http` quando provider real roda.
+- [ ] Live Dashboard mostra Evidence Modes, P95 Latency, Recent Failures e Last Event.
 - [ ] Voice/Agents aparecem como `blocked` até V2.
 
 ## Contexto e logs
@@ -49,3 +53,4 @@ Use este checklist antes de apresentação, release ou gravação.
 - [ ] SKILL está alinhado com evidência antes de implementação.
 - [ ] `docs/MVP_100_PERCENT_MAP.md` está atualizado.
 - [ ] `docs/SYSTEM_DIAGRAM.md` mostra ACP, SKILL, labs, PostgreSQL, Context Builder e Evidence Pack.
+- [ ] `docs/DEMO_SCRIPT.md` guia a demo sem chamar dry-run de API real.

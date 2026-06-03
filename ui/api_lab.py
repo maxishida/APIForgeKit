@@ -4,12 +4,46 @@ import json
 
 from nicegui import ui
 
-from core.api_test_lab import ApiTestRunner, ensure_default_api_suites, export_api_suite
+from core.api_test_lab import ApiTestRunner, ensure_default_api_suites, export_api_suite, import_api_suite_payload
 from core.database import database_status
 from ui.components.alerts import db_offline, empty_state
 from ui.components.badges import evidence_badge
 from ui.components.cards import metric_card
 from ui.components.charts import result_latency_bar, result_status_donut
+
+
+API_IMPORT_WIZARD_COPY = [
+    "Paste suite JSON",
+    "Validate JSON",
+    "Import suite",
+]
+
+API_IMPORT_EXAMPLE = {
+    "api_test_suites": [
+        {
+            "name": "custom_contract_pack",
+            "provider": "custom_api",
+            "description": "Dry-run contract suite imported through APIForgeKit Studio.",
+            "docs_url": "https://example.com/docs",
+            "tags": ["contract", "imported"],
+        }
+    ],
+    "api_test_cases": [
+        {
+            "name": "valid contract response",
+            "method": "POST",
+            "url": "dry-run://custom/validate",
+            "headers": {"Content-Type": "application/json"},
+            "body": {"lead_id": "lead_123", "message": "Quero orçamento hoje"},
+            "expected": {"status_code": 200, "json_contains": {"ok": True}},
+            "dry_run": True,
+            "mock_response": {"status_code": 200, "json": {"ok": True}, "text": "{\"ok\": true}"},
+            "timeout_seconds": 20,
+            "tags": ["contract"],
+            "enabled": True,
+        }
+    ],
+}
 
 
 def render_api_lab(services) -> None:
@@ -109,6 +143,52 @@ def render_api_lab(services) -> None:
                     on_click=lambda: save_case(suite, case_name.value, method.value, url.value, headers.value, body.value, expected.value, dry_run.value, mock.value),
                 ).classes("afk-ghost-btn")
                 ui.button("Executar caso", icon="play_arrow", on_click=lambda: run_single(selected_case.value, case_options)).classes("afk-primary-btn")
+
+            with ui.expansion("Import Suite JSON", icon="upload_file").classes("w-full"):
+                ui.label("Cole um contrato exportado pelo APIForgeKit ou por outro harness compatível. Dry-run continua rotulado como contrato.").classes(
+                    "afk-muted"
+                )
+                import_payload = ui.textarea(
+                    "Paste suite JSON",
+                    value=json.dumps(API_IMPORT_EXAMPLE, ensure_ascii=False, indent=2),
+                ).classes("w-full")
+                import_status = ui.label("").classes("afk-muted")
+
+                def validate_import_payload() -> dict[str, object] | None:
+                    try:
+                        payload = json.loads(import_payload.value or "{}")
+                        if not isinstance(payload.get("api_test_suites"), list) or not payload["api_test_suites"]:
+                            raise ValueError("api_test_suites deve conter pelo menos uma suite.")
+                        if not isinstance(payload.get("api_test_cases"), list):
+                            raise ValueError("api_test_cases deve ser uma lista.")
+                        import_status.text = f"JSON válido: {len(payload['api_test_cases'])} casos prontos para import."
+                        import_status.update()
+                        ui.notify("JSON validado.", type="positive")
+                        return payload
+                    except Exception as exc:  # noqa: BLE001 - surfaced to the UI
+                        import_status.text = f"JSON inválido: {exc}"
+                        import_status.update()
+                        ui.notify(f"JSON inválido: {exc}", type="negative")
+                        return None
+
+                def import_suite_from_text() -> None:
+                    payload = validate_import_payload()
+                    if payload is None:
+                        return
+                    try:
+                        imported = import_api_suite_payload(services.api_test_repository, payload)
+                        suite_by_name[str(imported["name"])] = imported
+                        selected_suite.options = list(suite_by_name)
+                        selected_suite.value = str(imported["name"])
+                        selected_suite.update()
+                        ui.notify(f"Suite importada: {imported['name']}", type="positive")
+                        refresh_all()
+                    except Exception as exc:  # noqa: BLE001
+                        ui.notify(f"Erro ao importar: {exc}", type="negative")
+
+                with ui.row().classes("gap-3"):
+                    ui.button("Validate JSON", icon="fact_check", on_click=validate_import_payload).classes("afk-ghost-btn")
+                    ui.button("Import suite", icon="upload_file", on_click=import_suite_from_text).classes("afk-primary-btn")
 
     def render_results() -> None:
         results = services.api_test_repository.list_results(limit=100)

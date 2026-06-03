@@ -20,3 +20,13 @@ def test_token_calculator_exposes_pricing_modes_and_context_savings_copy():
     wizard_text = " ".join(step["help"] for step in token_calculator.TOKEN_WIZARD_STEPS)
     assert "Context Builder savings" in wizard_text
     assert "docs_verified" in wizard_text
+
+
+def test_token_calculator_declares_pricing_audit_fields():
+    assert token_calculator.PRICING_AUDIT_FIELDS == [
+        "pricing_verified_at",
+        "pricing_verified_source_url",
+    ]
+    wizard_text = " ".join(step["help"] for step in token_calculator.TOKEN_WIZARD_STEPS)
+    assert "verification timestamp" in wizard_text
+    assert "source URL" in wizard_text

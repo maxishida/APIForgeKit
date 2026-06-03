@@ -22,10 +22,15 @@ PRICING_MODE_OPTIONS = {
     "docs_verified": "Docs verified",
 }
 
+PRICING_AUDIT_FIELDS = [
+    "pricing_verified_at",
+    "pricing_verified_source_url",
+]
+
 TOKEN_WIZARD_STEPS = [
     {
         "label": "1. Pricing Source",
-        "help": "Escolha provider/modelo, abra a fonte oficial e marque docs_verified somente depois de conferir o documento.",
+        "help": "Escolha provider/modelo, abra a fonte oficial e marque docs_verified somente depois de conferir source URL; o save grava verification timestamp.",
     },
     {
         "label": "2. Usage Volume",
@@ -82,6 +87,7 @@ def render_token_calculator(services) -> None:
                 provider = ui.select(list(options), value="xai", label="Provider").classes("w-full")
                 model = ui.select(options["xai"], value=options["xai"][0], label="Modelo").classes("w-full")
                 pricing_mode = ui.select(list(PRICING_MODE_OPTIONS), value="seeded_estimate", label="Pricing mode").classes("w-full")
+            verified_source = ui.input("Pricing source URL", value=get_pricing("xai", options["xai"][0]).source_url).classes("w-full")
             with ui.row().classes("items-center gap-3"):
                 provider_badge = ui.html("")
                 ui.button(
@@ -145,8 +151,13 @@ def render_token_calculator(services) -> None:
     def sync_models() -> None:
         model.options = options[str(provider.value)]
         model.value = options[str(provider.value)][0]
+        sync_pricing_source()
         model.update()
         refresh_all()
+
+    def sync_pricing_source() -> None:
+        verified_source.value = get_pricing(str(provider.value), str(model.value)).source_url
+        verified_source.update()
 
     def render_pricing() -> None:
         pricing = get_pricing(str(provider.value), str(model.value))
@@ -162,6 +173,7 @@ def render_token_calculator(services) -> None:
                 metric_card("Cached", f"${pricing.cached_input_per_million}", "/1M tokens", "#2563EB")
                 metric_card("Output", f"${pricing.output_per_million}", "/1M tokens", "#F59E0B")
             ui.link("Abrir documentação oficial de preço", pricing.source_url, new_tab=True).classes("afk-neon")
+            ui.label(f"Fonte registrada no histórico: {verified_source.value or pricing.source_url}").classes("afk-muted")
             ui.label(pricing.notes).classes("afk-muted")
         provider_badge.set_content(f"<span class='afk-badge' style='color:{ACCENT_BY_PROVIDER.get(str(provider.value), '#00D4FF')}'>{provider.value}</span>")
 
@@ -176,6 +188,7 @@ def render_token_calculator(services) -> None:
             requests_per_user_per_day=int(requests_per_day.value or 0),
             days=int(days.value or 30),
             pricing_mode=str(pricing_mode.value or "seeded_estimate"),
+            pricing_verified_source_url=str(verified_source.value or ""),
         )
 
     def current_savings() -> dict[str, object]:
@@ -257,6 +270,7 @@ def render_token_calculator(services) -> None:
                         {"field": "provider", "headerName": "Provider", "sortable": True, "filter": True, "width": 120},
                         {"field": "model", "headerName": "Model", "sortable": True, "filter": True, "flex": 1},
                         {"field": "pricing_mode", "headerName": "Pricing Mode", "sortable": True, "filter": True, "width": 160},
+                        {"field": "pricing_verified_at", "headerName": "Verified At", "sortable": True, "filter": True, "width": 180},
                         {"field": "users", "headerName": "Users", "sortable": True, "filter": "agNumberColumnFilter", "width": 110},
                         {"field": "estimated_cost_usd", "headerName": "Cost", "sortable": True, "filter": "agNumberColumnFilter", "width": 120},
                         {"field": "total_tokens", "headerName": "Tokens", "sortable": True, "filter": "agNumberColumnFilter", "width": 130},
@@ -270,8 +284,9 @@ def render_token_calculator(services) -> None:
             ).classes("w-full").style("height:300px")
 
     provider.on_value_change(lambda _: sync_models())
-    model.on_value_change(lambda _: refresh_all())
+    model.on_value_change(lambda _: (sync_pricing_source(), refresh_all()))
     pricing_mode.on_value_change(lambda _: refresh_all())
+    verified_source.on_value_change(lambda _: refresh_all())
     for control in (users, requests_per_day, days, input_tokens, cached_tokens, output_tokens, raw_context, structured_context, repeated_calls):
         control.on_value_change(lambda _: refresh_all())
     refresh_all()
@@ -282,4 +297,6 @@ def _history_row(row: dict[str, object]) -> dict[str, object]:
     summary = row.get("summary") if isinstance(row.get("summary"), dict) else {}
     enriched = dict(row)
     enriched["pricing_mode"] = summary.get("pricing_mode", "seeded_estimate")
+    enriched["pricing_verified_at"] = summary.get("pricing_verified_at", "")
+    enriched["pricing_verified_source_url"] = summary.get("pricing_verified_source_url", "")
     return enriched

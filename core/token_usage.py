@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
+from datetime import UTC, datetime
 from uuid import uuid4
 
 from sqlalchemy import desc, select
@@ -186,9 +187,16 @@ def calculate_token_cost(
     requests_per_user_per_day: int = 1,
     days: int = 30,
     pricing_mode: str = "seeded_estimate",
+    pricing_verified_source_url: str = "",
+    pricing_verified_at: str | None = None,
 ) -> dict[str, object]:
     pricing = get_pricing(provider, model)
     pricing_mode = pricing_mode if pricing_mode in {"seeded_estimate", "docs_verified"} else "seeded_estimate"
+    verified_source_url = ""
+    verified_at = ""
+    if pricing_mode == "docs_verified":
+        verified_source_url = pricing_verified_source_url or pricing.source_url
+        verified_at = pricing_verified_at or datetime.now(UTC).isoformat()
     users = max(int(users), 1)
     requests_per_user_per_day = max(int(requests_per_user_per_day), 0)
     days = max(int(days), 1)
@@ -228,6 +236,8 @@ def calculate_token_cost(
         "cost_per_user_usd": round(total_cost / users, 6),
         "cost_per_request_usd": round(total_cost / total_requests, 8) if total_requests else 0,
         "pricing_mode": pricing_mode,
+        "pricing_verified_source_url": verified_source_url,
+        "pricing_verified_at": verified_at,
         "pricing": asdict(pricing),
         "source_url": pricing.source_url,
         "recommendation": _usage_recommendation(total_cost, users, total_requests),
@@ -319,7 +329,8 @@ def build_token_usage_context(repository: TokenUsageRepository, limit: int = 50)
             f"- `{estimate['provider']}/{estimate['model']}` users={estimate['users']} "
             f"requests_day={estimate['requests_per_user_per_day']} tokens={estimate['total_tokens']} "
             f"cost=${estimate['estimated_cost_usd']} pricing_mode={estimate.get('summary', {}).get('pricing_mode', 'seeded_estimate')} "
-            f"source={estimate['source_url']}"
+            f"verified_at={estimate.get('summary', {}).get('pricing_verified_at', '') or 'n/a'} "
+            f"source={estimate.get('summary', {}).get('pricing_verified_source_url') or estimate['source_url']}"
         )
     return f"""# Contexto Técnico - Token Usage Calculator
 

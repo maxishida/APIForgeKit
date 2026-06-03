@@ -23,6 +23,15 @@ STATUS_COLORS = {
     "pending": "#9CA3AF",
 }
 
+DASHBOARD_SIGNAL_CARDS = [
+    {"label": "Evidence Modes", "caption": "Real/dry/seed/blocked mix"},
+    {"label": "P95 Latency", "caption": "Cauda de latência dos eventos filtrados"},
+    {"label": "Recent Failures", "caption": "Falhas e bloqueios recentes"},
+    {"label": "Last Event", "caption": "Última telemetria recebida"},
+]
+
+LIVE_DASHBOARD_EMPTY_STATE_COPY = "Nenhum evento encontrado para os filtros atuais."
+
 
 def render_live_dashboard(services) -> None:
     status = database_status(services.engine)
@@ -34,6 +43,7 @@ def render_live_dashboard(services) -> None:
         return
 
     metrics_container = ui.grid(columns=4).classes("w-full gap-4")
+    signal_container = ui.grid(columns=4).classes("w-full gap-4")
     controls_container = ui.column().classes("afk-card w-full gap-4").style("padding:18px;")
     charts_container = ui.grid(columns=2).classes("w-full gap-4")
     stream_container = ui.column().classes("afk-card w-full gap-3").style("padding:18px;")
@@ -76,6 +86,14 @@ def render_live_dashboard(services) -> None:
             metric_card("Tempo Médio", f"{metrics['average_time_ms']} ms", "Duração média observada", "#2563EB")
             metric_card("Requests", metrics["requests"], "Chamadas registradas", "#00D4FF")
             metric_card("Tokens / Custo", f"{metrics['tokens']} / ${metrics['estimated_cost']}", "Telemetria estimada", "#10B981")
+
+        signals = _signal_metrics(filtered_events)
+        signal_container.clear()
+        with signal_container:
+            metric_card("Evidence Modes", signals["evidence_modes"], "Real/dry/seed/blocked mix", "#00D4FF")
+            metric_card("P95 Latency", signals["p95_latency"], "Eventos filtrados", "#F59E0B")
+            metric_card("Recent Failures", signals["recent_failures"], "failed + blocked", "#EF4444")
+            metric_card("Last Event", signals["last_event"], "Telemetria mais recente", "#10B981")
 
         charts_container.clear()
         with charts_container:
@@ -178,7 +196,7 @@ def _render_event_stream(events: list[dict[str, object]], runner_state: dict[str
         ui.html(f"<div style='color:#EF4444;font-size:13px'>{escape(str(runner_state['last_error']))}</div>")
 
     if not events:
-        ui.label("Nenhum evento encontrado para os filtros atuais.").classes("afk-muted")
+        ui.label(LIVE_DASHBOARD_EMPTY_STATE_COPY).classes("afk-muted")
         return
 
     for event in reversed(events[:80]):
@@ -227,3 +245,42 @@ def _format_time(value: str) -> str:
         return datetime.fromisoformat(value).strftime("%H:%M:%S")
     except ValueError:
         return "--:--:--"
+
+
+def _signal_metrics(events: list[dict[str, object]]) -> dict[str, object]:
+    modes: dict[str, int] = {}
+    latencies: list[float] = []
+    failures = 0
+    last_timestamp = ""
+    for event in events:
+        mode = str(event.get("evidence_mode") or "unknown")
+        modes[mode] = modes.get(mode, 0) + 1
+        latency = float(event.get("latency_ms") or 0)
+        if latency > 0:
+            latencies.append(latency)
+        if str(event.get("status")) in {"failed", "blocked"}:
+            failures += 1
+        timestamp = str(event.get("timestamp") or "")
+        if timestamp and timestamp > last_timestamp:
+            last_timestamp = timestamp
+    p95 = _percentile(latencies, 95)
+    return {
+        "evidence_modes": _compact_modes(modes),
+        "p95_latency": f"{p95:.2f} ms" if p95 else "0 ms",
+        "recent_failures": failures,
+        "last_event": _format_time(last_timestamp) if last_timestamp else "--:--:--",
+    }
+
+
+def _compact_modes(modes: dict[str, int]) -> str:
+    if not modes:
+        return "none"
+    return " / ".join(f"{key}:{value}" for key, value in sorted(modes.items()))
+
+
+def _percentile(values: list[float], percentile: int) -> float:
+    if not values:
+        return 0.0
+    ordered = sorted(values)
+    index = min(len(ordered) - 1, max(0, round((percentile / 100) * (len(ordered) - 1))))
+    return ordered[index]

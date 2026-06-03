@@ -67,6 +67,7 @@ npm run db:reset        # recria banco local
 npm run dev             # roda app NiceGUI
 npm run test            # roda testes
 npm run algorithm:suite # valida lead_score e exporta evidências
+npm run ui:smoke        # valida rotas principais com a UI rodando
 npm run acp             # inicia executor ACP via stdio
 npm run acp:prompt -- "/validate-lead-score" # smoke local ACP via CLI
 ```
@@ -117,6 +118,8 @@ Exports gerados em `exports/reports/`:
 - Logs: busca, filtros e JSON completo dos eventos.
 - Context Builder: contexto técnico baseado em evidências reais.
 
+No `Token Calculator`, `seeded_estimate` é planejamento local. `docs_verified` só deve ser usado após conferir a fonte oficial; o histórico grava `pricing_verified_at` e `pricing_verified_source_url`.
+
 ## Algorithm Test Lab
 
 O primeiro algoritmo pronto é `lead_score`.
@@ -148,6 +151,20 @@ Rode pela CLI:
 ```bash
 npm run algorithm:suite
 ```
+
+## Demo e smoke UI
+
+Para gravar vídeo ou validar a jornada completa, use o roteiro:
+
+- [docs/DEMO_SCRIPT.md](./docs/DEMO_SCRIPT.md)
+
+Com a UI rodando em `http://127.0.0.1:8080`, valide as rotas principais:
+
+```bash
+npm run ui:smoke
+```
+
+O smoke cobre `/`, `/tutorial`, `/token-calculator`, `/algorithm-test-lab`, `/api-test-lab`, `/context-builder`, `/logs` e `/live-dashboard`.
 
 ## ACP Skill Executor
 
@@ -248,11 +265,12 @@ Leitura recomendada:
 2. [docs/MVP_100_PERCENT_CHECKLIST.md](./docs/MVP_100_PERCENT_CHECKLIST.md)
 3. [docs/MVP_FEATURE_TEST_REPORT.md](./docs/MVP_FEATURE_TEST_REPORT.md)
 4. [docs/SYSTEM_DIAGRAM.md](./docs/SYSTEM_DIAGRAM.md)
-5. [docs/USER_GUIDE.md](./docs/USER_GUIDE.md)
-6. [docs/OPEN_SOURCE_TUTORIAL.md](./docs/OPEN_SOURCE_TUTORIAL.md)
-7. [docs/ALGORITHM_TEST_PLAN.md](./docs/ALGORITHM_TEST_PLAN.md)
-8. [docs/ACP_AGENT_ARCHITECTURE.md](./docs/ACP_AGENT_ARCHITECTURE.md)
-9. [docs/IMPLEMENTATION_CHECKLIST.md](./docs/IMPLEMENTATION_CHECKLIST.md)
+5. [docs/DEMO_SCRIPT.md](./docs/DEMO_SCRIPT.md)
+6. [docs/USER_GUIDE.md](./docs/USER_GUIDE.md)
+7. [docs/OPEN_SOURCE_TUTORIAL.md](./docs/OPEN_SOURCE_TUTORIAL.md)
+8. [docs/ALGORITHM_TEST_PLAN.md](./docs/ALGORITHM_TEST_PLAN.md)
+9. [docs/ACP_AGENT_ARCHITECTURE.md](./docs/ACP_AGENT_ARCHITECTURE.md)
+10. [docs/IMPLEMENTATION_CHECKLIST.md](./docs/IMPLEMENTATION_CHECKLIST.md)
 
 ## Status
 
