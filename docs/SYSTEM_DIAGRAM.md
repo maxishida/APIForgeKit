@@ -6,6 +6,7 @@ Este diagrama mostra o fluxo completo do MVP evidence-first, começando no ACP e
 flowchart LR
     A[ACP Client / CLI / IDE] --> B[agents/acp_agent.py]
     B --> C[SKILL.md Decision Gates]
+    B --> N[ACP protocol_trace audit]
     C --> D[SkillExecutor]
     D --> E{Validation Path}
     E --> F[Algorithm Test Lab]
@@ -16,6 +17,7 @@ flowchart LR
     G --> J
     H --> J
     I --> J
+    N --> J
     J --> K[Dashboard / Logs / Context Builder]
     K --> L[Evidence Pack]
     L --> M[Implementation later]
@@ -68,6 +70,20 @@ flowchart LR
     D --> E[PostgreSQL Evidence Store]
     E --> F[Live Dashboard]
     F --> G[Context Builder]
+```
+
+## ACP Audit
+
+```mermaid
+flowchart LR
+    A[ACP initialize/session/new/session/prompt] --> B[Protocol gates]
+    B --> C[session_prompt]
+    B --> D[prompt_response]
+    B --> E[permission_requested]
+    C --> F[acp_events]
+    D --> F
+    E --> F
+    F --> G[Context Builder: ACP Evidence]
 ```
 
 ## Operating Rule

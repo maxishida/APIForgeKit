@@ -63,7 +63,7 @@ O `Context Builder` agora mostra readiness antes do export:
 - `Needs tests`: faltam suites/evidências.
 - `Has failures`: existem diffs ou erros a corrigir.
 
-Use `Algorithm + API` quando quiser validar uma futura feature de SaaS com regra de negócio e payload externo; use `Algorithm only` para score/regras determinísticas; use `API only` para webhooks/endpoints.
+Use `Algorithm + API` quando quiser validar uma futura feature de SaaS com regra de negócio e payload externo; use `Algorithm only` para score/regras determinísticas; use `API only` para webhooks/endpoints; use `ACP Evidence` para revisar como o harness ACP/CLI/IDE executou a skill.
 
 Para conferir a UI durante release local, rode a app e execute:
 

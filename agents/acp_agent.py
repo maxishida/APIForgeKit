@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from uuid import uuid4
 
+from core.acp_audit import AcpAuditRepository
 from core.algorithm_test_lab import AlgorithmTestRepository
 from core.api_test_lab import ApiTestRepository
 from core.config import get_settings
@@ -57,6 +58,7 @@ class AcpAgent:
         self.sessions: dict[str, AcpSession] = {}
         self.outbox: list[dict[str, object]] = []
         self._executor: SkillExecutor | None = None
+        self._audit_repository: AcpAuditRepository | None = None
 
     def handle_request(self, request: dict[str, object]) -> dict[str, object]:
         request_id = request.get("id")
@@ -114,6 +116,14 @@ class AcpAgent:
             raise ValueError("cwd must be absolute")
         session = AcpSession(session_id=str(uuid4()), cwd=str(path), mcp_servers=mcp_servers)
         self.sessions[session.session_id] = session
+        self._audit_create_session(session)
+        self._audit_event(
+            session.session_id,
+            event_type="session_created",
+            status="success",
+            message="ACP session created.",
+            request={"cwd": str(path), "mcpServers": mcp_servers},
+        )
         self._notify(session.session_id, "available_commands_update", {"availableCommands": AVAILABLE_COMMANDS})
         return session
 
@@ -129,8 +139,24 @@ class AcpAgent:
                 "agent_message_chunk",
                 {"content": _text_content(str(exc))},
             )
+            self._audit_event(
+                session_id,
+                event_type="prompt_response",
+                status="refused",
+                message=str(exc),
+                request={"prompt": prompt},
+                response={"stopReason": "refusal"},
+            )
             return {"stopReason": "refusal", "_meta": _session_meta(session_id)}
         command = _command_name(prompt_text)
+        self._audit_event(
+            session_id,
+            event_type="session_prompt",
+            status="received",
+            command=command,
+            message="Prompt received from ACP client.",
+            request={"prompt": prompt_text},
+        )
         plan_entries = _plan_for_prompt(prompt_text)
         self._notify(session_id, "plan", {"entries": plan_entries})
         self._notify(session_id, "plan", {"entries": _activate_plan_entry(plan_entries, 0)})
@@ -145,6 +171,16 @@ class AcpAgent:
                 session_id,
                 "agent_message_chunk",
                 {"content": _text_content("Permissão necessária antes de executar HTTP real ou provider pago.")},
+            )
+            self._audit_event(
+                session_id,
+                event_type="prompt_response",
+                status="refused",
+                command=command,
+                message="Permission required before executing paid or real HTTP path.",
+                request={"prompt": prompt_text},
+                response={"stopReason": "refusal", "_meta": _permission_meta(session_id, prompt_text, permission)},
+                evidence_mode="blocked",
             )
             return {"stopReason": "refusal", "_meta": _permission_meta(session_id, prompt_text, permission)}
         tool_call_id = str(uuid4())
@@ -178,6 +214,16 @@ class AcpAgent:
                 "agent_message_chunk",
                 {"content": _text_content("Permissão necessária antes de continuar a validação.")},
             )
+            self._audit_event(
+                session_id,
+                event_type="prompt_response",
+                status="refused",
+                command=command,
+                message="Skill executor requested permission.",
+                request={"prompt": prompt_text},
+                response=result,
+                evidence_mode="blocked",
+            )
             return {
                 "stopReason": "refusal",
                 "_meta": _permission_meta(session_id, prompt_text, permission_payload),
@@ -197,11 +243,28 @@ class AcpAgent:
             "agent_message_chunk",
             {"content": _text_content(json.dumps(result, ensure_ascii=False))},
         )
-        return {"stopReason": "end_turn", "_meta": _result_meta(session_id, command, result)}
+        final_response = {"stopReason": "end_turn", "_meta": _result_meta(session_id, command, result)}
+        self._audit_event(
+            session_id,
+            event_type="prompt_response",
+            status="success" if result.get("status") == "success" else "failed",
+            command=command,
+            message=str(result.get("message") or ""),
+            request={"prompt": prompt_text},
+            response={"result": result, "promptResponse": final_response},
+        )
+        return final_response
 
     def cancel(self, session_id: str) -> dict[str, object]:
         session = self._get_session(session_id)
         session.cancelled = True
+        self._audit_event(
+            session_id,
+            event_type="session_cancelled",
+            status="cancelled",
+            message="Session cancelled.",
+        )
+        self._audit_complete_session(session_id, status="cancelled", summary={"cancelled": True})
         self._notify(session_id, "agent_message_chunk", {"content": _text_content("Session cancelled.")})
         return {"cancelled": True, "_meta": _session_meta(session_id)}
 
@@ -222,9 +285,61 @@ class AcpAgent:
                     token_repository=TokenUsageRepository(session_factory),
                     reports_dir=self.reports_dir,
                     skill_path="SKILL.md",
+                    acp_repository=self._get_audit_repository(),
                 )
             )
         return self._executor
+
+    def _get_audit_repository(self) -> AcpAuditRepository:
+        if self._audit_repository is None:
+            engine = build_engine(self.database_url)
+            init_db(engine)
+            self._audit_repository = AcpAuditRepository(build_session_factory(engine))
+        return self._audit_repository
+
+    def _audit_create_session(self, session: AcpSession) -> None:
+        try:
+            self._get_audit_repository().create_session(
+                session_id=session.session_id,
+                cwd=session.cwd,
+                mcp_servers=session.mcp_servers,
+            )
+        except Exception:
+            return
+
+    def _audit_complete_session(self, session_id: str, *, status: str, summary: dict[str, object]) -> None:
+        try:
+            self._get_audit_repository().complete_session(session_id, status=status, summary=summary)
+        except Exception:
+            return
+
+    def _audit_event(
+        self,
+        session_id: str,
+        *,
+        event_type: str,
+        status: str,
+        command: str = "",
+        message: str = "",
+        request: dict[str, object] | None = None,
+        response: dict[str, object] | None = None,
+        metadata: dict[str, object] | None = None,
+        evidence_mode: str = "protocol_trace",
+    ) -> None:
+        try:
+            self._get_audit_repository().record_event(
+                session_id=session_id,
+                event_type=event_type,
+                status=status,
+                command=command,
+                message=message,
+                request=request or {},
+                response=response or {},
+                metadata=metadata or {},
+                evidence_mode=evidence_mode,
+            )
+        except Exception:
+            return
 
     def _notify(self, session_id: str, update_type: str, payload: dict[str, object]) -> None:
         self.outbox.append(
@@ -241,6 +356,15 @@ class AcpAgent:
 
     def _request_permission(self, session_id: str, permission: dict[str, object]) -> None:
         tool_call_id = str(uuid4())
+        self._audit_event(
+            session_id,
+            event_type="permission_requested",
+            status="blocked",
+            command=str(permission.get("command") or ""),
+            message=str(permission.get("reason") or "Permission required."),
+            request={"permission": permission},
+            evidence_mode="blocked",
+        )
         self.outbox.append(
             {
                 "jsonrpc": "2.0",
@@ -316,6 +440,10 @@ def _plan_for_prompt(prompt: str) -> list[dict[str, str]]:
         steps = ["Classificar pedido como API", "Verificar permissão", "Executar dry-run", "Exportar contexto"]
     elif command == "/token-cost":
         steps = ["Classificar pedido como custo", "Calcular estimativa", "Registrar fonte de pricing"]
+    elif command == "/build-context":
+        steps = ["Coletar evidências dos labs", "Gerar contexto técnico", "Exportar caminho do contexto"]
+    elif command == "/export-evidence":
+        steps = ["Coletar último contexto", "Empacotar evidências", "Retornar caminhos do bundle"]
     else:
         steps = ["Aplicar gates do SKILL.md", "Retornar próximo passo seguro"]
     return [

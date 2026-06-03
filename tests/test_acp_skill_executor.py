@@ -1,6 +1,9 @@
+from pathlib import Path
+
 from sqlalchemy import create_engine
 
 from agents.skill_executor import SkillExecutor, SkillExecutorServices
+from core.acp_audit import AcpAuditRepository
 from core.algorithm_test_lab import AlgorithmTestRepository
 from core.api_test_lab import ApiTestRepository
 from core.database import build_session_factory, init_db
@@ -15,6 +18,30 @@ def _executor(tmp_path):
         algorithm_repository=AlgorithmTestRepository(session_factory),
         api_repository=ApiTestRepository(session_factory),
         token_repository=TokenUsageRepository(session_factory),
+        reports_dir=tmp_path,
+        skill_path="SKILL.md",
+    )
+    return SkillExecutor(services)
+
+
+def _executor_with_acp(tmp_path):
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    init_db(engine)
+    session_factory = build_session_factory(engine)
+    acp_repository = AcpAuditRepository(session_factory)
+    acp_repository.create_session(session_id="session-1", cwd=str(tmp_path), mcp_servers=[])
+    acp_repository.record_event(
+        session_id="session-1",
+        event_type="session_prompt",
+        status="received",
+        command="/build-context",
+        message="Prompt received from test.",
+    )
+    services = SkillExecutorServices(
+        algorithm_repository=AlgorithmTestRepository(session_factory),
+        api_repository=ApiTestRepository(session_factory),
+        token_repository=TokenUsageRepository(session_factory),
+        acp_repository=acp_repository,
         reports_dir=tmp_path,
         skill_path="SKILL.md",
     )
@@ -94,6 +121,17 @@ def test_token_cost_returns_pricing_source_url(tmp_path):
     assert result["estimate"]["source_url"] == "https://docs.x.ai/developers/models"
     assert result["estimate"]["cost_per_user_usd"] == 1.5
     assert result["errors"] == []
+
+
+def test_build_context_includes_acp_protocol_trace_when_available(tmp_path):
+    result = _executor_with_acp(tmp_path).execute("/build-context")
+
+    assert result["status"] == "success"
+    assert result["exports"]["context"].endswith(".md")
+    context = Path(result["exports"]["context"]).read_text(encoding="utf-8")
+    assert "Contexto Técnico - ACP Skill Executor" in context
+    assert "protocol_trace" in context
+    assert "/build-context" in context
 
 
 def test_export_evidence_creates_bundle_from_current_context(tmp_path):

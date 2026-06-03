@@ -235,6 +235,22 @@ Safety defaults:
 
 The seed is intentionally additive. It does not replace NiceGUI, PostgreSQL, labs or reports; it only makes the same evidence-first workflow callable from ACP clients.
 
+## ACP Audit Persistence
+
+ACP now persists protocol evidence in PostgreSQL:
+
+- `acp_sessions`: session ID, cwd, MCP stdio metadata, status and summary.
+- `acp_events`: `session_created`, `session_prompt`, `prompt_response`, `permission_requested` and `session_cancelled`.
+
+Context Builder reads these records as `ACP Evidence`.
+
+Evidence modes:
+
+- `protocol_trace`: normal ACP/CLI/IDE execution trace.
+- `blocked`: permission gate or refused risky action.
+
+This lets a user prove not only that a lab produced evidence, but also how an agent client invoked the validation workflow.
+
 ## Current Local-Seed Limitations
 
 - ACP protocol version is v1-only and always returns `protocolVersion=1`.

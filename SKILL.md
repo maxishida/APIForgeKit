@@ -60,6 +60,7 @@ Evidence modes:
 - `real_http`: real external/local HTTP or SDK call
 - `dry_run_contract`: local contract validation with expected vs actual
 - `seed_validation`: canonical deterministic seed suite
+- `protocol_trace`: ACP/CLI/IDE execution trace proving which gate, command, response and permission path ran
 - `blocked`: not executed because permission, credential, cost, fixture or V2 scope is missing
 - `legacy`: preserved feature outside the canonical MVP
 
@@ -78,7 +79,7 @@ Handshake for IDE/CLI clients:
 5. Read `available_commands_update`; command names are announced without `/`.
 6. Send `session/prompt` with text `ContentBlock[]`.
 7. Read `session/update` notifications for `plan`, `tool_call`, `tool_call_update` and `agent_message_chunk`.
-8. Treat final `PromptResponse` as stop metadata and `_meta` paths only.
+8. Treat final `PromptResponse` as stop metadata; ACP sessions/prompts persist as `protocol_trace` for Context Builder.
 
 Quick local harness:
 

@@ -43,6 +43,8 @@ Use este checklist antes de apresentação, release ou gravação.
 - [ ] `/validate-lead-score` retorna `end_turn`, `runId`, `contextPath` e `evidenceZip`.
 - [ ] `/validate-api-suite whatsapp_validation_pack --http-real` emite `session/request_permission`.
 - [ ] Caminho de permissão retorna `stopReason=refusal`.
+- [ ] Sessões/prompts ACP aparecem em `acp_sessions` e `acp_events`.
+- [ ] Context Builder mostra `ACP Evidence` quando o harness ACP foi usado.
 
 ## Produto e docs
 

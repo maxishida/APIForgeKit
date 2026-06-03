@@ -7,6 +7,7 @@ from nicegui import ui
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
 
+from core.acp_audit import AcpAuditRepository
 from core.algorithm_test_lab import AlgorithmTestRepository
 from core.api_test_lab import ApiTestRepository
 from core.database import database_status
@@ -24,6 +25,7 @@ class AppServices:
     algorithm_repository: AlgorithmTestRepository
     api_test_repository: ApiTestRepository
     token_usage_repository: TokenUsageRepository
+    acp_audit_repository: AcpAuditRepository
     log_path: object
     contexts_dir: object
     blueprints_dir: object

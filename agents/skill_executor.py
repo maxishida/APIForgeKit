@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 
+from core.acp_audit import build_acp_context
 from core.algorithm_test_lab import AlgorithmTestRunner, build_algorithm_context, ensure_default_algorithms, summarize_algorithm_invariants
 from core.api_test_lab import ApiTestRunner, build_api_context, ensure_default_api_suites
 from core.report_bundle import create_report_bundle
@@ -18,6 +19,7 @@ class SkillExecutorServices:
     token_repository: TokenUsageRepository
     reports_dir: str | Path
     skill_path: str | Path = "SKILL.md"
+    acp_repository: object | None = None
 
 
 class SkillExecutor:
@@ -207,6 +209,8 @@ class SkillExecutor:
             build_api_context(self.services.api_repository),
             build_token_usage_context(self.services.token_repository),
         ]
+        if self.services.acp_repository is not None:
+            parts.append(build_acp_context(self.services.acp_repository))
         context = "\n\n---\n\n".join(part for part in parts if part)
         self.last_context = context
         path = self.reports_dir / f"acp_context_{_stamp()}.md"

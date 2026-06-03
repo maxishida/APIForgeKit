@@ -5,6 +5,7 @@ from html import escape
 
 from nicegui import ui
 
+from core.acp_audit import build_acp_context
 from core.algorithm_test_lab import build_algorithm_context
 from core.api_test_lab import build_api_context
 from core.context_builder import SOURCE_MODE_LABELS, build_guided_context_bundle, export_guided_context_bundle
@@ -44,16 +45,19 @@ def render_context_builder(services) -> None:
             mode = str(summary.get("pricing_mode") or "seeded_estimate")
             token_modes[mode] = token_modes.get(mode, 0) + 1
         token_metrics = {"total_estimates": len(token_estimates), "evidence_modes": token_modes}
+        acp_metrics = services.acp_audit_repository.metrics() if status["online"] else {"total_events": 0, "successful_prompts": 0, "failed_prompts": 0}
         return build_guided_context_bundle(
             source_mode=source_options[str(selected_source.value)],
             live_context=build_live_context(runs, events),
             algorithm_context=build_algorithm_context(services.algorithm_repository, algorithm_name="lead_score") if status["online"] else "",
             api_context=build_api_context(services.api_test_repository) if status["online"] else "",
             token_context=build_token_usage_context(services.token_usage_repository) if status["online"] else "",
+            acp_context=build_acp_context(services.acp_audit_repository) if status["online"] else "",
             algorithm_metrics=algorithm_metrics,
             api_metrics=api_metrics,
             live_metrics=live_metrics,
             token_metrics=token_metrics,
+            acp_metrics=acp_metrics,
         )
 
     def render_summary(bundle: dict[str, object]) -> None:
@@ -78,6 +82,12 @@ def render_context_builder(services) -> None:
                 bundle["token_metrics"]["total_estimates"],
                 "Estimativas salvas para decisão de custo",
                 _status_color(readiness["token"]["status"]),
+            )
+            metric_card(
+                "ACP Trace",
+                bundle["acp_metrics"].get("total_events", 0),
+                f"{bundle['acp_metrics'].get('successful_prompts', 0)} prompts OK / {bundle['acp_metrics'].get('permission_requests', 0)} gates",
+                _status_color(readiness["acp"]["status"]),
             )
 
     def render_workflow(bundle: dict[str, object]) -> None:
@@ -116,6 +126,7 @@ def render_context_builder(services) -> None:
                     "api": bundle["api_metrics"],
                     "live": bundle["live_metrics"],
                     "token": bundle["token_metrics"],
+                    "acp": bundle["acp_metrics"],
                 },
                 "Fontes": bundle["contexts"],
                 "Export JSON": bundle,

@@ -113,6 +113,26 @@ def test_session_prompt_streams_plan_and_result_updates(tmp_path):
     schema.SessionNotification.model_validate(message["params"])
 
 
+def test_build_context_prompt_streams_context_builder_plan(tmp_path):
+    agent = AcpAgent(database_url="sqlite+pysqlite:///:memory:", reports_dir=tmp_path)
+    session = agent.new_session(cwd=str(tmp_path.resolve()), mcp_servers=[])
+
+    agent.handle_request(
+        {
+            "jsonrpc": "2.0",
+            "id": 55,
+            "method": "session/prompt",
+            "params": {"sessionId": session.session_id, "prompt": "/build-context"},
+        }
+    )
+
+    plan = next(update for update in agent.outbox if update["params"]["update"]["sessionUpdate"] == "plan")
+    steps = [entry["content"] for entry in plan["params"]["update"]["entries"]]
+
+    assert "Coletar evidências dos labs" in steps
+    assert "Gerar contexto técnico" in steps
+
+
 def test_session_prompt_accepts_content_blocks_and_validate_lead_score_runs_canonical_plan(tmp_path):
     agent = AcpAgent(database_url="sqlite+pysqlite:///:memory:", reports_dir=tmp_path)
     session = agent.new_session(cwd=str(tmp_path.resolve()), mcp_servers=[])

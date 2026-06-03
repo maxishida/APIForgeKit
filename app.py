@@ -3,6 +3,7 @@ from __future__ import annotations
 from loguru import logger
 from nicegui import ui
 
+from core.acp_audit import AcpAuditRepository
 from core.algorithm_test_lab import AlgorithmTestRepository, ensure_default_algorithms
 from core.api_test_lab import ApiTestRepository, ensure_default_api_suites
 from core.config import get_settings
@@ -38,6 +39,7 @@ observability_repository = ObservabilityRepository(session_factory)
 algorithm_repository = AlgorithmTestRepository(session_factory)
 api_test_repository = ApiTestRepository(session_factory)
 token_usage_repository = TokenUsageRepository(session_factory)
+acp_audit_repository = AcpAuditRepository(session_factory)
 
 try:
     init_db(engine)
@@ -55,6 +57,7 @@ set_services(
         algorithm_repository=algorithm_repository,
         api_test_repository=api_test_repository,
         token_usage_repository=token_usage_repository,
+        acp_audit_repository=acp_audit_repository,
         log_path=settings.log_path,
         contexts_dir=settings.contexts_dir,
         blueprints_dir=settings.blueprints_dir,

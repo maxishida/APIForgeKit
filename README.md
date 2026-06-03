@@ -26,7 +26,7 @@ O projeto não tenta gerar código de produto primeiro. Ele testa o comportament
 - Calcular uso e custo de tokens por provider/modelo/usuário.
 - Ver logs, métricas e relatórios em uma UI local.
 - Exportar contexto técnico em Markdown, JSON, HTML e ZIP.
-- Distinguir evidência `real_http`, `dry_run_contract`, `seed_validation`, `legacy` e `blocked`.
+- Distinguir evidência `real_http`, `dry_run_contract`, `seed_validation`, `protocol_trace`, `legacy` e `blocked`.
 
 ## Stack
 
@@ -242,6 +242,8 @@ No ACP v1, os comandos anunciados em `available_commands_update` não usam `/`, 
 ```
 
 O resultado completo sai em `session/update -> agent_message_chunk`. Caminhos como `contextPath` e `evidenceZip` também aparecem em `_meta`.
+
+As sessões ACP, prompts, respostas finais e gates de permissão são gravados em PostgreSQL como `protocol_trace` ou `blocked`, e aparecem no `Context Builder` como fonte `ACP Evidence`.
 
 ## Testes
 

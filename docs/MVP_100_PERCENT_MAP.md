@@ -23,6 +23,7 @@ Evidence Pack
 - `real_http`: chamada real de API, SDK ou HTTP externo/local.
 - `dry_run_contract`: validação local de contrato usando expected vs actual/mock response.
 - `seed_validation`: suite canônica com casos seedados e deterministicamente reproduzíveis.
+- `protocol_trace`: rastro ACP/CLI/IDE com sessão, prompt, resposta final e gates de permissão.
 - `legacy`: recurso preservado para referência, fora do caminho canônico do MVP.
 - `blocked`: recurso não executado por falta de credencial, permissão, fixture, orçamento ou escopo V2.
 
@@ -35,8 +36,8 @@ Evidence Pack
 | Live Dashboard / xAI compact runner | Funcional com credencial | `real_http` e `blocked` | Connectivity, chat, structured outputs, streaming e tools rodam com `XAI_API_KEY`. |
 | Logs | Funcional | todos os modos | Filtro por provider, módulo, status, evidência, latência e busca JSON. |
 | Token Calculator | Funcional como estimativa | `seeded_estimate` | Decisão financeira exige conferir docs oficiais e registrar fonte. |
-| Context Builder | Funcional | todos os modos | Readiness: `Ready`, `Needs tests`, `Has failures`. |
-| ACP Executor | Funcional local | `seed_validation`, `dry_run_contract`, `blocked` | Executa skill gates e exporta evidência; HTTP real pede permissão. |
+| Context Builder | Funcional | todos os modos | Readiness: `Ready`, `Needs tests`, `Has failures`; inclui `ACP Evidence`. |
+| ACP Executor | Funcional local | `protocol_trace`, `seed_validation`, `dry_run_contract`, `blocked` | Executa skill gates, persiste sessão/prompt/resposta e exporta evidência; HTTP real pede permissão. |
 | Lead Algorithm Lab | Legacy | `legacy` | Mantido como referência; use Algorithm Test Lab no MVP. |
 | Blueprint Archive | Legacy/futuro | `legacy` | Não faz parte do fluxo atual de validação. |
 | Voice/Agents xAI | Bloqueado/V2 | `blocked` | Exige fixtures, orçamento e critérios dedicados. |
@@ -57,6 +58,8 @@ Evidence Pack
 - `api_responses`
 - `token_usage_estimates`
 - `context_exports`
+- `acp_sessions`
+- `acp_events`
 - `voice_tests`
 - `agent_tests`
 
@@ -78,6 +81,7 @@ npm run acp
 - Filtrar logs por `evidence_mode`.
 - Gerar Context Builder em Markdown, JSON, HTML e ZIP.
 - Executar `/validate-lead-score` via ACP e obter evidence ZIP.
+- Ver rastro ACP no Context Builder como `ACP Evidence`.
 
 ## O que não deve ser prometido ainda
 

@@ -200,6 +200,61 @@ class ContextExport(Base):
     summary: Mapped[dict[str, object]] = mapped_column(JSON, default=dict)
 
 
+class AcpSessionRecord(Base):
+    __tablename__ = "acp_sessions"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC), index=True)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    cwd: Mapped[str] = mapped_column(String(1000), default="")
+    status: Mapped[str] = mapped_column(String(40), default="active", index=True)
+    mcp_servers: Mapped[list[dict[str, object]]] = mapped_column(JSON, default=list)
+    summary: Mapped[dict[str, object]] = mapped_column(JSON, default=dict)
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "id": self.id,
+            "created_at": self.created_at.isoformat() if self.created_at else "",
+            "completed_at": self.completed_at.isoformat() if self.completed_at else "",
+            "cwd": self.cwd,
+            "status": self.status,
+            "mcp_servers": self.mcp_servers,
+            "summary": self.summary,
+        }
+
+
+class AcpEventRecord(Base):
+    __tablename__ = "acp_events"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC), index=True)
+    session_id: Mapped[str] = mapped_column(String(64), index=True)
+    event_type: Mapped[str] = mapped_column(String(120), index=True)
+    command: Mapped[str] = mapped_column(String(240), default="", index=True)
+    status: Mapped[str] = mapped_column(String(40), default="success", index=True)
+    evidence_mode: Mapped[str] = mapped_column(String(60), default="protocol_trace", index=True)
+    message: Mapped[str] = mapped_column(Text, default="")
+    request: Mapped[dict[str, object]] = mapped_column(JSON, default=dict)
+    response: Mapped[dict[str, object]] = mapped_column(JSON, default=dict)
+    event_metadata: Mapped[dict[str, object]] = mapped_column("metadata", JSON, default=dict)
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "id": self.id,
+            "created_at": self.created_at.isoformat() if self.created_at else "",
+            "timestamp": self.created_at.isoformat() if self.created_at else "",
+            "session_id": self.session_id,
+            "event_type": self.event_type,
+            "command": self.command,
+            "status": self.status,
+            "evidence_mode": self.evidence_mode,
+            "message": self.message,
+            "request": self.request,
+            "response": self.response,
+            "metadata": self.event_metadata,
+        }
+
+
 class ApiTestSuite(Base):
     __tablename__ = "api_test_suites"
 
