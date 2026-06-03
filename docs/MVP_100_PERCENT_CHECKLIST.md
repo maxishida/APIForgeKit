@@ -12,7 +12,7 @@ Use este checklist antes de apresentação, release ou gravação.
 ## Validação automática
 
 - [ ] `python -m pytest -q` passa.
-- [ ] `python -m compileall app.py core ui agents run_algorithm_lab.py` passa.
+- [ ] `python -m compileall app.py core ui agents run_algorithm_lab.py run_acp_prompt.py` passa.
 - [ ] `git diff --check` passa.
 - [ ] `npm run algorithm:suite` passa com 17/17 casos.
 
@@ -48,3 +48,4 @@ Use este checklist antes de apresentação, release ou gravação.
 - [ ] README tem passo a passo curto.
 - [ ] SKILL está alinhado com evidência antes de implementação.
 - [ ] `docs/MVP_100_PERCENT_MAP.md` está atualizado.
+- [ ] `docs/SYSTEM_DIAGRAM.md` mostra ACP, SKILL, labs, PostgreSQL, Context Builder e Evidence Pack.

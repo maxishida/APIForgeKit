@@ -14,9 +14,10 @@ A raiz do repositório deve ficar simples:
 3. [MVP 100% Map](./MVP_100_PERCENT_MAP.md): separa real, dry-run, seed, legacy e blocked.
 4. [MVP 100% Checklist](./MVP_100_PERCENT_CHECKLIST.md): checklist antes de apresentação/release.
 5. [MVP Feature Test Report](./MVP_FEATURE_TEST_REPORT.md): sequência de testes e backlog de otimização.
-6. [Workflow](./workflow.md): fluxo `teste -> logs -> evidências -> contexto`.
-7. [Architecture](./architecture.md): arquitetura local-first com NiceGUI, PostgreSQL e labs.
-8. [Implementation Checklist](./IMPLEMENTATION_CHECKLIST.md): o que já existe e como testar.
+6. [System Diagram](./SYSTEM_DIAGRAM.md): fluxo completo de ACP/SKILL até Evidence Pack.
+7. [Workflow](./workflow.md): fluxo `teste -> logs -> evidências -> contexto`.
+8. [Architecture](./architecture.md): arquitetura local-first com NiceGUI, PostgreSQL e labs.
+9. [Implementation Checklist](./IMPLEMENTATION_CHECKLIST.md): o que já existe e como testar.
 
 ## Labs
 
@@ -37,6 +38,8 @@ A raiz do repositório deve ficar simples:
 
 ```txt
 README
+↓
+System Diagram
 ↓
 MVP 100% Map
 ↓

@@ -33,10 +33,44 @@ TUTORIAL_SECTIONS = [
     },
 ]
 
+SYSTEM_DIAGRAM_LANES = [
+    {
+        "label": "ACP Client / CLI / IDE",
+        "detail": "initialize -> session/new -> session/prompt with ContentBlock[]",
+        "badge": "entry",
+    },
+    {
+        "label": "SKILL.md Gates",
+        "detail": "Classify request, require evidence, block implementation until context exists",
+        "badge": "policy",
+    },
+    {
+        "label": "Validation Labs",
+        "detail": "Algorithm Test Lab, Generic API Lab, Token Calculator, Provider/xAI Validation",
+        "badge": "runner",
+    },
+    {
+        "label": "PostgreSQL Evidence",
+        "detail": "Runs, events, requests, responses, token estimates and context exports",
+        "badge": "store",
+    },
+    {
+        "label": "Dashboard + Context",
+        "detail": "Live metrics, logs, readiness and technical context",
+        "badge": "observe",
+    },
+    {
+        "label": "Evidence Pack",
+        "detail": "Markdown, JSON, HTML and ZIP for future implementation",
+        "badge": "export",
+    },
+]
+
 
 def render_tutorial() -> None:
     content = _read_tutorial_markdown()
     _render_hero()
+    _render_system_diagram()
     _render_workflow_cards()
     _render_command_panel()
     _render_markdown_reference(content)
@@ -84,6 +118,30 @@ def _render_workflow_cards() -> None:
                 </article>
                 """
             )
+
+
+def _render_system_diagram() -> None:
+    with ui.column().classes("afk-card w-full gap-4").style("padding:22px;"):
+        with ui.row().classes("w-full items-center justify-between gap-3"):
+            with ui.column().classes("gap-1"):
+                ui.label("System Flow").classes("text-xl font-bold afk-title")
+                ui.label("ACP e SKILL.md comandam os labs; evidências voltam para PostgreSQL, dashboard e Context Builder.").classes("text-sm afk-muted")
+            ui.link("Abrir Mermaid em docs/SYSTEM_DIAGRAM.md", "https://github.com/maxishida/APIForgeKit/blob/main/docs/SYSTEM_DIAGRAM.md", new_tab=True).classes("afk-neon")
+        with ui.grid(columns=6).classes("w-full gap-3"):
+            for index, lane in enumerate(SYSTEM_DIAGRAM_LANES):
+                arrow = "->" if index < len(SYSTEM_DIAGRAM_LANES) - 1 else "OK"
+                ui.html(
+                    f"""
+                    <div style="min-height:178px; border:1px solid rgba(0,212,255,.18); border-radius:8px; padding:14px; background:rgba(11,18,32,.72); display:flex; flex-direction:column; gap:10px;">
+                      <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+                        <span class="afk-badge" style="color:#00D4FF;">{escape(lane["badge"])}</span>
+                        <span style="color:#9CA3AF; font-weight:800;">{arrow}</span>
+                      </div>
+                      <strong style="color:#F9FAFB; line-height:1.25;">{escape(lane["label"])}</strong>
+                      <p style="color:#9CA3AF; font-size:13px; line-height:1.55; margin:0;">{escape(lane["detail"])}</p>
+                    </div>
+                    """
+                )
 
 
 def _render_command_panel() -> None:
