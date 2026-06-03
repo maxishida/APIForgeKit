@@ -38,7 +38,12 @@ def render_context_builder(services) -> None:
         api_metrics = services.api_test_repository.metrics() if status["online"] else _empty_metrics()
         live_metrics = services.observability_repository.metrics() if status["online"] else {"total_tests": 0, "success": 0, "failures": 0}
         token_estimates = services.token_usage_repository.list_estimates(limit=50) if status["online"] else []
-        token_metrics = {"total_estimates": len(token_estimates)}
+        token_modes: dict[str, int] = {}
+        for estimate in token_estimates:
+            summary = estimate.get("summary") if isinstance(estimate.get("summary"), dict) else {}
+            mode = str(summary.get("pricing_mode") or "seeded_estimate")
+            token_modes[mode] = token_modes.get(mode, 0) + 1
+        token_metrics = {"total_estimates": len(token_estimates), "evidence_modes": token_modes}
         return build_guided_context_bundle(
             source_mode=source_options[str(selected_source.value)],
             live_context=build_live_context(runs, events),
@@ -161,10 +166,18 @@ def _status_color(status: str) -> str:
 
 
 def _record_context_export(services, bundle: dict[str, object], paths: dict[str, str]) -> None:
+    readiness = bundle.get("readiness") if isinstance(bundle.get("readiness"), dict) else {}
+    evidence_modes = {
+        key: (readiness.get(key, {}) or {}).get("evidence_modes", {})
+        for key in ("algorithm", "api", "live", "token")
+        if isinstance(readiness.get(key, {}), dict)
+    }
     summary = {
         "source": "context_builder",
         "source_mode": bundle["source_mode"],
         "readiness": bundle["readiness"]["overall"]["status"],
+        "evidence_mode": "mixed",
+        "evidence_modes": evidence_modes,
         "generated_at": bundle["generated_at"],
         "paths": paths,
     }

@@ -107,6 +107,11 @@ class TestEvent(Base):
     recommendation: Mapped[str] = mapped_column(Text, default="")
 
     def to_dict(self) -> dict[str, object]:
+        evidence_mode = (
+            (self.request or {}).get("evidence_mode")
+            or (self.response or {}).get("evidence_mode")
+            or ("blocked" if self.status == "blocked" else "real_http")
+        )
         return {
             "id": self.id,
             "event_id": self.id,
@@ -118,6 +123,7 @@ class TestEvent(Base):
             "test_name": self.test_name,
             "event_type": self.event_type,
             "status": self.status,
+            "evidence_mode": evidence_mode,
             "message": self.message,
             "latency_ms": self.latency_ms,
             "tokens": self.tokens,

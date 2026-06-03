@@ -26,6 +26,7 @@ O projeto não tenta gerar código de produto primeiro. Ele testa o comportament
 - Calcular uso e custo de tokens por provider/modelo/usuário.
 - Ver logs, métricas e relatórios em uma UI local.
 - Exportar contexto técnico em Markdown, JSON, HTML e ZIP.
+- Distinguir evidência `real_http`, `dry_run_contract`, `seed_validation`, `legacy` e `blocked`.
 
 ## Stack
 
@@ -67,6 +68,7 @@ npm run dev             # roda app NiceGUI
 npm run test            # roda testes
 npm run algorithm:suite # valida lead_score e exporta evidências
 npm run acp             # inicia executor ACP via stdio
+npm run acp:prompt -- "/validate-lead-score" # smoke local ACP via CLI
 ```
 
 ## Fluxo recomendado
@@ -76,8 +78,8 @@ npm run acp             # inicia executor ACP via stdio
 3. Abra `http://localhost:8080`.
 4. Entre em `Algorithm Test Lab`.
 5. Selecione `lead_score`.
-6. Execute a suite completa.
-7. Veja passed/failed, diff e logs.
+6. Execute a canonical suite.
+7. Veja passed/failed, diff, invariantes e `seed_validation`.
 8. Abra `Context Builder`.
 9. Exporte o relatório para usar como contexto em uma IA.
 
@@ -107,7 +109,7 @@ Exports gerados em `exports/reports/`:
 
 ## Páginas principais
 
-- Home: visão geral e modo demo.
+- Home: visão geral e ações de seed validation.
 - Live Dashboard: observabilidade e eventos.
 - Algorithm Test Lab: testes de algoritmos determinísticos.
 - Generic API Lab: contratos de APIs/webhooks.
@@ -155,6 +157,41 @@ Para operar o lab por um cliente compatível com ACP:
 npm run acp
 ```
 
+Para rodar um prompt ACP completo sem montar JSON-RPC manualmente:
+
+```bash
+python run_acp_prompt.py "/validate-lead-score"
+python run_acp_prompt.py "/token-cost provider=xai model=grok-4.3 users=10 requests=20"
+```
+
+Esse helper cria uma sessão local, envia `ContentBlock[]` de texto e imprime a resposta final junto das notificações `session/update`.
+
+### ACP stdio quickstart
+
+Suba dependências primeiro:
+
+```bash
+python -m pip install -r requirements.txt
+copy .env.example .env
+npm run db
+npm run acp
+```
+
+Configure um cliente ACP/IDE para abrir o executor como subprocesso stdio:
+
+```json
+{
+  "command": "npm",
+  "args": ["run", "acp"],
+  "cwd": "D:\\myworksapce\\Apiforgekit\\APIForgeKit",
+  "transport": "stdio"
+}
+```
+
+O cliente deve enviar um JSON-RPC por linha. A ordem é `initialize`, depois `session/new` com `cwd` absoluto, depois `session/prompt`.
+
+O executor envia progresso em notificações `session/update` antes da resposta final. Leia `agent_message_chunk` para o JSON completo do resultado; trate `PromptResponse` como metadata de parada e caminhos em `_meta`.
+
 Comandos principais:
 
 ```txt
@@ -193,7 +230,7 @@ O resultado completo sai em `session/update -> agent_message_chunk`. Caminhos co
 
 ```bash
 python -m pytest -q
-python -m compileall app.py core ui agents run_algorithm_lab.py
+python -m compileall app.py core ui agents run_algorithm_lab.py run_acp_prompt.py
 ```
 
 ## Documentação
@@ -207,11 +244,14 @@ Todo o restante está em [docs/SUMMARY.md](./docs/SUMMARY.md).
 
 Leitura recomendada:
 
-1. [docs/USER_GUIDE.md](./docs/USER_GUIDE.md)
-2. [docs/OPEN_SOURCE_TUTORIAL.md](./docs/OPEN_SOURCE_TUTORIAL.md)
-3. [docs/ALGORITHM_TEST_PLAN.md](./docs/ALGORITHM_TEST_PLAN.md)
-4. [docs/ACP_AGENT_ARCHITECTURE.md](./docs/ACP_AGENT_ARCHITECTURE.md)
-5. [docs/IMPLEMENTATION_CHECKLIST.md](./docs/IMPLEMENTATION_CHECKLIST.md)
+1. [docs/MVP_100_PERCENT_MAP.md](./docs/MVP_100_PERCENT_MAP.md)
+2. [docs/MVP_100_PERCENT_CHECKLIST.md](./docs/MVP_100_PERCENT_CHECKLIST.md)
+3. [docs/MVP_FEATURE_TEST_REPORT.md](./docs/MVP_FEATURE_TEST_REPORT.md)
+4. [docs/USER_GUIDE.md](./docs/USER_GUIDE.md)
+5. [docs/OPEN_SOURCE_TUTORIAL.md](./docs/OPEN_SOURCE_TUTORIAL.md)
+6. [docs/ALGORITHM_TEST_PLAN.md](./docs/ALGORITHM_TEST_PLAN.md)
+7. [docs/ACP_AGENT_ARCHITECTURE.md](./docs/ACP_AGENT_ARCHITECTURE.md)
+8. [docs/IMPLEMENTATION_CHECKLIST.md](./docs/IMPLEMENTATION_CHECKLIST.md)
 
 ## Status
 

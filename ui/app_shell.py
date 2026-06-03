@@ -50,11 +50,9 @@ NAV_ITEMS = (
     ("Generic API Lab", "/api-test-lab", "api"),
     ("Algorithm Test Lab", "/algorithm-test-lab", "rule"),
     ("Token Calculator", "/token-calculator", "calculate"),
-    ("Lead Algorithm Lab", "/lead-lab", "science"),
     ("Logs", "/logs", "terminal"),
     ("Context Builder", "/context-builder", "integration_instructions"),
     ("Tutorial", "/tutorial", "article"),
-    ("Blueprint Archive", "/blueprint", "account_tree"),
     ("Settings", "/settings", "settings"),
 )
 
@@ -99,7 +97,7 @@ def render_shell(active: str, title: str, subtitle: str, content: Callable[[], N
                 ui.html(f"<span class='afk-badge'>Runs {metrics['total_tests']}</span>")
                 ui.html(f"<span class='afk-badge'>Active {metrics['active_tests']}</span>")
                 ui.html(f"<span class='afk-badge'>Avg Latency {metrics['average_latency_ms']} ms</span>")
-                ui.button("Run Demo", icon="play_arrow", on_click=lambda: ui.navigate.to("/algorithm-test-lab")).classes("afk-primary-btn")
+                ui.button("Run Suite", icon="play_arrow", on_click=lambda: ui.navigate.to("/algorithm-test-lab")).classes("afk-primary-btn")
 
     with ui.column().classes("afk-page w-full gap-6"):
         content()

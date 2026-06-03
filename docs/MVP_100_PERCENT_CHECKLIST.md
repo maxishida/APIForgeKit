@@ -1,0 +1,50 @@
+# APIForgeKit MVP 100% Functional Checklist
+
+Use este checklist antes de apresentação, release ou gravação.
+
+## Ambiente
+
+- [ ] Banco online com `npm run db`.
+- [ ] `.env` configurado quando testes reais de provider forem usados.
+- [ ] UI abre com `npm run dev` ou `python app.py`.
+- [ ] Nenhum segredo aparece em logs, prints ou exports.
+
+## Validação automática
+
+- [ ] `python -m pytest -q` passa.
+- [ ] `python -m compileall app.py core ui agents run_algorithm_lab.py` passa.
+- [ ] `git diff --check` passa.
+- [ ] `npm run algorithm:suite` passa com 17/17 casos.
+
+## Labs
+
+- [ ] Algorithm Test Lab executa `lead_score` e grava `seed_validation`.
+- [ ] Generic API Lab executa WhatsApp pack e grava `dry_run_contract`.
+- [ ] Generic API Lab separa `Run Contract Dry-run` de `Run Real HTTP`.
+- [ ] `Run Real HTTP` exige confirmação e URL `http://` ou `https://`.
+- [ ] Token Calculator mostra `pricing_mode=seeded_estimate` ou `docs_verified`.
+- [ ] Live Dashboard registra `real_http` quando provider real roda.
+- [ ] Voice/Agents aparecem como `blocked` até V2.
+
+## Contexto e logs
+
+- [ ] Context Builder exportando Markdown, JSON, HTML e ZIP.
+- [ ] Context Builder mostra `Ready`, `Needs tests` ou `Has failures`.
+- [ ] Logs filtráveis por provider, módulo, status, evidência, latência e busca.
+- [ ] Todo mock/dry-run rotulado como `dry_run_contract`.
+- [ ] Evidence Pack inclui caminhos e metadata.
+
+## ACP
+
+- [ ] `/validate-lead-score` retorna `end_turn`, `runId`, `contextPath` e `evidenceZip`.
+- [ ] `/validate-api-suite whatsapp_validation_pack --http-real` emite `session/request_permission`.
+- [ ] Caminho de permissão retorna `stopReason=refusal`.
+
+## Produto e docs
+
+- [ ] Nenhuma página principal usa texto ambíguo de mock ou dry-run.
+- [ ] Lead Algorithm Lab está marcado como legacy ou fora do menu principal.
+- [ ] Blueprint Archive está marcado como legacy/futuro.
+- [ ] README tem passo a passo curto.
+- [ ] SKILL está alinhado com evidência antes de implementação.
+- [ ] `docs/MVP_100_PERCENT_MAP.md` está atualizado.

@@ -41,6 +41,7 @@ class XaiLiveRunner:
                 "readiness_failed",
                 "failed",
                 "XAI_API_KEY ausente no .env local",
+                request={"evidence_mode": "blocked"},
                 error="Set XAI_API_KEY in .env before running real xAI tests.",
                 recommendation="Configurar chave local e repetir a sequência.",
             )
@@ -201,7 +202,7 @@ class XaiLiveRunner:
         started = self._start(run_id, "function_calling", "tools", {"model": self.model, "tool": "get_lab_weather"})
         lab_tool = chat_types["tool"](
             name="get_lab_weather",
-            description="Return fake lab weather for a city.",
+            description="Return deterministic lab weather for a city.",
             parameters={
                 "type": "object",
                 "properties": {"city": {"type": "string", "description": "City name"}},

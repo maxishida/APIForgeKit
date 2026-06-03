@@ -38,6 +38,7 @@ def test_token_cost_calculator_projects_per_user_monthly_usage():
     assert estimate["estimated_cost_usd"] == 15.0
     assert estimate["cost_per_user_usd"] == 1.5
     assert estimate["source_url"] == "https://docs.x.ai/developers/models"
+    assert estimate["pricing_mode"] == "seeded_estimate"
 
 
 def test_usage_presets_include_human_scale_defaults():
@@ -107,3 +108,4 @@ def test_token_usage_context_includes_saved_estimates_and_provider_docs():
     assert "Contexto Técnico - Token Usage Calculator" in context
     assert "grok-4.3" in context
     assert "https://docs.x.ai/developers/models" in context
+    assert "pricing_mode=seeded_estimate" in context

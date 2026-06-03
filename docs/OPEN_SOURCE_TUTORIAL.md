@@ -69,7 +69,7 @@ http://localhost:8080/tutorial
 
 1. Abra `Algorithm Test Lab`.
 2. Selecione `lead_score`.
-3. Clique em `Run Demo Suite`.
+3. Clique em `Run Canonical Suite`.
 4. Veja os casos `passed` e `failed`.
 5. Abra o JSON estruturado.
 6. Abra `Context Builder`.

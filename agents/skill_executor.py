@@ -134,6 +134,13 @@ class SkillExecutor:
                 command=f"/validate-api-suite {suite_name}",
             )
         run = ApiTestRunner(self.services.api_repository).run_suite(str(suite["id"]))
+        results = self.services.api_repository.list_results(run_id=str(run["id"]), limit=int(run["total_cases"] or 100))
+        evidence_modes: dict[str, int] = {}
+        for result in results:
+            log = result.get("structured_log") or {}
+            request = result.get("request") or {}
+            mode = str(log.get("evidence_mode") or request.get("evidence_mode") or "dry_run_contract")
+            evidence_modes[mode] = evidence_modes.get(mode, 0) + 1
         context = build_api_context(self.services.api_repository)
         context_path = self.reports_dir / f"{suite_name}_context.md"
         context_path.write_text(context, encoding="utf-8")
@@ -146,6 +153,7 @@ class SkillExecutor:
             "passed": run["passed"],
             "failed": run["failed"],
             "total_cases": run["total_cases"],
+            "evidence_modes": evidence_modes,
         }
         self.last_evidence = evidence
         return {
@@ -174,7 +182,13 @@ class SkillExecutor:
         saved = self.services.token_repository.save_estimate(estimate)
         context = build_token_usage_context(self.services.token_repository)
         self.last_context = context
-        self.last_evidence = {"command": "/token-cost", "record_id": saved["id"], "provider": estimate["provider"], "model": estimate["model"]}
+        self.last_evidence = {
+            "command": "/token-cost",
+            "record_id": saved["id"],
+            "provider": estimate["provider"],
+            "model": estimate["model"],
+            "pricing_mode": estimate["pricing_mode"],
+        }
         return {
             "status": "success",
             "mode": "token_economy",

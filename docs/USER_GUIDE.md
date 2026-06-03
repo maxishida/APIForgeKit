@@ -104,7 +104,7 @@ http://localhost:8080
 
 3. Escolher o laboratório:
 
-- Home para a demo limpa e ações rápidas.
+- Home para apresentação limpa e ações rápidas.
 - API Provider Lab para APIs de IA e logs ao vivo.
 - Generic API Lab para APIs, webhooks, contratos e WhatsApp pack.
 - Algorithm Test Lab para validar algoritmo determinístico com input, expected output e diff.
@@ -149,7 +149,7 @@ O resultado aparece no Live Event Stream e é salvo no PostgreSQL.
 
 ## Exemplo: algoritmo de lead
 
-No Algorithm Test Lab, o usuário seleciona `lead_score` e pode clicar em `Run Demo Suite` para rodar a suíte pronta com:
+No Algorithm Test Lab, o usuário seleciona `lead_score` e pode clicar em `Run Canonical Suite` para rodar a suíte pronta com:
 
 1. lead frio Instagram
 2. lead morno Landing Page

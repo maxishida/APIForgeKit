@@ -100,9 +100,9 @@ def api_test_lab_page() -> None:
 def lead_lab_page() -> None:
     apply_theme()
     render_shell(
-        "Lead Algorithm Lab",
-        "Lead Algorithm Lab",
-        "Execute o algoritmo determinístico e gere evidência estruturada",
+        "Legacy Lead Lab",
+        "Legacy Lead Algorithm Lab",
+        "Referência legada; use Algorithm Test Lab como caminho canônico",
         lambda: render_lead_lab(_services()),
     )
 
@@ -151,8 +151,8 @@ def blueprint_page() -> None:
     apply_theme()
     render_shell(
         "Blueprint Archive",
-        "Blueprint Archive",
-        "Referência legada preservada; o foco atual é observabilidade",
+        "Legacy Blueprint Archive",
+        "Referência futura preservada; o MVP atual é validação e contexto",
         lambda: render_blueprint(_services()),
     )
 

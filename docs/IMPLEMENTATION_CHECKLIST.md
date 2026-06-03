@@ -4,7 +4,7 @@
 
 - NiceGUI local app em `app.py`.
 - Shell visual com sidebar, header, cards e tema Dark/Neon Blue.
-- Home demo dashboard como tela principal.
+- Home seed validation dashboard como tela principal.
 - API Provider Lab separado em `/live-dashboard`.
 - Tutorial open source dentro da UI em `/tutorial`.
 - xAI compact runner acionado pela UI.
@@ -23,7 +23,7 @@
 - Validador esperado x recebido com diff estruturado.
 - API harness genérico com método, URL, headers, body, expected output, dry-run e HTTP real.
 - Import/export de suites JSON para algoritmo e API.
-- Demo Mode para rodar algoritmo, API pack e estimativa de tokens.
+- Seed Validation Mode para rodar algoritmo, API pack e estimativa de tokens.
 - Calculadora de tokens/custo por usuário com preços seedados de docs oficiais.
 - Token Calculator com presets de uso, cards de pricing, economia de contexto e histórico.
 - Context savings calculator para comparar prompt cru vs contexto técnico.
@@ -166,10 +166,10 @@ Arquivos gerados:
 4. Clique em `Calcular e salvar`.
 5. Use `Context Savings` para comparar prompt cru versus contexto técnico.
 
-## Como usar Demo Mode
+## Como usar Seed Validation Mode
 
 1. Abra Home.
-2. Clique em `Run Full Demo`.
+2. Clique em `Run Full Seed Validation`.
 3. O app executa `lead_score`, `whatsapp_validation_pack` e salva uma estimativa de custo.
 4. Abra Context Builder para exportar o bundle.
 

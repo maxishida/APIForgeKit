@@ -279,6 +279,10 @@ class ApiTestRepository:
         passed = len([result for result in results if result["status"] == "passed"])
         failed = len([result for result in results if result["status"] == "failed"])
         latencies = [float(result["latency_ms"] or 0) for result in results]
+        evidence_modes: dict[str, int] = {}
+        for result in results:
+            mode = _result_evidence_mode(result)
+            evidence_modes[mode] = evidence_modes.get(mode, 0) + 1
         return {
             "total_runs": len(runs),
             "total_results": len(results),
@@ -286,6 +290,7 @@ class ApiTestRepository:
             "failed": failed,
             "pass_rate": round((passed / len(results)) * 100, 2) if results else 0,
             "average_latency_ms": round(sum(latencies) / len(latencies), 2) if latencies else 0,
+            "evidence_modes": evidence_modes,
         }
 
 
@@ -319,12 +324,14 @@ class ApiTestRunner:
 
     def _execute_case(self, run_id: str, case: dict[str, object]) -> dict[str, object]:
         suite = self.repository.get_suite(str(case["suite_id"]))
+        evidence_mode = _evidence_mode_for_case(case)
         request_payload = {
             "method": case["method"],
             "url": case["url"],
             "headers": redact_headers(dict(case["headers"])),
             "body": case["body"],
             "dry_run": case["dry_run"],
+            "evidence_mode": evidence_mode,
         }
         started = perf_counter()
         error = None
@@ -333,6 +340,7 @@ class ApiTestRunner:
         except Exception as exc:  # noqa: BLE001 - captured as structured evidence
             response_payload = {"status_code": 0, "json": {}, "text": ""}
             error = str(exc)
+        response_payload["evidence_mode"] = evidence_mode
         latency = round((perf_counter() - started) * 1000, 2)
         diff = validate_api_response(dict(case["expected"]), response_payload)
         status = "passed" if diff["passed"] and error is None else "failed"
@@ -344,6 +352,7 @@ class ApiTestRunner:
             "module": "generic_api_test_lab",
             "test_name": case["name"],
             "status": status,
+            "evidence_mode": evidence_mode,
             "latency_ms": latency,
             "tokens": {},
             "cost": 0,
@@ -376,7 +385,7 @@ def ensure_default_api_suites(repository: ApiTestRepository) -> None:
             provider="whatsapp",
             description="Dry-run contract pack for WhatsApp payloads, webhook events and lead intent validation.",
             docs_url="https://developers.facebook.com/docs/whatsapp",
-            tags=["whatsapp", "contract", "demo"],
+            tags=["whatsapp", "contract", "seed"],
         )
     existing = {case["name"] for case in repository.list_cases(str(suite["id"]))}
     for case in DEFAULT_WHATSAPP_CASES:
@@ -491,12 +500,17 @@ def build_api_context(repository: ApiTestRepository, limit: int = 100) -> str:
     runs = repository.list_runs(limit=20)
     passed = [result for result in results if result["status"] == "passed"]
     failed = [result for result in results if result["status"] == "failed"]
+    evidence_modes: dict[str, int] = {}
+    for result in results:
+        mode = _result_evidence_mode(result)
+        evidence_modes[mode] = evidence_modes.get(mode, 0) + 1
     payload_lines = []
     for result in results[:20]:
         log = result.get("structured_log") or {}
         payload_lines.append(
             f"- `{log.get('test_name', result.get('case_id'))}` status={result.get('status')} "
-            f"http={result.get('response', {}).get('status_code')} request={json.dumps(result.get('request', {}).get('body', {}), ensure_ascii=False)}"
+            f"mode={_result_evidence_mode(result)} http={result.get('response', {}).get('status_code')} "
+            f"request={json.dumps(result.get('request', {}).get('body', {}), ensure_ascii=False)}"
         )
 
     return f"""# Contexto Técnico - Generic API Test Lab
@@ -511,6 +525,7 @@ def build_api_context(repository: ApiTestRepository, limit: int = 100) -> str:
 - Resultados analisados: {len(results)}
 - Passaram: {len(passed)}
 - Falharam: {len(failed)}
+- Modos de evidência: {_render_evidence_modes(evidence_modes)}
 
 ## Payloads validados
 
@@ -534,6 +549,22 @@ def redact_headers(headers: dict[str, object]) -> dict[str, object]:
     for key, value in headers.items():
         redacted[key] = "***REDACTED***" if str(key).lower() in SECRET_HEADER_NAMES else value
     return redacted
+
+
+def _evidence_mode_for_case(case: dict[str, object]) -> str:
+    return "dry_run_contract" if bool(case.get("dry_run", True)) else "real_http"
+
+
+def _result_evidence_mode(result: dict[str, object]) -> str:
+    structured_log = result.get("structured_log") or {}
+    request = result.get("request") or {}
+    return str(structured_log.get("evidence_mode") or request.get("evidence_mode") or "dry_run_contract")
+
+
+def _render_evidence_modes(evidence_modes: dict[str, int]) -> str:
+    if not evidence_modes:
+        return "nenhum"
+    return ", ".join(f"{mode}={count}" for mode, count in sorted(evidence_modes.items()))
 
 
 def _json_contains_mismatches(expected: dict[str, object], actual: dict[str, object], prefix: str = "") -> list[dict[str, object]]:

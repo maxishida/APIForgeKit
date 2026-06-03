@@ -16,6 +16,7 @@ from core.algorithm_test_lab import (
 from core.database import database_status
 from core.report_bundle import create_report_bundle
 from ui.components.alerts import db_offline, empty_state
+from ui.components.badges import evidence_badge
 from ui.components.cards import metric_card
 from ui.components.charts import algorithm_score_distribution, result_latency_bar, result_status_donut
 
@@ -66,7 +67,9 @@ def render_algorithm_lab(services) -> None:
                 with ui.column().classes("gap-1"):
                     ui.label("Criar e executar caso").classes("text-xl font-bold afk-title")
                     ui.label("Defina input JSON, resultado esperado e compare com o algoritmo puro.").classes("afk-muted")
-                ui.html("<span class='afk-badge'>Sem LLM</span>")
+                with ui.row().classes("gap-2"):
+                    evidence_badge("seed_validation")
+                    ui.html("<span class='afk-badge'>Sem LLM</span>")
 
             case_name = ui.input("Nome do caso", value=first_case["name"] if first_case else "novo caso").classes("w-full")
             selected_case = ui.select(list(case_options), value=first_case["name"] if first_case else None, label="Caso salvo").classes("w-full")
@@ -98,7 +101,7 @@ def render_algorithm_lab(services) -> None:
                     "afk-primary-btn"
                 )
                 ui.button("Run Canonical lead_score", icon="verified", on_click=run_canonical_lead_score).classes("afk-primary-btn")
-                ui.button("Run Demo Suite", icon="playlist_play", on_click=lambda: run_suite(definition)).classes("afk-primary-btn")
+                ui.button("Run Canonical Suite", icon="playlist_play", on_click=lambda: run_suite(definition)).classes("afk-primary-btn")
                 ui.button("Export Evidence Pack", icon="inventory_2", on_click=lambda: export_evidence_pack(definition)).classes("afk-ghost-btn")
                 ui.button("Export Suite JSON", icon="download", on_click=lambda: export_suite(definition)).classes("afk-ghost-btn")
                 ui.button("Import Suite JSON", icon="upload_file", on_click=lambda: import_suite(import_path.value)).classes("afk-ghost-btn")

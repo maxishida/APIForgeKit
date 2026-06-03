@@ -185,8 +185,10 @@ def calculate_token_cost(
     users: int = 1,
     requests_per_user_per_day: int = 1,
     days: int = 30,
+    pricing_mode: str = "seeded_estimate",
 ) -> dict[str, object]:
     pricing = get_pricing(provider, model)
+    pricing_mode = pricing_mode if pricing_mode in {"seeded_estimate", "docs_verified"} else "seeded_estimate"
     users = max(int(users), 1)
     requests_per_user_per_day = max(int(requests_per_user_per_day), 0)
     days = max(int(days), 1)
@@ -225,6 +227,7 @@ def calculate_token_cost(
         "estimated_cost_usd": total_cost,
         "cost_per_user_usd": round(total_cost / users, 6),
         "cost_per_request_usd": round(total_cost / total_requests, 8) if total_requests else 0,
+        "pricing_mode": pricing_mode,
         "pricing": asdict(pricing),
         "source_url": pricing.source_url,
         "recommendation": _usage_recommendation(total_cost, users, total_requests),
@@ -315,7 +318,8 @@ def build_token_usage_context(repository: TokenUsageRepository, limit: int = 50)
         lines.append(
             f"- `{estimate['provider']}/{estimate['model']}` users={estimate['users']} "
             f"requests_day={estimate['requests_per_user_per_day']} tokens={estimate['total_tokens']} "
-            f"cost=${estimate['estimated_cost_usd']} source={estimate['source_url']}"
+            f"cost=${estimate['estimated_cost_usd']} pricing_mode={estimate.get('summary', {}).get('pricing_mode', 'seeded_estimate')} "
+            f"source={estimate['source_url']}"
         )
     return f"""# Contexto Técnico - Token Usage Calculator
 
@@ -329,6 +333,7 @@ def build_token_usage_context(repository: TokenUsageRepository, limit: int = 50)
 - Medir input/output reais nos logs do provider.
 - Trocar conversa longa por contexto técnico compacto sempre que possível.
 - Conferir preços nos docs oficiais antes de decisão financeira.
+- Tratar `seeded_estimate` como planejamento; decisão financeira exige `docs_verified`.
 """
 
 

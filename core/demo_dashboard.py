@@ -36,7 +36,7 @@ def build_demo_dashboard_snapshot(
             "accent": "#00D4FF",
         },
         "recommended_flow": [
-            "Run demo suite",
+            "Run canonical suite",
             "Inspect structured JSON",
             "Generate AI context",
         ],

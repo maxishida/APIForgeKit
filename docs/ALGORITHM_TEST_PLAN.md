@@ -325,7 +325,7 @@ Critério de aceite:
 
 - O usuário consegue decidir se o algoritmo está pronto.
 
-Métricas que devem aparecer para uma demo gravável:
+Métricas que devem aparecer para uma apresentação gravável:
 
 - total de testes executados
 - total passed/failed

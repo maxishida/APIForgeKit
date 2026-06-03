@@ -13,6 +13,11 @@ COLORS = {
     "invalid_lead": "#EF4444",
     "success": "#10B981",
     "failed": "#EF4444",
+    "real_http": "#10B981",
+    "dry_run_contract": "#00D4FF",
+    "seed_validation": "#F59E0B",
+    "legacy": "#9CA3AF",
+    "blocked": "#EF4444",
 }
 
 
@@ -26,3 +31,14 @@ def badge(label: str, value: str) -> None:
         </span>
         """
     )
+
+
+def evidence_badge(mode: str) -> None:
+    labels = {
+        "real_http": "Real",
+        "dry_run_contract": "Dry-run",
+        "seed_validation": "Seed",
+        "legacy": "Legacy",
+        "blocked": "Blocked",
+    }
+    badge(labels.get(mode, mode), mode)

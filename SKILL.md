@@ -1,586 +1,219 @@
 ---
 name: apiforgekit-operational-brain
-description: Use when an agent works in APIForgeKit and needs to validate APIs or algorithms, collect evidence, reduce LLM token waste, operate live logs, build reports, or prepare implementation context without guessing behavior.
+description: Use when an agent operates APIForgeKit to validate APIs, algorithms, token cost, logs, evidence, Context Builder exports or ACP commands before suggesting implementation.
 ---
 
 # APIForgeKit Operational Brain
 
-APIForgeKit exists to turn uncertain API or algorithm behavior into observable evidence before any product implementation.
+Use this file as the short execution contract for ACP and human-driven agents. Keep detailed explanations in `docs/`; keep this skill small enough to load in prompt context.
 
-The repo should teach a simple open source idea: a small local test lab can save LLM tokens for developers by replacing long speculative chats with compact validated context.
-
-Primary flow:
-
-```txt
-Teste Real
-↓
-Logs Estruturados
-↓
-Evidências
-↓
-Cálculo de custo/tokens
-↓
-Contexto Técnico
-↓
-Implementação futura
-```
-
-Do not jump directly to app code. First run a focused test, collect logs, inspect evidence, build context, and only then recommend implementation work.
-
-The user-facing promise is:
-
-```txt
-Insert API or algorithm into the harness
-↓
-Run validation
-↓
-Get JSON behavior evidence
-↓
-Generate AI-ready context
-↓
-Build the SaaS with fewer assumptions
-```
-
-## Core Rule
+## Prime Directive
 
 No implementation without evidence.
 
-Evidence means:
+Official flow:
 
-- command or UI action executed
-- sanitized input payload
-- sanitized output payload
-- status
-- latency
-- provider, model, endpoint or SDK path
-- token/cost metadata when available
-- pricing source URL when estimating model cost
-- error details when failed
-- recommendation
+```txt
+Test -> Structured Log -> PostgreSQL -> Dashboard -> Context Builder -> Evidence Pack -> Implementation later
+```
+
+If evidence is missing, answer:
+
+```txt
+Ainda nao validado pelo APIForgeKit. Proximo passo: executar teste/log/contexto antes de implementar.
+```
 
 ## Decision Gates
 
-The agent must pass these gates in order. Do not skip gates because a task feels simple.
+1. Classify the request.
+2. Execute the smallest relevant validation.
+3. Persist structured evidence.
+4. Build or reference Context Builder output.
+5. Only then recommend implementation work.
 
-### Gate 1 - Classify Request
+Route by intent:
 
-Route the user request to the correct lab before acting:
-
-| User asks for | Required mode |
+| Intent | Required path |
 | --- | --- |
-| API, webhook, endpoint, SaaS integration | Generic API Validation Mode |
-| xAI/OpenAI/Gemini/Anthropic behavior | Provider Validation Mode |
-| deterministic business logic | Algorithm Validation Mode |
-| token usage, model price, cost per user | Token Economy Mode |
-| implementation plan or app code | Context Builder first, then Implementation Boundary |
-| agent/editor protocol | ACP Agent Direction |
+| Deterministic scoring or business logic | Algorithm Test Lab |
+| API, webhook or SaaS payload | Generic API Lab |
+| xAI/OpenAI/Gemini/Anthropic behavior | Provider validation |
+| Cost, token usage or price per user | Token Calculator |
+| Implementation request | Context Builder first |
+| IDE/client protocol | ACP Execution Contract |
 
-### Gate 2 - Evidence Checklist
+## Evidence Contract
 
-Before saying a test is validated, confirm:
+Every validated test must have:
 
-- input/request exists
-- expected output exists when applicable
-- actual output/response exists
-- status is recorded
-- latency is recorded
-- error is recorded if present
-- tokens/cost are recorded or explicitly unavailable
-- pricing source URL is recorded for cost estimates
-- recommendation is recorded
-- context is generated from observed data
+- input/request payload, sanitized
+- expected output when applicable
+- actual output/response
+- status and latency
+- error if failed
+- recommendation
+- context/export path when generated
+- `evidence_mode`
 
-### Gate 3 - Implementation Permission
+Evidence modes:
 
-The agent can suggest implementation only after:
+- `real_http`: real external/local HTTP or SDK call
+- `dry_run_contract`: local contract validation with expected vs actual
+- `seed_validation`: canonical deterministic seed suite
+- `blocked`: not executed because permission, credential, cost, fixture or V2 scope is missing
+- `legacy`: preserved feature outside the canonical MVP
 
-- at least one relevant test was executed
-- structured logs exist
-- evidence is inspectable
-- Context Builder output exists
-- known risks and limitations are listed
+Never hide dry-run or seed evidence as real production behavior.
 
-If a gate is missing, say `ainda não validado` and run or request the missing validation step.
+## ACP Execution Contract
 
-## Anti-Guess Rule
+ACP is a protocol layer around the same labs; it must not bypass evidence gates or generate product code.
 
-Never invent payloads, endpoints, SDK behavior, model prices, limits, token costs, response shapes or algorithm outcomes.
+Handshake for IDE/CLI clients:
 
-If evidence is missing:
+1. Start PostgreSQL: `npm run db`.
+2. Start ACP stdio subprocess: `npm run acp`.
+3. Send `initialize`.
+4. Send `session/new` with absolute `cwd`.
+5. Read `available_commands_update`; command names are announced without `/`.
+6. Send `session/prompt` with text `ContentBlock[]`.
+7. Read `session/update` notifications for `plan`, `tool_call`, `tool_call_update` and `agent_message_chunk`.
+8. Treat final `PromptResponse` as stop metadata and `_meta` paths only.
 
-```txt
-Ainda não validado pelo APIForgeKit.
-Próximo passo: executar teste/log/contexto antes de implementar.
-```
-
-## Token Economy Rule
-
-Use the lab to shrink prompts before asking a LLM to implement.
-
-Do:
-
-1. Run the smallest real test.
-2. Save structured JSON.
-3. Generate context.
-4. Give the LLM the context, not the whole debugging story.
-
-Avoid:
-
-- pasting full docs when a validated payload is enough
-- asking a LLM to guess API behavior
-- repeating failed attempts without structured logs
-- implementing before expected-vs-actual behavior is known
-
-Good implementation prompt:
-
-```txt
-Use este contexto técnico validado pelo APIForgeKit.
-Implemente somente a lógica confirmada pelos testes.
-Não invente endpoints, payloads ou regras.
-```
-
-## Current Product Focus
-
-The current APIForgeKit Studio focus is observability for APIs and algorithms:
-
-- live dashboard
-- real-time event stream
-- structured PostgreSQL logs
-- request/response evidence
-- xAI test runner
-- Algorithm Test Lab for deterministic Python logic
-- Context Builder from real logs
-- Markdown, JSON and HTML reports
-- Generic API Lab for HTTP/dry-run API contracts
-- WhatsApp validation pack as a seed suite
-- Token Calculator for provider/model/user cost planning, presets and context savings
-- report ZIP bundles for portable evidence
-
-Algorithm Test Lab now validates `lead_score` with seed cases, expected output validation and structured PostgreSQL results. Future harnesses should support WhatsApp APIs, webhooks, local algorithms and site/API endpoints using the same evidence pattern.
-Generic API Lab now validates API/webhook contracts with expected output validation, sanitized headers and structured PostgreSQL results.
-
-## ACP Agent Direction
-
-ACP is a strong V2 direction for APIForgeKit when the Studio should be operated from an editor, IDE or agent client instead of only the NiceGUI UI.
-
-Target role:
-
-```txt
-ACP Client / Editor
-↓
-APIForgeKit ACP Agent
-↓
-Skill Gates
-↓
-API Lab / Algorithm Lab / Token Calculator
-↓
-PostgreSQL Evidence
-↓
-Context Builder / Reports
-```
-
-The ACP agent must not bypass this skill. It should execute the same gates through protocol-visible progress updates.
-
-Suggested ACP-facing capabilities:
-
-- `validate_api_contract`
-- `validate_algorithm_suite`
-- `calculate_token_usage`
-- `build_technical_context`
-- `export_evidence_bundle`
-- `explain_next_step`
-
-Implemented ACP prompt commands:
-
-- Announced `validate-api-suite`; prompt `/validate-api-suite whatsapp_validation_pack`
-- Announced `validate-lead-score`; prompt `/validate-lead-score`
-- Announced `validate-algorithm`; prompt `/validate-algorithm lead_score`
-- Announced `token-cost`; prompt `/token-cost provider=xai model=grok-4.3 users=10 requests=20`
-- Announced `build-context`; prompt `/build-context`
-- Announced `export-evidence`; prompt `/export-evidence`
-
-ACP fit:
-
-- Use ACP for editor/client interoperability.
-- Use `session/update` notifications to stream test progress.
-- Use `available_commands_update` after `session/new` so clients can discover safe commands.
-- Advertise command names without `/`, while accepting prompts with or without `/`.
-- Use `plan` updates before execution so the client sees validation gates.
-- Accept ACP `ContentBlock[]` text prompts and keep legacy string prompt support.
-- Use `tool_call` and `tool_call_update` around local lab execution.
-- Use `agent_message_chunk` with text content blocks for final structured summaries; `PromptResponse` should carry `stopReason` and `_meta`.
-- Use `session/request_permission` before running costly API calls, shell commands, file writes or external MCP actions.
-- Include APIForgeKit `_meta` fields so clients can correlate updates with local evidence.
-- Keep APIForgeKit's PostgreSQL/log/report system as the evidence backend.
-
-Do not build the ACP agent before the local lab contract is stable. V1 remains NiceGUI local-first; ACP is the protocolized execution layer for V2.
-
-## Operating Modes
-
-### 1. Live Observability Mode
-
-Use the NiceGUI Studio to run and inspect live provider tests.
+Quick local harness:
 
 ```bash
-npm run db
-python app.py
+python run_acp_prompt.py "/validate-lead-score"
+python run_acp_prompt.py "/build-context"
+python run_acp_prompt.py "/token-cost provider=xai model=grok-4.3 users=10 requests=20"
 ```
 
-Open `http://localhost:8080`, then use Live Dashboard -> Executar xAI Compact.
-
-This path writes to PostgreSQL tables:
-
-- `test_runs`
-- `test_events`
-- `api_requests`
-- `api_responses`
-- `voice_tests`
-- `agent_tests`
-- `context_exports`
-
-### 2. Provider Validation Mode
-
-Use for direct API/provider exploration, especially xAI.
-
-The agent must:
-
-1. Read current official provider docs when the endpoint is new, changed, or failing.
-2. Verify local readiness without printing secrets.
-3. Run the smallest focused real test possible.
-4. Persist structured logs and request/response evidence.
-5. Generate context and reports.
-6. Stop before implementation unless the user explicitly approves a later build phase.
-
-Legacy compact runner remains available:
-
-```bash
-python run_lab.py --provider xai --case auth
-python run_lab.py --provider xai --case basic
-python run_lab.py --provider xai --case stream
-python run_lab.py --provider xai --case tools
-```
-
-### 3. Algorithm Validation Mode
-
-Use when validating a business algorithm before turning it into a SaaS feature.
-
-Examples:
-
-- lead score
-- WhatsApp lead qualification
-- ticket classification
-- spam detection
-- recommendation logic
-- pricing or eligibility rules
-
-The agent must:
-
-1. Define the algorithm objective in plain language.
-2. Define required inputs and expected outputs.
-3. Create manual cases first.
-4. Compare expected output with actual output.
-5. Save JSON evidence.
-6. Generate context that explains the behavior to an implementation AI.
-
-Preferred output:
-
-```json
-{
-  "case_id": "uuid",
-  "algorithm": "lead_score",
-  "status": "passed",
-  "input": {},
-  "expected": {},
-  "actual": {},
-  "diff": {},
-  "latency_ms": 0,
-  "recommendation": ""
-}
-```
-
-### Lead/Score Algorithm ACP Practice
-
-Use this stricter path whenever the prompt mentions lead score, score-based routing, WhatsApp lead qualification, lead status, conversion score, `/validate-lead-score` or `/validate-algorithm lead_score`.
-
-The ACP agent must treat score algorithms as deterministic validation targets, not as creative generation tasks.
-
-Required ACP flow:
-
-1. Advertise `validate-lead-score` and `validate-algorithm` through `available_commands_update`.
-2. Prefer `/validate-lead-score` for canonical lead qualification validation.
-3. Emit a `plan` with these gates: classify scoring objective, load canonical rules, run required cases, verify invariants, compare expected vs actual, export evidence pack.
-4. Execute the suite through Algorithm Test Lab.
-5. Stream result summary through `agent_message_chunk`.
-6. Persist run/results in PostgreSQL.
-7. Return evidence paths, ZIP bundle path and context paths.
-
-Minimum score test matrix:
-
-- cold lead
-- warm lead
-- hot lead
-- urgent lead
-- invalid empty message
-- spam message
-- no contact penalty
-- previous customer with high intent
-- boundary transitions around 30/31, 60/61 and 80/81 using reachable deterministic scores
-- conflicting signals: high intent but no contact, low intent but previous customer
-- invalid payload types recorded as structured failed evidence
-
-Score invariants:
-
-- payload is validated before execution
-- score is deterministic for the same input
-- score is clamped between 0 and 100
-- invalid lead status overrides score classification
-- every score contribution has a reason
-- penalties are visible in reasons and diff
-- expected vs actual mismatch is a failed test, not a warning
-- no LLM decides classification
-
-Recommended result contract:
-
-```json
-{
-  "algorithm": "lead_score",
-  "status": "passed",
-  "input": {},
-  "expected": {
-    "score": 85,
-    "classification": "urgent_lead"
-  },
-  "actual": {
-    "score": 85,
-    "classification": "urgent_lead",
-    "reasons": []
-  },
-  "diff": {},
-  "invariants": {
-    "payload_validated": true,
-    "deterministic": true,
-    "score_clamped": true,
-    "invalid_override_checked": true
-  },
-  "recommendation": "Ready for Context Builder"
-}
-```
-
-ACP metadata should include:
-
-- `_meta.apiforgekit.sessionId`
-- `_meta.apiforgekit.algorithm`
-- `_meta.apiforgekit.runId` when available
-- `_meta.apiforgekit.evidencePath` when available
-
-Stop conditions for lead/score work:
-
-- expected output is missing
-- case cannot be reproduced
-- rules are ambiguous
-- PostgreSQL is offline for a run that must be persisted
-- user asks for Next.js implementation before context exists
-- user asks for model/LLM scoring in the deterministic MVP
-
-Open source tutorial:
+Implemented commands:
 
 ```txt
-README.md -> docs/SUMMARY.md -> docs/OPEN_SOURCE_TUTORIAL.md -> Algorithm Test Lab -> Context Builder
+/validate-lead-score
+/validate-algorithm lead_score
+/validate-api-suite whatsapp_validation_pack
+/token-cost provider=xai model=grok-4.3 users=10 requests=20
+/build-context
+/export-evidence
 ```
 
-### 4. Generic API Validation Mode
+ACP limitations:
 
-Use when validating APIs, webhooks, SaaS endpoints or payload contracts.
+- v1-only: return `protocolVersion=1`.
+- Accept text `ContentBlock[]`; keep legacy string prompt support.
+- Refuse image/audio/resource blocks until a specific resource validation path exists.
+- For real HTTP/provider-paid paths, emit `session/request_permission` and return `stopReason="refusal"`.
+- Full result JSON belongs in `agent_message_chunk`; `_meta` should include session, command, run ID, context path and evidence ZIP when available.
 
-Examples:
+## Algorithm Path
 
-- WhatsApp outbound message payload
-- WhatsApp webhook lead intent
-- CRM endpoint payload
-- payment API status handling
-- custom site/API classification endpoint
+Use `Algorithm Test Lab` for deterministic logic. `lead_score` is the canonical MVP algorithm.
 
-The agent must:
+Required behavior:
 
-1. Define method, URL, headers, body and expected output.
-2. Prefer dry-run contract tests until credentials and cost are clear.
-3. Redact secrets before logging.
-4. Compare expected status/body with actual response.
-5. Save structured JSON in PostgreSQL.
-6. Export suite JSON when the test should be shared in GitHub.
+- run canonical suite before implementation
+- compare expected vs actual
+- fail on mismatch, not warn
+- persist run/results in PostgreSQL
+- export context/evidence pack
+- classify score without LLM involvement
 
-### 5. Token Economy Mode
+Lead score invariants:
 
-Use when the user asks about provider cost, token usage, cost per user or model choice.
+- payload validated
+- deterministic output for same input
+- score clamped 0-100
+- invalid status overrides score classification
+- reasons include contributions and penalties
 
-The agent must:
+Prefer `/validate-lead-score` through ACP for lead qualification work.
 
-1. Always consult the current official provider pricing docs before answering or calculating price, token cost, cost per user, monthly cost or model cost.
-2. Estimate input, cached input and output tokens separately.
-3. Calculate total requests from users, requests per user and days.
-4. Save the estimate when PostgreSQL is online.
-5. Compare raw prompt cost against APIForgeKit structured context cost.
-6. Recommend shrinking prompts through Context Builder before implementation.
+## API Path
 
-Required pricing sources:
+Use `Generic API Lab` for APIs, webhooks and SaaS contracts.
+
+Rules:
+
+- prefer `dry_run_contract` until credentials and cost are clear
+- require explicit permission for `real_http`
+- redact secrets before logs
+- compare expected status/body against actual response
+- store request, response, diff, error and recommendation
+
+## Token Economy Path
+
+Use Token Calculator when the user asks about price, usage, monthly cost or cost per user.
+
+Rules:
+
+- record `pricing_mode`
+- use `seeded_estimate` for local catalog estimates
+- use `docs_verified` only after checking current official pricing docs
+- never present seeded pricing as billing truth
+- include source URL
+- recommend Context Builder to shrink prompts before implementation
+
+Provider pricing docs:
 
 - xAI: https://docs.x.ai/developers/models
 - OpenAI: https://platform.openai.com/docs/pricing
 - Anthropic: https://docs.anthropic.com/en/docs/about-claude/pricing
 - Gemini: https://ai.google.dev/gemini-api/docs/pricing
 
-Never present seeded pricing as billing truth. Always call it an estimate, include the provider pricing source URL, and say when the doc was checked.
+## Provider Validation
 
-If the pricing doc cannot be reached, say the calculation is blocked or use the local seeded catalog only as a clearly labeled rough estimate.
+For provider behavior, use official docs when the endpoint, model, pricing or limits may have changed. Start with the smallest safe test and log all request/response evidence. Do not print secrets.
 
-## xAI Validation Priority
+xAI references live in `docs/XAI_TEST_PLAN.md`; ACP architecture details live in `docs/ACP_AGENT_ARCHITECTURE.md`.
 
-Use official xAI docs as source of truth:
+## Context Builder Gate
 
-- Overview: https://docs.x.ai/overview
-- Text / Responses: https://docs.x.ai/developers/model-capabilities/text/generate-text
-- Structured Outputs: https://docs.x.ai/developers/model-capabilities/text/structured-outputs
-- Streaming: https://docs.x.ai/developers/model-capabilities/text/streaming
-- Function Calling: https://docs.x.ai/developers/tools/function-calling
-- Multi Agent: https://docs.x.ai/developers/model-capabilities/text/multi-agent
-- Voice: https://docs.x.ai/developers/model-capabilities/audio/voice
-- Speech to Text: https://docs.x.ai/developers/model-capabilities/audio/speech-to-text
-- Models: https://docs.x.ai/developers/rest-api-reference/inference/models
-- Rate Limits: https://docs.x.ai/developers/rate-limits
-- Debugging: https://docs.x.ai/developers/debugging
+Before implementation, Context Builder must say `Ready` or the missing evidence/failures must be explicit.
 
-Current practical stance:
+Modes:
 
-- Prefer Responses API concepts for future integrations, but use `xai-sdk` where it gives cleaner Python validation.
-- Validate structured outputs with schemas before trusting parser behavior.
-- Capture streaming chunks, first-chunk latency and final response shape.
-- Treat Multi Agent as beta and record additional cost/latency risk.
-- Treat Voice as a separate validation track with explicit budget, audio fixtures and privacy rules.
+- `Algorithm only`
+- `API only`
+- `Algorithm + API`
+- `Full evidence`
 
-## Structured Event Contract
+Readiness:
 
-Every live test event should follow this shape:
+- `Ready`: enough evidence exists
+- `Needs tests`: required evidence is missing
+- `Has failures`: diffs/errors must be fixed or documented
 
-```json
-{
-  "event_id": "uuid",
-  "timestamp": "",
-  "provider": "xai",
-  "module": "",
-  "test_name": "",
-  "status": "running | success | failed | blocked",
-  "latency_ms": 0,
-  "tokens": {},
-  "cost": 0,
-  "request": {},
-  "response": {},
-  "error": null,
-  "recommendation": ""
-}
-```
-
-Never log full API keys, bearer tokens, private audio, raw private transcripts or user secrets. If an artifact is sensitive, log metadata and a local artifact path instead.
-
-## Context Builder Contract
-
-Context Builder is the implementation gate. Before suggesting product code, the agent must build or point to a Context Builder export based on real evidence.
-
-Supported source modes:
-
-- `Algorithm + API`: requires algorithm evidence and API evidence.
-- `Algorithm only`: requires deterministic algorithm evidence.
-- `API only`: requires API/webhook evidence.
-- `Full evidence`: combines algorithm, API, live observability and token evidence.
-
-Readiness statuses:
-
-- `Ready`: enough evidence exists for an implementation AI.
-- `Needs tests`: required evidence is missing.
-- `Has failures`: evidence exists but diffs/errors must be corrected or explicitly documented.
-
-If readiness is not `Ready`, return `ainda não validado` and run the missing validation step instead of recommending implementation.
-
-After each test sequence, generate context containing:
-
-- what was tested
-- what worked
-- what failed
-- correct payloads
-- response shapes
-- expected vs actual behavior for algorithms
-- latency and reliability observations
-- token/cost observations
-- cost per user estimates when available
-- source docs for pricing estimates
-- limitations discovered
-- recommendations
-- implementation blockers
-
-The guided export must include:
-
-- source mode
-- readiness
-- algorithm metrics
-- API metrics
-- live metrics
-- token metrics
-- full context
-- paths for Markdown, JSON, HTML and ZIP when exported
-
-## Report Contract
-
-Reports export to:
-
-- Markdown
-- JSON
-- HTML
-- ZIP bundle
-
-Each report should include:
-
-- executive summary
-- metrics
-- errors
-- evidence references
-- recommendations
-- implementation impact for a future phase
+Exports should include Markdown, JSON, HTML and ZIP when requested.
 
 ## Stop Conditions
 
-Stop and ask before continuing when:
+Stop or request permission when:
 
 - no real output exists
-- `XAI_API_KEY` is missing
-- PostgreSQL is offline for live runs
+- PostgreSQL is offline for a run that must persist
+- credentials or fixtures are missing
+- a call may generate cost
 - docs conflict with observed behavior
-- voice tests require real or private audio not approved by the user
-- a test may generate meaningful cost
-- pricing docs are missing or unclear
-- rate limit or account permission blocks validation
+- pricing docs cannot be verified for a financial decision
+- voice/audio/private data is involved without approval
+- user asks for implementation before context exists
 
-## Safety Rules
+## Safety
 
-- Never hardcode API keys.
-- Never print complete secrets.
-- Never commit `.env`, provider outputs, audio samples or sensitive responses.
-- Use official docs over memory.
-- Prefer small tests over broad exploratory calls.
-- Record failures as evidence instead of hiding them.
+- Never hardcode or print API keys.
+- Never commit `.env`, provider raw outputs, private audio or secrets.
+- Prefer small validations over broad exploratory calls.
+- Record failures as evidence.
+- Keep generated artifacts in ignored `exports/` unless the user asks otherwise.
 
-## Response Template After Validation
+## Reference Docs
 
-```txt
-Provider:
-Phase:
-Test:
-Action:
-Report:
-Status:
-Model or endpoint:
-Latency:
-Tokens/cost:
-Finding:
-Failure mode:
-Evidence:
-Next action:
-```
+- MVP map: `docs/MVP_100_PERCENT_MAP.md`
+- MVP checklist: `docs/MVP_100_PERCENT_CHECKLIST.md`
+- Feature test report: `docs/MVP_FEATURE_TEST_REPORT.md`
+- User tutorial: `docs/OPEN_SOURCE_TUTORIAL.md`
+- Algorithm plan: `docs/ALGORITHM_TEST_PLAN.md`
+- ACP details: `docs/ACP_AGENT_ARCHITECTURE.md`
+- Architecture: `docs/architecture.md`

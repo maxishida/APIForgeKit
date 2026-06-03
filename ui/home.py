@@ -37,7 +37,7 @@ def render_home(services) -> None:
             title="Algorithm Test Lab",
             badge="Pure Python",
             caption="Valide lógica determinística com expected vs actual antes de pedir implementação para IA.",
-            primary_label="Run Demo Suite",
+            primary_label="Run Seed Validation",
             primary_icon="playlist_play",
             primary_action=lambda: _run_algorithm_demo(services),
             secondary_label="Open Lab",
@@ -79,7 +79,7 @@ def render_home(services) -> None:
         )
 
     with ui.column().classes("afk-card w-full gap-4").style("padding:18px;"):
-        ui.label("Demo Flow").classes("text-xl font-bold afk-title")
+        ui.label("Seed Validation Flow").classes("text-xl font-bold afk-title")
         with ui.grid(columns=3).classes("w-full gap-3"):
             for index, step in enumerate(snapshot["recommended_flow"], start=1):
                 ui.html(
@@ -91,7 +91,7 @@ def render_home(services) -> None:
                     """
                 )
         with ui.row().classes("gap-3"):
-            ui.button("Run Full Demo", icon="play_arrow", on_click=lambda: _run_full_demo(services)).classes("afk-primary-btn")
+            ui.button("Run Full Seed Validation", icon="play_arrow", on_click=lambda: _run_full_demo(services)).classes("afk-primary-btn")
             ui.button("Generate AI Context", icon="integration_instructions", on_click=lambda: ui.navigate.to("/context-builder")).classes("afk-ghost-btn")
             ui.button("Open Source Tutorial", icon="article", on_click=lambda: ui.navigate.to("/tutorial")).classes("afk-ghost-btn")
 
@@ -122,19 +122,19 @@ def _track_card(
 def _run_algorithm_demo(services) -> None:
     status = database_status(services.engine)
     if not status["online"]:
-        ui.notify("PostgreSQL offline. Rode npm run db antes da demo.", type="negative")
+        ui.notify("PostgreSQL offline. Rode npm run db antes da validação seed.", type="negative")
         return
     ensure_default_algorithms(services.algorithm_repository)
     definition = services.algorithm_repository.get_definition_by_name("lead_score")
     run = AlgorithmTestRunner(services.algorithm_repository).run_suite(str(definition["id"]))
-    ui.notify(f"Demo suite: {run['passed']} passed / {run['failed']} failed.", type="positive" if run["failed"] == 0 else "warning")
+    ui.notify(f"Seed validation: {run['passed']} passed / {run['failed']} failed.", type="positive" if run["failed"] == 0 else "warning")
     ui.navigate.to("/algorithm-test-lab")
 
 
 def _run_full_demo(services) -> None:
     status = database_status(services.engine)
     if not status["online"]:
-        ui.notify("PostgreSQL offline. Rode npm run db antes da demo.", type="negative")
+        ui.notify("PostgreSQL offline. Rode npm run db antes da validação seed.", type="negative")
         return
     result = run_demo_mode(
         algorithm_repository=services.algorithm_repository,
@@ -143,7 +143,7 @@ def _run_full_demo(services) -> None:
     )
     summary = result["summary"]
     ui.notify(
-        f"Full demo pronta: {summary['algorithm_passed']} algorithm cases, {summary['api_passed']} API cases, ${summary['estimated_cost_usd']} estimado.",
+        f"Full seed validation pronta: {summary['algorithm_passed']} algorithm cases, {summary['api_passed']} API cases, ${summary['estimated_cost_usd']} estimado.",
         type="positive" if summary["demo_ready"] else "warning",
     )
     ui.navigate.to("/api-test-lab")

@@ -26,10 +26,11 @@ def render_logs(services) -> None:
 
     with ui.column().classes("afk-card w-full gap-4").style("padding:18px;"):
         ui.label("Filtros").classes("text-lg font-bold")
-        with ui.grid(columns=5).classes("w-full gap-3"):
+        with ui.grid(columns=6).classes("w-full gap-3"):
             provider = ui.select(["", "xai"], value="", label="Provider").classes("w-full")
             module = ui.select(["", "connectivity", "chat", "structured_outputs", "streaming", "function_calling", "agents", "voice"], value="", label="Módulo").classes("w-full")
             record_status = ui.select(["", "running", "success", "failed", "blocked"], value="", label="Status").classes("w-full")
+            evidence_mode = ui.select(["", "real_http", "dry_run_contract", "seed_validation", "blocked", "legacy"], value="", label="Evidência").classes("w-full")
             min_latency = ui.number("Latência mínima", value=0, min=0).classes("w-full")
             query = ui.input("Buscar JSON").classes("w-full")
 
@@ -40,6 +41,7 @@ def render_logs(services) -> None:
                 provider=provider.value or "",
                 module=module.value or "",
                 status=record_status.value or "",
+                evidence_mode=evidence_mode.value or "",
                 min_latency=float(min_latency.value or 0),
                 query=query.value or "",
             )
@@ -105,6 +107,7 @@ def _filter_records(
     status: str,
     min_latency: float,
     query: str,
+    evidence_mode: str = "",
 ) -> list[dict[str, object]]:
     query_lower = query.lower().strip()
     filtered: list[dict[str, object]] = []
@@ -115,9 +118,25 @@ def _filter_records(
             continue
         if status and record.get("status") != status:
             continue
+        if evidence_mode and _record_evidence_mode(record) != evidence_mode:
+            continue
         if float(record.get("latency_ms") or 0) < min_latency:
             continue
         if query_lower and query_lower not in json.dumps(record, ensure_ascii=False, default=str).lower():
             continue
         filtered.append(record)
     return filtered
+
+
+def _record_evidence_mode(record: dict[str, object]) -> str:
+    if record.get("evidence_mode"):
+        return str(record["evidence_mode"])
+    request = record.get("request") if isinstance(record.get("request"), dict) else {}
+    response = record.get("response") if isinstance(record.get("response"), dict) else {}
+    if request and request.get("evidence_mode"):
+        return str(request["evidence_mode"])
+    if response and response.get("evidence_mode"):
+        return str(response["evidence_mode"])
+    if record.get("status") == "blocked":
+        return "blocked"
+    return "real_http" if record.get("provider") else "unknown"

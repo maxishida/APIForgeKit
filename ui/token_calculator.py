@@ -107,6 +107,7 @@ def render_token_calculator(services) -> None:
         with details_container:
             ui.label("Pricing Source").classes("text-xl font-bold afk-title")
             ui.html(f"<span class='afk-badge'>{pricing.provider} / {pricing.model}</span>")
+            ui.html("<span class='afk-badge' style='color:#F59E0B'>pricing_mode=seeded_estimate</span>")
             with ui.grid(columns=3).classes("w-full gap-3"):
                 metric_card("Input", f"${pricing.input_per_million}", "/1M tokens", ACCENT_BY_PROVIDER.get(pricing.provider, "#00D4FF"))
                 metric_card("Cached", f"${pricing.cached_input_per_million}", "/1M tokens", "#2563EB")
@@ -205,11 +206,12 @@ def render_token_calculator(services) -> None:
                         {"field": "created_at", "headerName": "Timestamp", "sortable": True, "filter": True, "minWidth": 180},
                         {"field": "provider", "headerName": "Provider", "sortable": True, "filter": True, "width": 120},
                         {"field": "model", "headerName": "Model", "sortable": True, "filter": True, "flex": 1},
+                        {"field": "pricing_mode", "headerName": "Pricing Mode", "sortable": True, "filter": True, "width": 160},
                         {"field": "users", "headerName": "Users", "sortable": True, "filter": "agNumberColumnFilter", "width": 110},
                         {"field": "estimated_cost_usd", "headerName": "Cost", "sortable": True, "filter": "agNumberColumnFilter", "width": 120},
                         {"field": "total_tokens", "headerName": "Tokens", "sortable": True, "filter": "agNumberColumnFilter", "width": 130},
                     ],
-                    "rowData": rows,
+                    "rowData": [_history_row(row) for row in rows],
                     "pagination": True,
                     "paginationPageSize": 8,
                     "defaultColDef": {"resizable": True},
@@ -223,3 +225,10 @@ def render_token_calculator(services) -> None:
         control.on_value_change(lambda _: refresh_all())
     refresh_all()
     render_history()
+
+
+def _history_row(row: dict[str, object]) -> dict[str, object]:
+    summary = row.get("summary") if isinstance(row.get("summary"), dict) else {}
+    enriched = dict(row)
+    enriched["pricing_mode"] = summary.get("pricing_mode", "seeded_estimate")
+    return enriched

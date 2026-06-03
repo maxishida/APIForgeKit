@@ -49,13 +49,14 @@ def render_live_dashboard(services) -> None:
                     "afk-primary-btn"
                 )
                 ui.button("Exportar Relatório", icon="download", on_click=lambda: _export_report(services)).classes("afk-ghost-btn")
-        with ui.grid(columns=4).classes("w-full gap-3"):
+        with ui.grid(columns=5).classes("w-full gap-3"):
             status_filter = ui.select(["", "running", "success", "failed", "blocked"], value="", label="Status").classes("w-full")
             module_filter = ui.select(
                 ["", "connectivity", "chat", "structured_outputs", "streaming", "function_calling", "agents", "voice"],
                 value="",
                 label="Módulo",
             ).classes("w-full")
+            evidence_filter = ui.select(["", "real_http", "dry_run_contract", "seed_validation", "blocked", "legacy"], value="", label="Evidência").classes("w-full")
             query_filter = ui.input("Buscar evento, payload ou erro").classes("w-full")
             limit_filter = ui.select([50, 100, 200, 500], value=200, label="Eventos").classes("w-full")
 
@@ -63,7 +64,7 @@ def render_live_dashboard(services) -> None:
         metrics = services.observability_repository.metrics()
         events = services.observability_repository.list_events(limit=int(limit_filter.value or 200))
         runs = services.observability_repository.list_runs(limit=25)
-        filtered_events = _filter_events(events, status_filter.value or "", module_filter.value or "", query_filter.value or "")
+        filtered_events = _filter_events(events, status_filter.value or "", module_filter.value or "", evidence_filter.value or "", query_filter.value or "")
 
         metrics_container.clear()
         with metrics_container:
@@ -97,6 +98,7 @@ def render_live_dashboard(services) -> None:
 
     status_filter.on_value_change(lambda _: refresh())
     module_filter.on_value_change(lambda _: refresh())
+    evidence_filter.on_value_change(lambda _: refresh())
     query_filter.on_value_change(lambda _: refresh())
     limit_filter.on_value_change(lambda _: refresh())
     refresh()
@@ -132,17 +134,28 @@ def _export_report(services) -> None:
     events = services.observability_repository.list_events(limit=500)
     paths = export_observability_report(services.reports_dir, runs, events)
     if runs:
-        services.observability_repository.record_context_export(runs[0]["id"], "multi", json.dumps(paths), {"events": len(events)})
+        modes: dict[str, int] = {}
+        for event in events:
+            mode = str(event.get("evidence_mode") or "unknown")
+            modes[mode] = modes.get(mode, 0) + 1
+        services.observability_repository.record_context_export(
+            runs[0]["id"],
+            "multi",
+            json.dumps(paths),
+            {"events": len(events), "evidence_mode": "mixed", "evidence_modes": modes},
+        )
     ui.notify(f"Relatório exportado: {paths['markdown']}", type="positive")
 
 
-def _filter_events(events: list[dict[str, object]], status: str, module: str, query: str) -> list[dict[str, object]]:
+def _filter_events(events: list[dict[str, object]], status: str, module: str, evidence_mode: str, query: str) -> list[dict[str, object]]:
     query_lower = query.lower().strip()
     filtered: list[dict[str, object]] = []
     for event in events:
         if status and event.get("status") != status:
             continue
         if module and event.get("module") != module:
+            continue
+        if evidence_mode and event.get("evidence_mode") != evidence_mode:
             continue
         if query_lower:
             haystack = json.dumps(event, ensure_ascii=False, default=str).lower()
@@ -176,12 +189,14 @@ def _render_event_stream(events: list[dict[str, object]], runner_state: dict[str
         module = escape(str(event.get("module") or ""))
         test_name = escape(str(event.get("test_name") or ""))
         event_type = escape(str(event.get("event_type") or ""))
+        evidence = escape(str(event.get("evidence_mode") or "unknown"))
         ui.html(
             f"""
-            <div style="display:grid;grid-template-columns:92px 150px 170px 1fr 100px;gap:12px;align-items:center;
+            <div style="display:grid;grid-template-columns:92px 150px 140px 170px 1fr 100px;gap:12px;align-items:center;
                         border-top:1px solid rgba(255,255,255,.06);padding:10px 0;font-size:13px;">
               <code style="color:#9CA3AF">[{timestamp}]</code>
               <span class="afk-badge" style="color:{color};justify-content:center">{escape(str(event.get("status")))}</span>
+              <span class="afk-badge" style="justify-content:center">{evidence}</span>
               <span style="color:#00D4FF;font-weight:700">{module}/{test_name}</span>
               <span><b>{event_type}</b> - {message}</span>
               <span style="color:#9CA3AF;text-align:right">{latency:.2f} ms</span>

@@ -63,7 +63,17 @@ class ObservabilityRepository:
 
     def record_event(self, event: ObservabilityEventInput) -> dict[str, object]:
         with self.session_factory() as session:
-            row = TestEvent(id=str(uuid4()), **asdict(event))
+            payload = asdict(event)
+            request = dict(payload.get("request") or {})
+            response = dict(payload.get("response") or {})
+            evidence_mode = request.get("evidence_mode") or response.get("evidence_mode")
+            if not evidence_mode:
+                evidence_mode = "blocked" if payload.get("status") == "blocked" else "real_http"
+            request.setdefault("evidence_mode", evidence_mode)
+            response.setdefault("evidence_mode", evidence_mode)
+            payload["request"] = request
+            payload["response"] = response
+            row = TestEvent(id=str(uuid4()), **payload)
             session.add(row)
             session.commit()
             session.refresh(row)
@@ -200,6 +210,7 @@ class ObservabilityRepository:
                 select(TestRun).where(TestRun.completed_at.is_not(None)).order_by(desc(TestRun.created_at)).limit(200)
             ).all()
             response_rows = session.scalars(select(ApiResponse)).all()
+            event_rows = session.scalars(select(TestEvent)).all()
             tokens = 0
             for row in response_rows:
                 usage = row.tokens or {}
@@ -213,6 +224,14 @@ class ObservabilityRepository:
                 if row.completed_at and row.created_at
             ]
             average_time = sum(durations) / len(durations) if durations else 0
+            evidence_modes: dict[str, int] = {}
+            for row in event_rows:
+                mode = (
+                    (row.request or {}).get("evidence_mode")
+                    or (row.response or {}).get("evidence_mode")
+                    or ("blocked" if row.status == "blocked" else "real_http")
+                )
+                evidence_modes[str(mode)] = evidence_modes.get(str(mode), 0) + 1
         return {
             "total_tests": int(total_runs),
             "active_tests": int(active),
@@ -223,6 +242,7 @@ class ObservabilityRepository:
             "average_time_ms": round(float(average_time), 2),
             "tokens": tokens,
             "estimated_cost": round(float(total_cost), 6),
+            "evidence_modes": evidence_modes,
         }
 
 
@@ -240,6 +260,10 @@ def build_live_context(runs: list[dict[str, object]], events: list[dict[str, obj
     recommendations = "\n".join(
         f"- {event.get('recommendation')}" for event in events if event.get("recommendation")
     ) or "- Continuar validando endpoints com logs estruturados antes de implementar."
+    evidence_modes: dict[str, int] = {}
+    for event in events:
+        mode = str(event.get("evidence_mode") or "unknown")
+        evidence_modes[mode] = evidence_modes.get(mode, 0) + 1
     return f"""# Contexto Técnico — API Observability Lab
 
 ## O que foi testado
@@ -247,6 +271,7 @@ def build_live_context(runs: list[dict[str, object]], events: list[dict[str, obj
 - Runs analisadas: {len(runs)}
 - Eventos analisados: {len(events)}
 - Módulos: {", ".join(sorted({str(event.get("module")) for event in events if event.get("module")})) or "nenhum"}
+- Modos de evidência: {_render_evidence_modes(evidence_modes)}
 
 ## O que funcionou
 
@@ -314,3 +339,9 @@ def export_observability_report(
         encoding="utf-8",
     )
     return {"json": str(json_path), "markdown": str(md_path), "html": str(html_path)}
+
+
+def _render_evidence_modes(evidence_modes: dict[str, int]) -> str:
+    if not evidence_modes:
+        return "nenhum"
+    return ", ".join(f"{mode}={count}" for mode, count in sorted(evidence_modes.items()))

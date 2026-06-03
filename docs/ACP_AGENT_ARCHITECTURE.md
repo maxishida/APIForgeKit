@@ -133,6 +133,32 @@ or:
 npm run acp
 ```
 
+For a single local smoke prompt without writing JSON-RPC by hand:
+
+```bash
+python run_acp_prompt.py "/validate-lead-score"
+python run_acp_prompt.py "/build-context"
+```
+
+IDE/client stdio config example:
+
+```json
+{
+  "command": "npm",
+  "args": ["run", "acp"],
+  "cwd": "D:\\myworksapce\\Apiforgekit\\APIForgeKit",
+  "transport": "stdio"
+}
+```
+
+Send one JSON-RPC object per line. The required handshake is:
+
+1. `initialize`
+2. `session/new` with absolute `cwd`
+3. read `available_commands_update`
+4. `session/prompt` with text `ContentBlock[]`
+5. read `session/update` notifications before the final prompt response
+
 Supported JSON-RPC methods:
 
 - `initialize`
@@ -208,3 +234,12 @@ Safety defaults:
 - Secrets from env, headers or MCP metadata must be redacted before logs or reports.
 
 The seed is intentionally additive. It does not replace NiceGUI, PostgreSQL, labs or reports; it only makes the same evidence-first workflow callable from ACP clients.
+
+## Current Local-Seed Limitations
+
+- ACP protocol version is v1-only and always returns `protocolVersion=1`.
+- Text `ContentBlock[]` prompts are supported; legacy string prompts are accepted for scripts.
+- Resource, image and audio blocks are refused until APIForgeKit has a specific resource validation path.
+- `session/request_permission` currently blocks risky execution and returns `stopReason="refusal"`; there is no continuation flow consuming a permission result yet.
+- `/token-cost` uses local seeded pricing unless a future workflow marks the estimate as `docs_verified`.
+- PostgreSQL should be online for commands that persist evidence.

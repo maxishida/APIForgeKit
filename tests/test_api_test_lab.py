@@ -51,10 +51,44 @@ def test_default_whatsapp_suite_runs_in_dry_run_mode_and_persists_results():
     assert run["total_cases"] >= 4
     assert run["passed"] == run["total_cases"]
     assert all(result["structured_log"]["provider"] == "whatsapp" for result in results)
+    assert all(result["structured_log"]["evidence_mode"] == "dry_run_contract" for result in results)
+    assert all(result["request"]["evidence_mode"] == "dry_run_contract" for result in results)
     assert {result["structured_log"]["test_name"] for result in results} >= {
         "valid outbound text payload",
         "missing phone should fail contract",
     }
+
+
+def test_real_http_case_records_real_http_evidence_mode_when_request_fails():
+    repository = _repository()
+    suite = repository.create_suite(
+        name="real_http_failure",
+        provider="local",
+        description="Real HTTP failure suite",
+        docs_url="https://example.com/docs",
+        tags=["real_http"],
+    )
+    case = repository.create_case(
+        suite_id=suite["id"],
+        name="unreachable endpoint",
+        method="POST",
+        url="http://127.0.0.1:9/unreachable",
+        headers={},
+        body={"ok": True},
+        expected={"status_code": 200},
+        dry_run=False,
+        mock_response={},
+        timeout_seconds=1,
+        tags=["real_http"],
+    )
+
+    run = ApiTestRunner(repository).run_single_case(case["id"])
+    result = repository.list_results(run_id=run["id"])[0]
+
+    assert run["status"] == "failed"
+    assert result["structured_log"]["evidence_mode"] == "real_http"
+    assert result["request"]["evidence_mode"] == "real_http"
+    assert result["structured_log"]["error"]
 
 
 def test_api_suite_export_and_import_roundtrip(tmp_path):
@@ -84,7 +118,7 @@ def test_api_runner_records_failed_diff_for_wrong_expectation():
         suite_id=suite["id"],
         name="wrong expectation",
         method="POST",
-        url="dry-run://demo",
+        url="dry-run://contract-test",
         headers={},
         body={"ok": True},
         expected={"status_code": 201, "json_contains": {"ok": False}},

@@ -62,7 +62,7 @@ def test_guided_context_builder_marks_algorithm_and_api_evidence_as_ready():
         api_context="# API\n\n- whatsapp passou",
         token_context="# Token\n\n- custo estimado",
         algorithm_metrics={"total_results": 17, "passed": 17, "failed": 0},
-        api_metrics={"total_results": 4, "passed": 4, "failed": 0},
+        api_metrics={"total_results": 4, "passed": 4, "failed": 0, "evidence_modes": {"dry_run_contract": 4}},
         live_metrics={"total_tests": 2, "success": 2, "failures": 0},
         token_metrics={"total_estimates": 1},
     )
@@ -74,6 +74,8 @@ def test_guided_context_builder_marks_algorithm_and_api_evidence_as_ready():
     assert "Impacto para Implementação Futura" in bundle["context"]
     assert "lead_score passou" in bundle["context"]
     assert "whatsapp passou" in bundle["context"]
+    assert bundle["readiness"]["api"]["evidence_modes"]["dry_run_contract"] == 4
+    assert "dry_run_contract=4" in bundle["context"]
 
 
 def test_guided_context_builder_marks_failures_as_has_failures():

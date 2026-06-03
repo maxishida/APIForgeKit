@@ -7,6 +7,7 @@ from nicegui import ui
 from core.api_test_lab import ApiTestRunner, ensure_default_api_suites, export_api_suite
 from core.database import database_status
 from ui.components.alerts import db_offline, empty_state
+from ui.components.badges import evidence_badge
 from ui.components.cards import metric_card
 from ui.components.charts import result_latency_bar, result_status_donut
 
@@ -54,8 +55,13 @@ def render_api_lab(services) -> None:
                     ui.label("Teste endpoints reais ou contratos dry-run antes de implementar integrações.").classes("afk-muted")
                 ui.html(f"<span class='afk-badge'>{suite['provider']}</span>")
             ui.label(str(suite["description"])).classes("afk-muted")
+            with ui.row().classes("gap-2"):
+                evidence_badge("dry_run_contract")
+                evidence_badge("real_http")
+            allow_real_http = ui.checkbox("Confirmo execução de HTTP real para casos com URL http/https e dry-run desligado.").classes("w-full")
             with ui.row().classes("gap-3"):
-                ui.button("Executar Suite", icon="playlist_play", on_click=lambda: run_suite(suite)).classes("afk-primary-btn")
+                ui.button("Run Contract Dry-run", icon="playlist_play", on_click=lambda: run_suite(suite)).classes("afk-primary-btn")
+                ui.button("Run Real HTTP", icon="public", on_click=lambda: run_real_http_suite(suite, bool(allow_real_http.value))).classes("afk-ghost-btn")
                 ui.button("Exportar Suite JSON", icon="download", on_click=lambda: export_suite(suite)).classes("afk-ghost-btn")
                 ui.button("Atualizar", icon="refresh", on_click=lambda: refresh_all()).classes("afk-ghost-btn")
 
@@ -68,10 +74,11 @@ def render_api_lab(services) -> None:
         with editor_container:
             ui.label("Criar caso de API").classes("text-xl font-bold afk-title")
             ui.label("Use dry-run para validar payload/contrato, ou desmarque para chamar HTTP real.").classes("afk-muted")
+            ui.html("<span class='afk-badge' style='color:#F59E0B'>Mock response só vale em dry-run contract</span>")
             selected_case = ui.select(list(case_options), value=first["name"] if first else None, label="Caso salvo").classes("w-full")
             case_name = ui.input("Nome", value=first["name"] if first else "novo caso").classes("w-full")
             method = ui.select(["GET", "POST", "PUT", "PATCH", "DELETE"], value=first["method"] if first else "POST", label="Método").classes("w-full")
-            url = ui.input("URL", value=first["url"] if first else "dry-run://demo").classes("w-full")
+            url = ui.input("URL", value=first["url"] if first else "dry-run://contract/whatsapp").classes("w-full")
             dry_run = ui.checkbox("Dry-run / contrato local", value=bool(first["dry_run"]) if first else True).classes("w-full")
             headers = ui.textarea("Headers JSON", value=json.dumps(first["headers"] if first else {}, ensure_ascii=False, indent=2)).classes("w-full")
             body = ui.textarea("Body JSON", value=json.dumps(first["body"] if first else {}, ensure_ascii=False, indent=2)).classes("w-full")
@@ -125,6 +132,7 @@ def render_api_lab(services) -> None:
                     "provider": result["structured_log"].get("provider"),
                     "status_code": result["response"].get("status_code"),
                     "latency_ms": result["latency_ms"],
+                    "evidence_mode": result["structured_log"].get("evidence_mode", result["request"].get("evidence_mode")),
                 }
                 for result in results
             ]
@@ -134,6 +142,7 @@ def render_api_lab(services) -> None:
                         {"field": "created_at", "headerName": "Timestamp", "sortable": True, "filter": True, "minWidth": 180},
                         {"field": "status", "headerName": "Status", "sortable": True, "filter": True, "width": 120},
                         {"field": "provider", "headerName": "Provider", "sortable": True, "filter": True, "width": 130},
+                        {"field": "evidence_mode", "headerName": "Evidence", "sortable": True, "filter": True, "width": 170},
                         {"field": "test", "headerName": "Test", "sortable": True, "filter": True, "flex": 1},
                         {"field": "status_code", "headerName": "HTTP", "sortable": True, "filter": "agNumberColumnFilter", "width": 110},
                         {"field": "latency_ms", "headerName": "Latency", "sortable": True, "filter": "agNumberColumnFilter", "width": 120},
@@ -156,6 +165,9 @@ def render_api_lab(services) -> None:
 
     def save_case(suite: dict[str, object], name: str, method: str, url: str, headers: str, body: str, expected: str, dry: bool, mock: str) -> None:
         try:
+            if not dry and not str(url).startswith(("http://", "https://")):
+                ui.notify("HTTP real exige URL iniciando com http:// ou https://.", type="warning")
+                return
             services.api_test_repository.create_case(
                 suite_id=str(suite["id"]),
                 name=name or "caso sem nome",
@@ -191,6 +203,31 @@ def render_api_lab(services) -> None:
             refresh_all()
         except Exception as exc:  # noqa: BLE001
             ui.notify(f"Erro ao executar suite: {exc}", type="negative")
+
+    def run_real_http_suite(suite: dict[str, object], confirmed: bool) -> None:
+        if not confirmed:
+            ui.notify("Confirme a execução de HTTP real antes de rodar.", type="warning")
+            return
+        cases = services.api_test_repository.list_cases(str(suite["id"]))
+        real_cases = [
+            case
+            for case in cases
+            if not bool(case.get("dry_run", True)) and str(case.get("url", "")).startswith(("http://", "https://"))
+        ]
+        if not real_cases:
+            ui.notify("Nenhum caso HTTP real configurado nesta suite.", type="warning")
+            return
+        runner = ApiTestRunner(services.api_test_repository)
+        passed = 0
+        failed = 0
+        for case in real_cases:
+            run = runner.run_single_case(str(case["id"]))
+            if run["status"] == "passed":
+                passed += 1
+            else:
+                failed += 1
+        ui.notify(f"HTTP real concluído: {passed} passed / {failed} failed.", type="positive" if failed == 0 else "warning")
+        refresh_all()
 
     def export_suite(suite: dict[str, object]) -> None:
         path = export_api_suite(services.api_test_repository, str(suite["id"]), services.reports_dir)

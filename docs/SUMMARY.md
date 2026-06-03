@@ -11,9 +11,12 @@ A raiz do repositório deve ficar simples:
 
 1. [User Guide](./USER_GUIDE.md): explicação simples da ferramenta.
 2. [Open Source Tutorial](./OPEN_SOURCE_TUTORIAL.md): passo a passo para economizar tokens usando evidências.
-3. [Workflow](./workflow.md): fluxo `teste -> logs -> evidências -> contexto`.
-4. [Architecture](./architecture.md): arquitetura local-first com NiceGUI, PostgreSQL e labs.
-5. [Implementation Checklist](./IMPLEMENTATION_CHECKLIST.md): o que já existe e como testar.
+3. [MVP 100% Map](./MVP_100_PERCENT_MAP.md): separa real, dry-run, seed, legacy e blocked.
+4. [MVP 100% Checklist](./MVP_100_PERCENT_CHECKLIST.md): checklist antes de apresentação/release.
+5. [MVP Feature Test Report](./MVP_FEATURE_TEST_REPORT.md): sequência de testes e backlog de otimização.
+6. [Workflow](./workflow.md): fluxo `teste -> logs -> evidências -> contexto`.
+7. [Architecture](./architecture.md): arquitetura local-first com NiceGUI, PostgreSQL e labs.
+8. [Implementation Checklist](./IMPLEMENTATION_CHECKLIST.md): o que já existe e como testar.
 
 ## Labs
 
@@ -34,6 +37,10 @@ A raiz do repositório deve ficar simples:
 
 ```txt
 README
+↓
+MVP 100% Map
+↓
+MVP 100% Checklist
 ↓
 User Guide
 ↓

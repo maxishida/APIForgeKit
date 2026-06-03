@@ -145,24 +145,28 @@ def build_context_readiness(
             passed=_number(algorithm_metrics, "passed"),
             failed=_number(algorithm_metrics, "failed"),
             label="Algorithm Test Lab",
+            evidence_modes=_mapping(algorithm_metrics, "evidence_modes"),
         ),
         "api": _metric_status(
             total=_number(api_metrics, "total_results"),
             passed=_number(api_metrics, "passed"),
             failed=_number(api_metrics, "failed"),
             label="API Test Lab",
+            evidence_modes=_mapping(api_metrics, "evidence_modes"),
         ),
         "live": _metric_status(
             total=_number(live_metrics or {}, "total_tests"),
             passed=_number(live_metrics or {}, "success"),
             failed=_number(live_metrics or {}, "failures"),
             label="Live Observability",
+            evidence_modes=_mapping(live_metrics or {}, "evidence_modes"),
         ),
         "token": _metric_status(
             total=_number(token_metrics or {}, "total_estimates"),
             passed=_number(token_metrics or {}, "total_estimates"),
             failed=0,
             label="Token Calculator",
+            evidence_modes=_mapping(token_metrics or {}, "evidence_modes"),
         ),
     }
     required = _required_sections(mode)
@@ -270,7 +274,14 @@ def _required_sections(source_mode: str) -> list[str]:
     return ["algorithm", "api", "live", "token"]
 
 
-def _metric_status(*, total: int, passed: int, failed: int, label: str) -> dict[str, object]:
+def _metric_status(
+    *,
+    total: int,
+    passed: int,
+    failed: int,
+    label: str,
+    evidence_modes: Mapping[str, object] | None = None,
+) -> dict[str, object]:
     if failed > 0:
         status = "Has failures"
         message = f"{label} tem {failed} falha(s) que precisam ser revisadas."
@@ -280,7 +291,15 @@ def _metric_status(*, total: int, passed: int, failed: int, label: str) -> dict[
     else:
         status = "Needs tests"
         message = f"{label} ainda não tem evidência registrada."
-    return {"status": status, "label": label, "total": total, "passed": passed, "failed": failed, "message": message}
+    return {
+        "status": status,
+        "label": label,
+        "total": total,
+        "passed": passed,
+        "failed": failed,
+        "evidence_modes": deepcopy(dict(evidence_modes or {})),
+        "message": message,
+    }
 
 
 def _number(metrics: Mapping[str, object], key: str) -> int:
@@ -289,6 +308,11 @@ def _number(metrics: Mapping[str, object], key: str) -> int:
         return int(value or 0)
     except (TypeError, ValueError):
         return 0
+
+
+def _mapping(metrics: Mapping[str, object], key: str) -> dict[str, object]:
+    value = metrics.get(key, {})
+    return dict(value) if isinstance(value, Mapping) else {}
 
 
 def _render_guided_context(
@@ -369,7 +393,8 @@ def _render_readiness_lines(readiness: Mapping[str, object]) -> str:
         item = readiness.get(key, {})
         lines.append(
             f"- {item.get('label', key)}: `{item.get('status', 'Needs tests')}` "
-            f"total={item.get('total', 0)} passed={item.get('passed', 0)} failed={item.get('failed', 0)}"
+            f"total={item.get('total', 0)} passed={item.get('passed', 0)} failed={item.get('failed', 0)} "
+            f"modes={_render_modes(dict(item.get('evidence_modes') or {}))}"
         )
     return "\n".join(lines)
 
@@ -383,11 +408,17 @@ def _render_metrics(
     return "\n".join(
         [
             f"- Algorithm results: {_number(algorithm_metrics, 'total_results')} | passed={_number(algorithm_metrics, 'passed')} | failed={_number(algorithm_metrics, 'failed')}",
-            f"- API results: {_number(api_metrics, 'total_results')} | passed={_number(api_metrics, 'passed')} | failed={_number(api_metrics, 'failed')}",
+            f"- API results: {_number(api_metrics, 'total_results')} | passed={_number(api_metrics, 'passed')} | failed={_number(api_metrics, 'failed')} | modes={_render_modes(_mapping(api_metrics, 'evidence_modes'))}",
             f"- Live tests: {_number(live_metrics, 'total_tests')} | success={_number(live_metrics, 'success')} | failures={_number(live_metrics, 'failures')}",
             f"- Token estimates: {_number(token_metrics, 'total_estimates')}",
         ]
     )
+
+
+def _render_modes(modes: Mapping[str, object]) -> str:
+    if not modes:
+        return "none"
+    return ", ".join(f"{mode}={count}" for mode, count in sorted(modes.items()))
 
 
 def _render_blockers(missing: list[str], failures: list[str]) -> str:

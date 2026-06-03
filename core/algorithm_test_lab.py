@@ -545,6 +545,11 @@ class AlgorithmTestRepository:
         passed = len([result for result in results if result["status"] == "passed"])
         failed = len([result for result in results if result["status"] == "failed"])
         latencies = [float(result["latency_ms"] or 0) for result in results]
+        evidence_modes: dict[str, int] = {}
+        for result in results:
+            structured_log = result.get("structured_log") or {}
+            mode = str(structured_log.get("evidence_mode") or "seed_validation")
+            evidence_modes[mode] = evidence_modes.get(mode, 0) + 1
         return {
             "total_runs": len(runs),
             "total_results": len(results),
@@ -553,6 +558,7 @@ class AlgorithmTestRepository:
             "pass_rate": round((passed / len(results)) * 100, 2) if results else 0,
             "average_latency_ms": round(sum(latencies) / len(latencies), 2) if latencies else 0,
             "latest_run": runs[0] if runs else None,
+            "evidence_modes": evidence_modes,
         }
 
 
@@ -617,6 +623,7 @@ class AlgorithmTestRunner:
             "timestamp": datetime.now(UTC).isoformat(),
             "lab": "algorithm_test_lab",
             "algorithm": definition["name"],
+            "evidence_mode": "seed_validation",
             "case_id": case["id"],
             "case_name": case["name"],
             "status": status,
