@@ -20,11 +20,11 @@ def test_docs_verified_pricing_records_source_and_timestamp():
         requests_per_user_per_day=20,
         days=30,
         pricing_mode="docs_verified",
-        pricing_verified_source_url="https://docs.x.ai/developers/models",
+        pricing_verified_source_url="https://docs.x.ai/developers/pricing",
     )
 
     assert estimate["pricing_mode"] == "docs_verified"
-    assert estimate["pricing_verified_source_url"] == "https://docs.x.ai/developers/models"
+    assert estimate["pricing_verified_source_url"] == "https://docs.x.ai/developers/pricing"
     assert isinstance(estimate["pricing_verified_at"], str)
     assert estimate["pricing_verified_at"]
 
@@ -50,7 +50,7 @@ def test_token_context_includes_pricing_verification_audit_fields():
         input_tokens_per_request=1000,
         output_tokens_per_request=500,
         pricing_mode="docs_verified",
-        pricing_verified_source_url="https://docs.x.ai/developers/models",
+        pricing_verified_source_url="https://docs.x.ai/developers/pricing",
     )
     repository.save_estimate(estimate)
 
@@ -58,4 +58,4 @@ def test_token_context_includes_pricing_verification_audit_fields():
 
     assert "pricing_mode=docs_verified" in context
     assert "verified_at=" in context
-    assert "https://docs.x.ai/developers/models" in context
+    assert "https://docs.x.ai/developers/pricing" in context

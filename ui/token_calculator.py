@@ -27,10 +27,16 @@ PRICING_AUDIT_FIELDS = [
     "pricing_verified_source_url",
 ]
 
+PRICING_OVERRIDE_FIELDS = [
+    "pricing_input_per_million",
+    "pricing_cached_input_per_million",
+    "pricing_output_per_million",
+]
+
 TOKEN_WIZARD_STEPS = [
     {
         "label": "1. Pricing Source",
-        "help": "Escolha provider/modelo, abra a fonte oficial e marque docs_verified somente depois de conferir source URL; o save grava verification timestamp.",
+        "help": "Escolha provider/modelo, abra a fonte oficial e marque docs_verified somente depois de conferir source URL e preços verificados; o save grava verification timestamp.",
     },
     {
         "label": "2. Usage Volume",
@@ -96,6 +102,10 @@ def render_token_calculator(services) -> None:
                     on_click=lambda: ui.run_javascript(f"window.open('{get_pricing(str(provider.value), str(model.value)).source_url}', '_blank')"),
                 ).classes("afk-ghost-btn")
                 ui.html("<span class='afk-badge' style='color:#F59E0B'>docs_verified exige conferência manual da fonte</span>")
+            with ui.grid(columns=3).classes("w-full gap-4"):
+                verified_input_price = ui.number("Input $ / 1M", value=get_pricing("xai", options["xai"][0]).input_per_million, min=0, step=0.01).classes("w-full")
+                verified_cached_price = ui.number("Cached $ / 1M", value=get_pricing("xai", options["xai"][0]).cached_input_per_million, min=0, step=0.01).classes("w-full")
+                verified_output_price = ui.number("Output $ / 1M", value=get_pricing("xai", options["xai"][0]).output_per_million, min=0, step=0.01).classes("w-full")
             with ui.stepper_navigation():
                 ui.button("Proximo", icon="arrow_downward", on_click=stepper.next).classes("afk-primary-btn")
 
@@ -156,22 +166,32 @@ def render_token_calculator(services) -> None:
         refresh_all()
 
     def sync_pricing_source() -> None:
-        verified_source.value = get_pricing(str(provider.value), str(model.value)).source_url
+        pricing = get_pricing(str(provider.value), str(model.value))
+        verified_source.value = pricing.source_url
+        verified_input_price.value = pricing.input_per_million
+        verified_cached_price.value = pricing.cached_input_per_million
+        verified_output_price.value = pricing.output_per_million
         verified_source.update()
+        verified_input_price.update()
+        verified_cached_price.update()
+        verified_output_price.update()
 
     def render_pricing() -> None:
         pricing = get_pricing(str(provider.value), str(model.value))
         mode = str(pricing_mode.value or "seeded_estimate")
         mode_color = "#10B981" if mode == "docs_verified" else "#F59E0B"
+        input_price = _number_value(verified_input_price.value, pricing.input_per_million) if mode == "docs_verified" else pricing.input_per_million
+        cached_price = _number_value(verified_cached_price.value, pricing.cached_input_per_million) if mode == "docs_verified" else pricing.cached_input_per_million
+        output_price = _number_value(verified_output_price.value, pricing.output_per_million) if mode == "docs_verified" else pricing.output_per_million
         details_container.clear()
         with details_container:
             ui.label("Pricing Source").classes("text-xl font-bold afk-title")
             ui.html(f"<span class='afk-badge'>{pricing.provider} / {pricing.model}</span>")
             ui.html(f"<span class='afk-badge' style='color:{mode_color}'>pricing_mode={mode}</span>")
             with ui.grid(columns=3).classes("w-full gap-3"):
-                metric_card("Input", f"${pricing.input_per_million}", "/1M tokens", ACCENT_BY_PROVIDER.get(pricing.provider, "#00D4FF"))
-                metric_card("Cached", f"${pricing.cached_input_per_million}", "/1M tokens", "#2563EB")
-                metric_card("Output", f"${pricing.output_per_million}", "/1M tokens", "#F59E0B")
+                metric_card("Input", f"${input_price}", "/1M tokens", ACCENT_BY_PROVIDER.get(pricing.provider, "#00D4FF"))
+                metric_card("Cached", f"${cached_price}", "/1M tokens", "#2563EB")
+                metric_card("Output", f"${output_price}", "/1M tokens", "#F59E0B")
             ui.link("Abrir documentação oficial de preço", pricing.source_url, new_tab=True).classes("afk-neon")
             ui.label(f"Fonte registrada no histórico: {verified_source.value or pricing.source_url}").classes("afk-muted")
             ui.label(pricing.notes).classes("afk-muted")
@@ -189,6 +209,11 @@ def render_token_calculator(services) -> None:
             days=int(days.value or 30),
             pricing_mode=str(pricing_mode.value or "seeded_estimate"),
             pricing_verified_source_url=str(verified_source.value or ""),
+            pricing_input_per_million=_number_value(verified_input_price.value, get_pricing(str(provider.value), str(model.value)).input_per_million),
+            pricing_cached_input_per_million=_number_value(
+                verified_cached_price.value, get_pricing(str(provider.value), str(model.value)).cached_input_per_million
+            ),
+            pricing_output_per_million=_number_value(verified_output_price.value, get_pricing(str(provider.value), str(model.value)).output_per_million),
         )
 
     def current_savings() -> dict[str, object]:
@@ -287,7 +312,20 @@ def render_token_calculator(services) -> None:
     model.on_value_change(lambda _: (sync_pricing_source(), refresh_all()))
     pricing_mode.on_value_change(lambda _: refresh_all())
     verified_source.on_value_change(lambda _: refresh_all())
-    for control in (users, requests_per_day, days, input_tokens, cached_tokens, output_tokens, raw_context, structured_context, repeated_calls):
+    for control in (
+        users,
+        requests_per_day,
+        days,
+        input_tokens,
+        cached_tokens,
+        output_tokens,
+        raw_context,
+        structured_context,
+        repeated_calls,
+        verified_input_price,
+        verified_cached_price,
+        verified_output_price,
+    ):
         control.on_value_change(lambda _: refresh_all())
     refresh_all()
     render_history()
@@ -300,3 +338,10 @@ def _history_row(row: dict[str, object]) -> dict[str, object]:
     enriched["pricing_verified_at"] = summary.get("pricing_verified_at", "")
     enriched["pricing_verified_source_url"] = summary.get("pricing_verified_source_url", "")
     return enriched
+
+
+def _number_value(value: object, fallback: float) -> float:
+    try:
+        return max(float(value), 0.0)
+    except (TypeError, ValueError):
+        return fallback

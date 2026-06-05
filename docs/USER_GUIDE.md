@@ -231,6 +231,7 @@ No Token Calculator, o usuário escolhe provider/modelo e informa:
 - tokens de input por request
 - tokens de output por request
 - tokens em cache, quando existir
+- fonte oficial e preços verificados quando usar `docs_verified`
 
 O Studio estima:
 
@@ -239,6 +240,8 @@ O Studio estima:
 - custo total
 - custo por usuário
 - economia ao trocar prompt cru por contexto técnico compacto
+
+Use `seeded_estimate` para planejamento rápido. Use `docs_verified` somente depois de conferir a página oficial do provider e revisar os preços de input, output e cache.
 
 ## Regra operacional
 

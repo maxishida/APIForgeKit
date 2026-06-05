@@ -37,7 +37,7 @@ O objetivo é simples: **economizar tempo e tokens de LLM usando evidência real
 - **Logs:** permite buscar e filtrar JSON estruturado por provider, módulo, status, latência e `evidence_mode`.
 - **Context Builder:** transforma evidências em contexto técnico para IA, com readiness `Ready`, `Needs tests` ou `Has failures`.
 - **Evidence Pack:** exporta Markdown, JSON, HTML e ZIP; `Download .md` serve para uso rápido.
-- **Token Calculator:** estima custo por provider/modelo/usuário e diferencia `seeded_estimate` de `docs_verified`.
+- **Token Calculator:** estima custo por provider/modelo/usuário, diferencia `seeded_estimate` de `docs_verified` e salva no histórico só quando solicitado.
 - **ACP Executor:** permite rodar o workflow por IDE/CLI/agente usando `SKILL.md` como contrato operacional.
 
 ## Quick Start

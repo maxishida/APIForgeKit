@@ -151,14 +151,14 @@ Rules:
 
 - record `pricing_mode`
 - use `seeded_estimate` for local catalog estimates
-- use `docs_verified` only after checking current official pricing docs
+- use `docs_verified` only after checking current official pricing docs and entering verified input/output/cached prices when they differ from seeds
 - never present seeded pricing as billing truth
 - include source URL and verification timestamp when `docs_verified`
+- ACP `/token-cost` calculates without saving by default; add `save=true` only when the estimate should become evidence in PostgreSQL
 - recommend Context Builder to shrink prompts before implementation
 
 Provider pricing docs:
-
-- xAI: https://docs.x.ai/developers/models
+- xAI: https://docs.x.ai/developers/pricing
 - OpenAI: https://platform.openai.com/docs/pricing
 - Anthropic: https://docs.anthropic.com/en/docs/about-claude/pricing
 - Gemini: https://ai.google.dev/gemini-api/docs/pricing

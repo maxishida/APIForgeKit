@@ -25,7 +25,7 @@
 - Import/export de suites JSON para algoritmo e API.
 - Seed Validation Mode para rodar algoritmo, API pack e estimativa de tokens.
 - Calculadora de tokens/custo por usuário com preços seedados de docs oficiais.
-- Token Calculator com presets de uso, cards de pricing, economia de contexto e histórico.
+- Token Calculator com presets de uso, cards de pricing, override `docs_verified`, economia de contexto e histórico.
 - Context savings calculator para comparar prompt cru vs contexto técnico.
 - Context Builder integrado aos resultados de algoritmo.
 - Context Builder integrado a API Lab e Token Calculator.
@@ -253,7 +253,7 @@ Implementação mais rápida
 - A UI depende do PostgreSQL para executar live runs; sem banco, abre em modo degradado.
 - Export CSV/JSONL grava arquivo local e mostra o caminho, sem download automático pelo navegador.
 - O runner compacto usa `xai-sdk`; endpoints REST completos ainda ficam para V2.
-- Os preços do Token Calculator são seeds de documentação e devem ser conferidos antes de decisões financeiras.
+- Os preços do Token Calculator são seeds de documentação; decisões financeiras exigem `docs_verified` com fonte oficial e preços revisados.
 - O WhatsApp pack é dry-run por padrão; chamadas reais dependem de credenciais e setup do usuário.
 - Agents e Voice aparecem como fases bloqueadas até haver fixtures, orçamento e critérios próprios.
 

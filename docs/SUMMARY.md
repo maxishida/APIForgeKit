@@ -73,7 +73,7 @@ Para conferir a UI durante release local, rode a app e execute:
 npm run ui:smoke
 ```
 
-Para custo de tokens, `docs_verified` exige conferência manual na fonte oficial e salva `pricing_verified_at` + `pricing_verified_source_url` no histórico.
+Para custo de tokens, `docs_verified` exige conferência manual na fonte oficial, aceita preços verificados de input/output/cache e salva `pricing_verified_at` + `pricing_verified_source_url` no histórico quando a estimativa é persistida.
 
 ## Fluxo recomendado para agentes
 

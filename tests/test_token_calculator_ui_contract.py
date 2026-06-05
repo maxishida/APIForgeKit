@@ -27,6 +27,12 @@ def test_token_calculator_declares_pricing_audit_fields():
         "pricing_verified_at",
         "pricing_verified_source_url",
     ]
+    assert token_calculator.PRICING_OVERRIDE_FIELDS == [
+        "pricing_input_per_million",
+        "pricing_cached_input_per_million",
+        "pricing_output_per_million",
+    ]
     wizard_text = " ".join(step["help"] for step in token_calculator.TOKEN_WIZARD_STEPS)
     assert "verification timestamp" in wizard_text
     assert "source URL" in wizard_text
+    assert "preços verificados" in wizard_text

@@ -24,6 +24,21 @@ def _executor(tmp_path):
     return SkillExecutor(services)
 
 
+def _executor_with_token_repository(tmp_path):
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    init_db(engine)
+    session_factory = build_session_factory(engine)
+    token_repository = TokenUsageRepository(session_factory)
+    services = SkillExecutorServices(
+        algorithm_repository=AlgorithmTestRepository(session_factory),
+        api_repository=ApiTestRepository(session_factory),
+        token_repository=token_repository,
+        reports_dir=tmp_path,
+        skill_path="SKILL.md",
+    )
+    return SkillExecutor(services), token_repository
+
+
 def _executor_with_acp(tmp_path):
     engine = create_engine("sqlite+pysqlite:///:memory:")
     init_db(engine)
@@ -118,9 +133,35 @@ def test_token_cost_returns_pricing_source_url(tmp_path):
 
     assert result["status"] == "success"
     assert result["mode"] == "token_economy"
-    assert result["estimate"]["source_url"] == "https://docs.x.ai/developers/models"
+    assert result["estimate"]["source_url"] == "https://docs.x.ai/developers/pricing"
     assert result["estimate"]["cost_per_user_usd"] == 1.5
+    assert result["record"] is None
+    assert result["evidence"]["record_id"] is None
     assert result["errors"] == []
+
+
+def test_token_cost_save_true_persists_estimate(tmp_path):
+    executor, repository = _executor_with_token_repository(tmp_path)
+
+    result = executor.execute("/token-cost provider=xai model=grok-4.3 users=1 requests=1 input=100 output=50 days=1 save=true")
+
+    rows = repository.list_estimates()
+    assert result["status"] == "success"
+    assert result["record"]["id"] == rows[0]["id"]
+    assert result["evidence"]["record_id"] == rows[0]["id"]
+
+
+def test_token_cost_docs_verified_accepts_pricing_overrides(tmp_path):
+    result = _executor(tmp_path).execute(
+        "/token-cost provider=xai model=grok-4.3 users=50 requests=15 days=30 input=1400 output=500 cached=200 "
+        "pricing_mode=docs_verified pricing_source=https://docs.x.ai/developers/pricing "
+        "input_price=1.25 output_price=2.50 cached_price=0.20"
+    )
+
+    assert result["estimate"]["pricing_mode"] == "docs_verified"
+    assert result["estimate"]["pricing_verified_source_url"] == "https://docs.x.ai/developers/pricing"
+    assert result["estimate"]["estimated_cost_usd"] == 62.775
+    assert result["record"] is None
 
 
 def test_build_context_includes_acp_protocol_trace_when_available(tmp_path):

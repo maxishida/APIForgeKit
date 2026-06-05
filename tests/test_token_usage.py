@@ -14,7 +14,8 @@ from core.token_usage import (
 def test_pricing_catalog_includes_current_provider_doc_sources():
     catalog = get_pricing_catalog()
 
-    assert catalog["xai:grok-4.3"].source_url == "https://docs.x.ai/developers/models"
+    assert catalog["xai:grok-4.3"].source_url == "https://docs.x.ai/developers/pricing"
+    assert catalog["xai:grok-4.3"].cached_input_per_million == 0.20
     assert catalog["openai:gpt-5.5"].input_per_million == 5.00
     assert catalog["anthropic:claude-sonnet-4.6"].output_per_million == 15.00
     assert catalog["gemini:gemini-2.5-flash"].cached_input_per_million == 0.03
@@ -37,8 +38,31 @@ def test_token_cost_calculator_projects_per_user_monthly_usage():
     assert estimate["total_output_tokens"] == 3_000_000
     assert estimate["estimated_cost_usd"] == 15.0
     assert estimate["cost_per_user_usd"] == 1.5
-    assert estimate["source_url"] == "https://docs.x.ai/developers/models"
+    assert estimate["source_url"] == "https://docs.x.ai/developers/pricing"
     assert estimate["pricing_mode"] == "seeded_estimate"
+
+
+def test_docs_verified_pricing_can_override_seed_prices_for_financial_review():
+    estimate = calculate_token_cost(
+        provider="xai",
+        model="grok-4.3",
+        input_tokens_per_request=1_400,
+        output_tokens_per_request=500,
+        cached_input_tokens_per_request=200,
+        users=50,
+        requests_per_user_per_day=15,
+        days=30,
+        pricing_mode="docs_verified",
+        pricing_verified_source_url="https://docs.x.ai/developers/pricing",
+        pricing_input_per_million=1.25,
+        pricing_output_per_million=2.50,
+        pricing_cached_input_per_million=0.20,
+    )
+
+    assert estimate["estimated_cost_usd"] == 62.775
+    assert estimate["cached_input_cost_usd"] == 0.9
+    assert estimate["pricing"]["cached_input_per_million"] == 0.20
+    assert estimate["seed_pricing"]["cached_input_per_million"] == 0.20
 
 
 def test_usage_presets_include_human_scale_defaults():
@@ -107,5 +131,5 @@ def test_token_usage_context_includes_saved_estimates_and_provider_docs():
 
     assert "Contexto Técnico - Token Usage Calculator" in context
     assert "grok-4.3" in context
-    assert "https://docs.x.ai/developers/models" in context
+    assert "https://docs.x.ai/developers/pricing" in context
     assert "pricing_mode=seeded_estimate" in context

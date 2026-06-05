@@ -31,8 +31,8 @@ DEFAULT_PRICING = (
         model="grok-4.3",
         input_per_million=1.25,
         output_per_million=2.50,
-        cached_input_per_million=0.25,
-        source_url="https://docs.x.ai/developers/models",
+        cached_input_per_million=0.20,
+        source_url="https://docs.x.ai/developers/pricing",
         notes="Seed baseado na tabela oficial de modelos e preços da xAI.",
     ),
     ProviderPricing(
@@ -41,7 +41,7 @@ DEFAULT_PRICING = (
         input_per_million=1.00,
         output_per_million=2.00,
         cached_input_per_million=0.20,
-        source_url="https://docs.x.ai/developers/models",
+        source_url="https://docs.x.ai/developers/pricing",
         notes="Modelo de baixo custo útil para harness e validações repetidas.",
     ),
     ProviderPricing(
@@ -189,14 +189,27 @@ def calculate_token_cost(
     pricing_mode: str = "seeded_estimate",
     pricing_verified_source_url: str = "",
     pricing_verified_at: str | None = None,
+    pricing_input_per_million: float | None = None,
+    pricing_output_per_million: float | None = None,
+    pricing_cached_input_per_million: float | None = None,
 ) -> dict[str, object]:
     pricing = get_pricing(provider, model)
     pricing_mode = pricing_mode if pricing_mode in {"seeded_estimate", "docs_verified"} else "seeded_estimate"
     verified_source_url = ""
     verified_at = ""
+    effective_pricing = pricing
     if pricing_mode == "docs_verified":
         verified_source_url = pricing_verified_source_url or pricing.source_url
         verified_at = pricing_verified_at or datetime.now(UTC).isoformat()
+        effective_pricing = ProviderPricing(
+            provider=pricing.provider,
+            model=pricing.model,
+            input_per_million=_verified_price(pricing_input_per_million, pricing.input_per_million),
+            output_per_million=_verified_price(pricing_output_per_million, pricing.output_per_million),
+            cached_input_per_million=_verified_price(pricing_cached_input_per_million, pricing.cached_input_per_million),
+            source_url=verified_source_url,
+            notes=pricing.notes,
+        )
     users = max(int(users), 1)
     requests_per_user_per_day = max(int(requests_per_user_per_day), 0)
     days = max(int(days), 1)
@@ -210,9 +223,9 @@ def calculate_token_cost(
     total_cached = cached_input_tokens_per_request * total_requests
     billable_input = max(total_input - total_cached, 0)
 
-    input_cost = (billable_input / 1_000_000) * pricing.input_per_million
-    cached_cost = (total_cached / 1_000_000) * pricing.cached_input_per_million
-    output_cost = (total_output / 1_000_000) * pricing.output_per_million
+    input_cost = (billable_input / 1_000_000) * effective_pricing.input_per_million
+    cached_cost = (total_cached / 1_000_000) * effective_pricing.cached_input_per_million
+    output_cost = (total_output / 1_000_000) * effective_pricing.output_per_million
     total_cost = round(input_cost + cached_cost + output_cost, 6)
 
     return {
@@ -238,8 +251,9 @@ def calculate_token_cost(
         "pricing_mode": pricing_mode,
         "pricing_verified_source_url": verified_source_url,
         "pricing_verified_at": verified_at,
-        "pricing": asdict(pricing),
-        "source_url": pricing.source_url,
+        "pricing": asdict(effective_pricing),
+        "seed_pricing": asdict(pricing),
+        "source_url": effective_pricing.source_url,
         "recommendation": _usage_recommendation(total_cost, users, total_requests),
     }
 
@@ -357,3 +371,13 @@ def _usage_recommendation(total_cost: float, users: int, total_requests: int) ->
     if cost_per_user > 10:
         return "Custo por usuário alto. Reduza contexto, use cache ou rode validações por amostragem."
     return "Custo controlado. Monitore tokens por usuário e mantenha relatórios compactos."
+
+
+def _verified_price(value: float | None, fallback: float) -> float:
+    if value is None:
+        return fallback
+    try:
+        price = float(value)
+    except (TypeError, ValueError):
+        return fallback
+    return max(price, 0.0)

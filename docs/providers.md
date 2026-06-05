@@ -15,12 +15,14 @@ The Token Calculator uses seeded prices only as planning inputs. Before financia
 
 ## Pricing Docs Used By Token Calculator
 
-- xAI: https://docs.x.ai/developers/models
+- xAI: https://docs.x.ai/developers/pricing
 - OpenAI: https://platform.openai.com/docs/pricing
 - Gemini: https://ai.google.dev/gemini-api/docs/pricing
 - Anthropic: https://docs.anthropic.com/en/docs/about-claude/pricing
 
 When a provider changes pricing, update `core/token_usage.py` and add/adjust tests in `tests/test_token_usage.py`.
+
+For xAI text models, keep cached input pricing in sync with the official pricing page. `docs_verified` estimates may override seeded input/output/cached prices after manual verification.
 
 ## xAI / Grok
 

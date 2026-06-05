@@ -113,7 +113,8 @@ Current implementation:
 - Route: `/token-calculator`
 - Table: `token_usage_estimates`
 - Calculates requests, total tokens, cost per request, cost per user and context savings.
-- Uses seeded provider prices with official docs links.
+- Uses seeded provider prices with official docs links for planning.
+- Supports `docs_verified` after the user checks the official provider pricing page and enters verified input/output/cached prices.
 
 ### Legacy Provider Track
 

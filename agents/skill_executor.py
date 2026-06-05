@@ -171,6 +171,7 @@ class SkillExecutor:
 
     def _token_cost(self, args: list[str]) -> dict[str, object]:
         values = _parse_key_values(args)
+        should_save = _parse_bool(values.get("save") or values.get("persist"), default=False)
         estimate = calculate_token_cost(
             provider=str(values.get("provider", "xai")),
             model=str(values.get("model", "grok-4.3")),
@@ -180,16 +181,24 @@ class SkillExecutor:
             input_tokens_per_request=int(values.get("input", values.get("input_tokens", 1000))),
             output_tokens_per_request=int(values.get("output", values.get("output_tokens", 500))),
             cached_input_tokens_per_request=int(values.get("cached", values.get("cached_input", 0))),
+            pricing_mode=str(values.get("pricing_mode", "seeded_estimate")),
+            pricing_verified_source_url=str(values.get("pricing_source", values.get("pricing_verified_source_url", ""))),
+            pricing_input_per_million=_optional_float(values.get("input_price", values.get("pricing_input_per_million"))),
+            pricing_output_per_million=_optional_float(values.get("output_price", values.get("pricing_output_per_million"))),
+            pricing_cached_input_per_million=_optional_float(
+                values.get("cached_price", values.get("pricing_cached_input_per_million"))
+            ),
         )
-        saved = self.services.token_repository.save_estimate(estimate)
+        saved = self.services.token_repository.save_estimate(estimate) if should_save else None
         context = build_token_usage_context(self.services.token_repository)
         self.last_context = context
         self.last_evidence = {
             "command": "/token-cost",
-            "record_id": saved["id"],
+            "record_id": saved["id"] if saved else None,
             "provider": estimate["provider"],
             "model": estimate["model"],
             "pricing_mode": estimate["pricing_mode"],
+            "saved": should_save,
         }
         return {
             "status": "success",
@@ -200,7 +209,11 @@ class SkillExecutor:
             "evidence": self.last_evidence,
             "exports": {},
             "errors": [],
-            "message": "Token estimate created. Verify official pricing docs before financial decisions.",
+            "message": (
+                "Token estimate saved. Verify official pricing docs before financial decisions."
+                if should_save
+                else "Token estimate calculated. Add save=true to persist it in PostgreSQL."
+            ),
         }
 
     def _build_context(self) -> dict[str, object]:
@@ -310,3 +323,18 @@ def _normalize_command(command: str) -> str:
 
 def _stamp() -> str:
     return datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
+
+
+def _optional_float(value: str | None) -> float | None:
+    if value in {None, ""}:
+        return None
+    try:
+        return float(value)
+    except ValueError:
+        return None
+
+
+def _parse_bool(value: str | None, *, default: bool = False) -> bool:
+    if value is None:
+        return default
+    return str(value).strip().lower() in {"1", "true", "yes", "y", "on"}

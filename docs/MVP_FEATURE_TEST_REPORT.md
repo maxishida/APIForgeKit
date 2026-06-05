@@ -47,7 +47,7 @@ GET /tutorial -> 200
 1. Add a small persisted table for ACP sessions if auditability of editor runs becomes important.
 2. Add a UI import wizard for Generic API suites so users can paste endpoint contracts without touching JSON files.
 3. Add a lightweight fixture manager for voice/audio before enabling real voice validation.
-4. Add provider pricing verification timestamps when a user confirms `docs_verified` costs.
+4. Extend Token Calculator beyond text-token pricing into provider-specific tools, batch, voice and media costs.
 5. Add CI jobs for PostgreSQL integration tests and NiceGUI route smokes.
 6. Add a release checklist that verifies no `legacy`, `blocked` or `dry_run_contract` evidence is presented as real production behavior.
 
@@ -61,5 +61,5 @@ GET /tutorial -> 200
 ## Next Adjustments
 
 - Improve dashboard density once more providers are validated.
-- Add a `docs_verified` pricing mode workflow tied to official provider URLs.
+- Add automated reminders to re-check official provider pricing docs before financial decisions.
 - Add sample MCP stdio configuration snippets for editor clients that support MCP through ACP.

@@ -24,7 +24,7 @@ Use este checklist antes de apresentação, release ou gravação.
 - [ ] Generic API Lab separa `Run Contract Dry-run` de `Run Real HTTP`.
 - [ ] `Run Real HTTP` exige confirmação e URL `http://` ou `https://`.
 - [ ] Token Calculator mostra `pricing_mode=seeded_estimate` ou `docs_verified`.
-- [ ] `docs_verified` grava `pricing_verified_at` e `pricing_verified_source_url`.
+- [ ] `docs_verified` usa preços verificados de input/output/cache e grava `pricing_verified_at` + `pricing_verified_source_url` quando salvo.
 - [ ] Generic API Lab importa suite JSON pelo wizard visual.
 - [ ] Live Dashboard registra `real_http` quando provider real roda.
 - [ ] Live Dashboard mostra Evidence Modes, P95 Latency, Recent Failures e Last Event.

@@ -184,6 +184,8 @@ Supported prompt commands:
 - announced: `validate-lead-score`, prompt: `/validate-lead-score`
 - announced: `validate-algorithm`, prompt: `/validate-algorithm lead_score`
 - announced: `token-cost`, prompt: `/token-cost provider=xai model=grok-4.3 users=10 requests=20 input=1000 output=500 days=30`
+- persistence: `/token-cost` only saves to PostgreSQL when `save=true`; default mode is calculation-only to avoid noisy evidence.
+- docs verified pricing: add `pricing_mode=docs_verified pricing_source=<official_url> input_price=<usd> output_price=<usd> cached_price=<usd>` after checking provider docs.
 - announced: `build-context`, prompt: `/build-context`
 - announced: `export-evidence`, prompt: `/export-evidence`
 
@@ -257,5 +259,5 @@ This lets a user prove not only that a lab produced evidence, but also how an ag
 - Text `ContentBlock[]` prompts are supported; legacy string prompts are accepted for scripts.
 - Resource, image and audio blocks are refused until APIForgeKit has a specific resource validation path.
 - `session/request_permission` currently blocks risky execution and returns `stopReason="refusal"`; there is no continuation flow consuming a permission result yet.
-- `/token-cost` uses local seeded pricing unless a future workflow marks the estimate as `docs_verified`.
+- `/token-cost` uses local seeded pricing by default. `docs_verified` is supported when the user provides an official source URL and manually verified input/output/cached prices.
 - PostgreSQL should be online for commands that persist evidence.
