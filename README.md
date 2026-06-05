@@ -108,6 +108,8 @@ Exports gerados em `exports/reports/`:
 - HTML
 - ZIP bundle
 
+A UI também oferece `Download .md` para baixar o contexto atual direto pelo navegador. Use esse arquivo quando quiser colar rapidamente o contexto em uma IA; use o ZIP/JSON quando precisar de evidência auditável com metadata.
+
 ## Páginas principais
 
 - Home: visão geral e ações de seed validation.

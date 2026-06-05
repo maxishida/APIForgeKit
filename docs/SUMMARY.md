@@ -65,6 +65,8 @@ O `Context Builder` agora mostra readiness antes do export:
 
 Use `Algorithm + API` quando quiser validar uma futura feature de SaaS com regra de negócio e payload externo; use `Algorithm only` para score/regras determinísticas; use `API only` para webhooks/endpoints; use `ACP Evidence` para revisar como o harness ACP/CLI/IDE executou a skill.
 
+Na UI, `Download .md` baixa o contexto técnico atual para uso imediato. `Export Markdown/JSON/HTML/ZIP` grava o pacote em `exports/reports/` com metadata para auditoria.
+
 Para conferir a UI durante release local, rode a app e execute:
 
 ```bash

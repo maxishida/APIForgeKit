@@ -33,6 +33,7 @@ Use este checklist antes de apresentação, release ou gravação.
 ## Contexto e logs
 
 - [ ] Context Builder exportando Markdown, JSON, HTML e ZIP.
+- [ ] Context Builder permite baixar o contexto atual como `.md` direto pela UI.
 - [ ] Context Builder mostra `Ready`, `Needs tests` ou `Has failures`.
 - [ ] Logs filtráveis por provider, módulo, status, evidência, latência e busca.
 - [ ] Todo mock/dry-run rotulado como `dry_run_contract`.

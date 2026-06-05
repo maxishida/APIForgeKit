@@ -16,6 +16,25 @@ from ui.components.alerts import db_offline
 from ui.components.cards import metric_card
 
 
+CONTEXT_EXPORT_ACTIONS = (
+    {"action": "download_markdown", "label": "Download .md", "icon": "download"},
+    {"action": "export", "format": "markdown", "label": "Export Markdown", "icon": "article"},
+    {"action": "export", "format": "json", "label": "Export JSON", "icon": "data_object"},
+    {"action": "export", "format": "html", "label": "Export HTML", "icon": "html"},
+    {"action": "export", "format": "zip", "label": "Export ZIP", "icon": "inventory_2"},
+)
+
+
+def build_markdown_download_payload(bundle: dict[str, object]) -> dict[str, str]:
+    source_mode = _safe_filename_part(str(bundle.get("source_mode") or "full"))
+    generated_at = _safe_filename_part(str(bundle.get("generated_at") or "context"))
+    return {
+        "filename": f"apiforgekit_context_{source_mode}_{generated_at}.md",
+        "media_type": "text/markdown",
+        "content": str(bundle.get("context") or ""),
+    }
+
+
 def render_context_builder(services) -> None:
     status = database_status(services.engine)
     if not status["online"]:
@@ -104,13 +123,15 @@ def render_context_builder(services) -> None:
                     ui.html(f"<span class='afk-badge'>{escape(step)}</span>")
             ui.label(str(readiness["overall"]["message"])).classes("afk-muted")
             with ui.row().classes("gap-3"):
-                for export_type, label, icon in [
-                    ("markdown", "Export Markdown", "article"),
-                    ("json", "Export JSON", "data_object"),
-                    ("html", "Export HTML", "html"),
-                    ("zip", "Export ZIP", "inventory_2"),
-                ]:
-                    ui.button(label, icon=icon, on_click=lambda fmt=export_type: export_bundle(fmt)).classes("afk-primary-btn")
+                for action in CONTEXT_EXPORT_ACTIONS:
+                    if action["action"] == "download_markdown":
+                        ui.button(action["label"], icon=action["icon"], on_click=download_markdown).classes("afk-primary-btn")
+                        continue
+                    ui.button(
+                        action["label"],
+                        icon=action["icon"],
+                        on_click=lambda fmt=action["format"]: export_bundle(str(fmt)),
+                    ).classes("afk-primary-btn")
                 ui.button("Copiar Contexto", icon="content_copy", on_click=copy_context).classes("afk-ghost-btn")
                 ui.button("Atualizar", icon="refresh", on_click=refresh).classes("afk-ghost-btn")
 
@@ -149,6 +170,14 @@ def render_context_builder(services) -> None:
         except Exception as exc:  # noqa: BLE001 - user-facing export
             ui.notify(f"Erro ao exportar contexto: {exc}", type="negative")
 
+    def download_markdown() -> None:
+        try:
+            payload = build_markdown_download_payload(build_bundle())
+            ui.download.content(payload["content"], payload["filename"], media_type=payload["media_type"])
+            ui.notify(f"Download pronto: {payload['filename']}", type="positive")
+        except Exception as exc:  # noqa: BLE001 - user-facing download
+            ui.notify(f"Erro ao preparar download: {exc}", type="negative")
+
     def copy_context() -> None:
         bundle = build_bundle()
         ui.run_javascript(f"navigator.clipboard.writeText({json.dumps(str(bundle['context']))})")
@@ -174,6 +203,20 @@ def _status_color(status: str) -> str:
     if status == "Has failures":
         return "#EF4444"
     return "#F59E0B"
+
+
+def _safe_filename_part(value: str) -> str:
+    cleaned = (
+        value.strip()
+        .replace(" ", "_")
+        .replace("/", "_")
+        .replace("\\", "_")
+        .replace("-", "")
+        .replace(":", "")
+        .replace("+", "")
+    )
+    safe = "".join(char for char in cleaned if char.isalnum() or char in {"_", "T"})
+    return safe or "context"
 
 
 def _record_context_export(services, bundle: dict[str, object], paths: dict[str, str]) -> None:
