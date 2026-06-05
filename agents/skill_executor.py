@@ -172,23 +172,26 @@ class SkillExecutor:
     def _token_cost(self, args: list[str]) -> dict[str, object]:
         values = _parse_key_values(args)
         should_save = _parse_bool(values.get("save") or values.get("persist"), default=False)
-        estimate = calculate_token_cost(
-            provider=str(values.get("provider", "xai")),
-            model=str(values.get("model", "grok-4.3")),
-            users=int(values.get("users", 1)),
-            requests_per_user_per_day=int(values.get("requests", values.get("requests_per_user_per_day", 1))),
-            days=int(values.get("days", 30)),
-            input_tokens_per_request=int(values.get("input", values.get("input_tokens", 1000))),
-            output_tokens_per_request=int(values.get("output", values.get("output_tokens", 500))),
-            cached_input_tokens_per_request=int(values.get("cached", values.get("cached_input", 0))),
-            pricing_mode=str(values.get("pricing_mode", "seeded_estimate")),
-            pricing_verified_source_url=str(values.get("pricing_source", values.get("pricing_verified_source_url", ""))),
-            pricing_input_per_million=_optional_float(values.get("input_price", values.get("pricing_input_per_million"))),
-            pricing_output_per_million=_optional_float(values.get("output_price", values.get("pricing_output_per_million"))),
-            pricing_cached_input_per_million=_optional_float(
-                values.get("cached_price", values.get("pricing_cached_input_per_million"))
-            ),
-        )
+        try:
+            estimate = calculate_token_cost(
+                provider=str(values.get("provider", "xai")),
+                model=str(values.get("model", "grok-4.3")),
+                users=_int_arg(values, "users", default=1),
+                requests_per_user_per_day=_int_arg(values, "requests", "requests_per_user_per_day", default=1),
+                days=_int_arg(values, "days", default=30),
+                input_tokens_per_request=_int_arg(values, "input", "input_tokens", default=1000),
+                output_tokens_per_request=_int_arg(values, "output", "output_tokens", default=500),
+                cached_input_tokens_per_request=_int_arg(values, "cached", "cached_input", default=0),
+                pricing_mode=str(values.get("pricing_mode", "seeded_estimate")),
+                pricing_verified_source_url=str(values.get("pricing_source", values.get("pricing_verified_source_url", ""))),
+                pricing_input_per_million=_optional_float(values.get("input_price", values.get("pricing_input_per_million"))),
+                pricing_output_per_million=_optional_float(values.get("output_price", values.get("pricing_output_per_million"))),
+                pricing_cached_input_per_million=_optional_float(
+                    values.get("cached_price", values.get("pricing_cached_input_per_million"))
+                ),
+            )
+        except ValueError as exc:
+            return self._invalid_token_cost_args(str(exc))
         saved = self.services.token_repository.save_estimate(estimate) if should_save else None
         context = build_token_usage_context(self.services.token_repository)
         self.last_context = context
@@ -214,6 +217,22 @@ class SkillExecutor:
                 if should_save
                 else "Token estimate calculated. Add save=true to persist it in PostgreSQL."
             ),
+        }
+
+    def _invalid_token_cost_args(self, reason: str) -> dict[str, object]:
+        message = f"Invalid /token-cost arguments: {reason}. Ajuste provider/modelo/números e execute novamente."
+        return {
+            "status": "not_validated",
+            "mode": "token_economy",
+            "permission_required": False,
+            "message": message,
+            "evidence": {"command": "/token-cost"},
+            "exports": {},
+            "errors": [{"type": "invalid_token_cost_args", "message": reason}],
+            "suggested_commands": [
+                "/token-cost provider=xai model=grok-4.3 users=10 requests=20 input=1000 output=500 days=30",
+                "/token-cost provider=xai model=grok-4.3 users=10 requests=20 save=true",
+            ],
         }
 
     def _build_context(self) -> dict[str, object]:
@@ -338,3 +357,14 @@ def _parse_bool(value: str | None, *, default: bool = False) -> bool:
     if value is None:
         return default
     return str(value).strip().lower() in {"1", "true", "yes", "y", "on"}
+
+
+def _int_arg(values: dict[str, str], *names: str, default: int) -> int:
+    for name in names:
+        if name in values:
+            raw = values[name]
+            try:
+                return int(raw)
+            except (TypeError, ValueError) as exc:
+                raise ValueError(f"{name} must be an integer, got {raw!r}") from exc
+    return default

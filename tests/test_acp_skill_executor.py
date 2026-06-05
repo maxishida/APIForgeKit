@@ -164,6 +164,24 @@ def test_token_cost_docs_verified_accepts_pricing_overrides(tmp_path):
     assert result["record"] is None
 
 
+def test_token_cost_invalid_numeric_argument_returns_safe_not_validated(tmp_path):
+    result = _executor(tmp_path).execute("/token-cost provider=xai model=grok-4.3 users=abc requests=20")
+
+    assert result["status"] == "not_validated"
+    assert result["mode"] == "token_economy"
+    assert result["errors"][0]["type"] == "invalid_token_cost_args"
+    assert "users" in result["message"]
+
+
+def test_token_cost_unknown_model_returns_safe_not_validated(tmp_path):
+    result = _executor(tmp_path).execute("/token-cost provider=xai model=missing users=1 requests=1")
+
+    assert result["status"] == "not_validated"
+    assert result["mode"] == "token_economy"
+    assert result["errors"][0]["type"] == "invalid_token_cost_args"
+    assert "Unsupported provider/model" in result["message"]
+
+
 def test_build_context_includes_acp_protocol_trace_when_available(tmp_path):
     result = _executor_with_acp(tmp_path).execute("/build-context")
 

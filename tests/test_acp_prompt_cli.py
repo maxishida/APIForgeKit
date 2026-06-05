@@ -55,3 +55,28 @@ def test_acp_prompt_cli_permission_path_is_schema_safe(tmp_path):
     assert payload["response"]["result"]["stopReason"] == "refusal"
     assert payload["response"]["result"]["_meta"]["apiforgekit.permissionRequired"] is True
     assert any(update["method"] == "session/request_permission" for update in payload["updates"])
+
+
+def test_acp_prompt_cli_token_cost_invalid_args_return_agent_message_not_rpc_error(tmp_path):
+    result = subprocess.run(
+        [
+            sys.executable,
+            "run_acp_prompt.py",
+            "/token-cost provider=xai model=grok-4.3 users=abc requests=20",
+            "--database-url",
+            "sqlite+pysqlite:///:memory:",
+            "--reports-dir",
+            str(tmp_path),
+        ],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=True,
+    )
+
+    payload = json.loads(result.stdout)
+
+    assert "error" not in payload["response"]
+    assert payload["response"]["result"]["stopReason"] == "end_turn"
+    message = next(update for update in payload["updates"] if update["params"]["update"]["sessionUpdate"] == "agent_message_chunk")
+    assert "invalid_token_cost_args" in message["params"]["update"]["content"]["text"]
