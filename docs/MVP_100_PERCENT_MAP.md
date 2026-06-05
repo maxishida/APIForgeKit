@@ -33,13 +33,14 @@ Este fluxo ainda segue a tese técnica: `Teste -> Log estruturado -> PostgreSQL 
 | Algorithm Test Lab | Funcional real local | `seed_validation` | Caminho canônico para `lead_score`, expected vs actual, diff e invariantes. |
 | Generic API Lab | Funcional | `dry_run_contract` e `real_http` | Dry-run valida contrato; HTTP real exige casos com URL real e confirmação. |
 | Live Dashboard / xAI compact runner | Funcional com credencial | `real_http` e `blocked` | Connectivity, chat, structured outputs, streaming e tools rodam com `XAI_API_KEY`. |
+| xAI Voice Lab REST | Funcional com credencial | `real_http` | TTS gera áudio, STT transcreve, agente responde e eventos entram em Logs/Dashboard/Context Builder. |
 | Logs | Funcional | todos os modos | Filtro por provider, módulo, status, evidência, latência e busca JSON. |
 | Token Calculator | Funcional como estimativa | `seeded_estimate` | Decisão financeira exige conferir docs oficiais e registrar fonte. |
 | Context Builder | Funcional | todos os modos | Readiness: `Ready`, `Needs tests`, `Has failures`; inclui `ACP Evidence`. |
 | ACP Executor | Funcional local | `protocol_trace`, `seed_validation`, `dry_run_contract`, `blocked` | Executa skill gates, persiste sessão/prompt/resposta e exporta evidência; HTTP real pede permissão. |
 | Lead Algorithm Lab | Legacy | `legacy` | Mantido como referência; use Algorithm Test Lab no MVP. |
 | Blueprint Archive | Legacy/futuro | `legacy` | Não faz parte do fluxo atual de validação. |
-| Voice/Agents xAI | Bloqueado/V2 | `blocked` | Exige fixtures, orçamento e critérios dedicados. |
+| Voice Agent realtime / Agents xAI | Bloqueado/V2 | `blocked` | WebSocket realtime e Multi Agent exigem orçamento, privacidade, fixtures e critérios dedicados. |
 
 ## Tabelas PostgreSQL usadas
 
@@ -77,6 +78,7 @@ npm run acp
 - Rodar `lead_score` no Algorithm Test Lab com 17 casos canônicos.
 - Rodar WhatsApp validation pack como `dry_run_contract`.
 - Rodar xAI compact runner com `XAI_API_KEY` configurada.
+- Rodar xAI Voice Lab REST com `XAI_API_KEY` configurada.
 - Filtrar logs por `evidence_mode`.
 - Gerar Context Builder em Markdown, JSON, HTML e ZIP.
 - Baixar `Download .md` para contexto rápido.
@@ -86,7 +88,7 @@ npm run acp
 ## O que não deve ser prometido ainda
 
 - WhatsApp real sem credenciais e casos HTTP reais configurados.
-- Voice/Agents xAI como validação concluída.
+- Voice Agent realtime WebSocket ou Multi Agent como validação concluída.
 - Custo financeiro exato sem conferência manual dos docs oficiais.
 - Implementação Next.js automática.
 - Blueprint como produto final.

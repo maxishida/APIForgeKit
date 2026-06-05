@@ -84,7 +84,7 @@ Live observability uses PostgreSQL as the source of truth:
 - `test_events`: timeline of structured events.
 - `api_requests`: sanitized request payloads and endpoint/SDK path.
 - `api_responses`: sanitized response payloads, tokens and cost.
-- `voice_tests`: future voice validation metadata.
+- `voice_tests`: real REST voice validation metadata, including audio artifact path, transcript, classification, status and metrics.
 - `agent_tests`: future multi-agent validation metadata.
 - `context_exports`: exported context/report records.
 
@@ -152,7 +152,7 @@ The UI-triggered compact runner currently validates:
 - streaming
 - function calling
 
-Agents and Voice are represented as blocked evidence until the dedicated validation plan has fixtures, cost boundaries and acceptance criteria.
+The xAI Voice Lab REST path validates TTS, STT and a text agent response as `real_http` evidence. Realtime Voice Agent WebSocket and Multi Agent remain blocked evidence until the dedicated validation plan has fixtures, cost boundaries and acceptance criteria.
 
 ## Context And Reports
 
@@ -240,4 +240,4 @@ It must start from:
 - Use `xai-sdk` where it gives cleaner Python validation and structured parsing.
 - Capture streaming chunk count and first-chunk latency.
 - Treat Multi Agent as beta and more expensive/slower than compact single-model tests.
-- Treat Voice APIs as a separate track with explicit budget, synthetic audio fixtures and privacy controls.
+- Treat realtime Voice Agent and private audio as a separate track with explicit budget, synthetic audio fixtures and privacy controls.

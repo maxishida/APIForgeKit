@@ -18,9 +18,9 @@ Logs -> Evidências -> Contexto -> Implementação futura
 - https://docs.x.ai/developers/model-capabilities/text/streaming
 - https://docs.x.ai/developers/tools/function-calling
 - https://docs.x.ai/developers/model-capabilities/text/multi-agent
-- https://docs.x.ai/developers/model-capabilities/audio/voice
+- https://docs.x.ai/developers/model-capabilities/audio/text-to-speech
 - https://docs.x.ai/developers/model-capabilities/audio/speech-to-text
-- https://docs.x.ai/docs/guides/voice/agent
+- https://docs.x.ai/developers/model-capabilities/audio/voice-agent
 - https://docs.x.ai/developers/rest-api-reference/inference/models
 - https://docs.x.ai/developers/rate-limits
 - https://docs.x.ai/developers/debugging
@@ -36,7 +36,8 @@ Implemented compact coverage:
 - structured output parsing with Pydantic
 - streaming response and chunk logging
 - function calling loop
-- blocked events for Agents and Voice until dedicated tests are approved
+- blocked events for Agents and realtime Voice Agent until dedicated tests are approved
+- REST Voice Lab for TTS -> STT -> agent response when `XAI_API_KEY` is configured
 
 Command path:
 
@@ -175,14 +176,21 @@ Evidence:
 
 Voice must be validated carefully because it can involve cost, private audio and larger artifacts.
 
-Tests:
+Implemented REST roundtrip:
 
-- STT upload with known synthetic sample
+- TTS generation from a synthetic lead message
+- STT upload of the generated MP3
+- transcript-based intent classification
+- text agent response using the transcript
+- structured logs for lead, user message, API error, latency, voice status, origin and previous page
+
+Remaining tests:
+
+- STT upload with known synthetic sample fixture
 - transcription accuracy
 - transcript-based intent analysis
 - transcript-based classification
 - transcript summary
-- TTS generation
 - realtime Voice Agent feasibility over WebSocket
 - event stream from `wss://api.x.ai/v1/realtime`
 

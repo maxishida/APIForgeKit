@@ -24,6 +24,7 @@ from ui.settings import render_settings
 from ui.theme import apply_theme
 from ui.token_calculator import render_token_calculator
 from ui.tutorial import render_tutorial
+from ui.voice_lab import render_voice_lab
 
 
 settings = get_settings()
@@ -136,6 +137,17 @@ def token_calculator_page() -> None:
 def logs_page() -> None:
     apply_theme()
     render_shell("Logs", "Logs", "Histórico, busca, filtros e JSON completo", lambda: render_logs(_services()))
+
+
+@ui.page("/voice-lab")
+def voice_lab_page() -> None:
+    apply_theme()
+    render_shell(
+        "Voice Lab",
+        "xAI Voice Lab",
+        "Valide lead recebido, áudio, transcrição, resposta do agente e logs",
+        lambda: render_voice_lab(_services()),
+    )
 
 
 @ui.page("/context-builder")

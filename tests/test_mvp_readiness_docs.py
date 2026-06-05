@@ -20,7 +20,8 @@ def test_mvp_map_and_checklist_document_real_dry_run_legacy_and_blocked_states()
         assert expected in map_text
     assert "Algorithm Test Lab" in map_text
     assert "Lead Algorithm Lab" in map_text
-    assert "Voice/Agents" in map_text
+    assert "xAI Voice Lab REST" in map_text
+    assert "Voice Agent realtime" in map_text
     assert "Context Builder exportando" in checklist_text
     assert "Todo mock/dry-run rotulado" in checklist_text
     assert "ACP Client / CLI / IDE" in diagram_text

@@ -23,6 +23,7 @@ def test_ui_smoke_script_and_npm_helper_cover_main_pages():
         "/token-calculator",
         "/algorithm-test-lab",
         "/api-test-lab",
+        "/voice-lab",
         "/context-builder",
         "/logs",
         "/live-dashboard",

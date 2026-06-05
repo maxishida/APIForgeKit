@@ -13,6 +13,7 @@ SMOKE_PATHS = [
     "/token-calculator",
     "/algorithm-test-lab",
     "/api-test-lab",
+    "/voice-lab",
     "/context-builder",
     "/logs",
     "/live-dashboard",

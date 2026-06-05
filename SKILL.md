@@ -38,6 +38,7 @@ Route by intent:
 | Deterministic scoring or business logic | Algorithm Test Lab |
 | API, webhook or SaaS payload | Generic API Lab |
 | xAI/OpenAI/Gemini/Anthropic behavior | Provider validation |
+| Voice lead/contact validation | xAI Voice Lab REST |
 | Cost, token usage or price per user | Token Calculator |
 | Implementation request | Context Builder first |
 | IDE/client protocol | ACP Execution Contract |
@@ -169,6 +170,10 @@ For provider behavior, use official docs when the endpoint, model, pricing or li
 
 xAI references live in `docs/XAI_TEST_PLAN.md`; ACP architecture details live in `docs/ACP_AGENT_ARCHITECTURE.md`.
 
+## Voice Validation Path
+
+Use `/voice-lab` or `npm run voice:run` for approved xAI REST voice validation. Log lead, user message, TTS, STT transcript, agent response, API error, latency, origin and previous page as `real_http`. Realtime WebSocket, private customer audio and benchmarks still require explicit approval, cost boundary and privacy review.
+
 ## Context Builder Gate
 
 Before implementation, Context Builder must say `Ready` or the missing evidence/failures must be explicit.
@@ -190,16 +195,7 @@ Exports should include Markdown, JSON, HTML and ZIP when requested.
 
 ## Stop Conditions
 
-Stop or request permission when:
-
-- no real output exists
-- PostgreSQL is offline for a run that must persist
-- credentials or fixtures are missing
-- a call may generate cost
-- docs conflict with observed behavior
-- pricing docs cannot be verified for a financial decision
-- voice/audio/private data is involved without approval
-- user asks for implementation before context exists
+Stop or request permission when real output is missing, PostgreSQL is offline for a persisted run, credentials/fixtures are missing, cost may be generated, docs conflict with observed behavior, pricing docs cannot be verified for a financial decision, voice/audio/private data lacks approval, or implementation is requested before context exists.
 
 ## Safety
 
@@ -211,10 +207,4 @@ Stop or request permission when:
 
 ## Reference Docs
 
-- MVP map: `docs/MVP_100_PERCENT_MAP.md`
-- MVP checklist: `docs/MVP_100_PERCENT_CHECKLIST.md`
-- Feature test report: `docs/MVP_FEATURE_TEST_REPORT.md`
-- User tutorial: `docs/OPEN_SOURCE_TUTORIAL.md`
-- Algorithm plan: `docs/ALGORITHM_TEST_PLAN.md`
-- ACP details: `docs/ACP_AGENT_ARCHITECTURE.md`
-- Architecture: `docs/architecture.md`
+Use `docs/SUMMARY.md` for the complete docs index. Main refs: `docs/MVP_100_PERCENT_MAP.md`, `docs/MVP_100_PERCENT_CHECKLIST.md`, `docs/ALGORITHM_TEST_PLAN.md`, `docs/ACP_AGENT_ARCHITECTURE.md`, `docs/architecture.md`.

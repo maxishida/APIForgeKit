@@ -22,6 +22,7 @@ Smokes de UI:
 GET / -> 200
 GET /algorithm-test-lab -> 200
 GET /api-test-lab -> 200
+GET /voice-lab -> 200
 GET /live-dashboard -> 200
 GET /logs -> 200
 GET /token-calculator -> 200
@@ -40,13 +41,14 @@ GET /tutorial -> 200
 | Token Calculator | Functional | `seeded_estimate`; financial decisions require official pricing docs. |
 | Context Builder | Functional | Markdown, JSON, HTML and ZIP exports with readiness. |
 | ACP Harness | Functional | stdio server plus `run_acp_prompt.py` for CLI/IDE smoke prompts. |
-| xAI Voice/Agents | Blocked/V2 | Needs fixtures, budget, privacy rules and official endpoint validation. |
+| xAI Voice Lab REST | Functional with credential | TTS, STT, agent response and voice events saved as `real_http`. |
+| xAI Voice Agent realtime / Agents | Blocked/V2 | Needs fixtures, budget, privacy rules and realtime/agent acceptance criteria. |
 
 ## Optimization Backlog
 
 1. Add a small persisted table for ACP sessions if auditability of editor runs becomes important.
 2. Add a UI import wizard for Generic API suites so users can paste endpoint contracts without touching JSON files.
-3. Add a lightweight fixture manager for voice/audio before enabling real voice validation.
+3. Add a lightweight fixture manager for voice/audio so REST voice regressions can run without spending API credits.
 4. Extend Token Calculator beyond text-token pricing into provider-specific tools, batch, voice and media costs.
 5. Add CI jobs for PostgreSQL integration tests and NiceGUI route smokes.
 6. Add a release checklist that verifies no `legacy`, `blocked` or `dry_run_contract` evidence is presented as real production behavior.

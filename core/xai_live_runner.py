@@ -72,7 +72,12 @@ class XaiLiveRunner:
                 if stop_on_failure:
                     break
         self._record_blocked_future_phase(run["id"], "agents", "agent_task", "A fase Agents exige validação dedicada de endpoints/eventos antes de execução real.")
-        self._record_blocked_future_phase(run["id"], "voice", "voice_transcription", "A fase Voice exige amostra sintética de áudio e orçamento explícito antes de STT/TTS.")
+        self._record_blocked_future_phase(
+            run["id"],
+            "voice",
+            "voice_realtime_agent",
+            "A fase Voice Agent realtime exige fixture sintética, orçamento explícito e critérios próprios. Use /voice-lab para REST TTS/STT.",
+        )
         status = "failed" if failed else "success"
         return self.repository.finish_run(run["id"], status, {"model": self.model, "compact_cases": len(cases)})
 

@@ -67,6 +67,8 @@ Use `Algorithm + API` quando quiser validar uma futura feature de SaaS com regra
 
 Na UI, `Download .md` baixa o contexto técnico atual para uso imediato. `Export Markdown/JSON/HTML/ZIP` grava o pacote em `exports/reports/` com metadata para auditoria.
 
+Para voz, use `/voice-lab` ou `npm run voice:run`. O fluxo REST atual gera áudio via xAI TTS, transcreve via xAI STT, registra resposta do agente e salva tudo como `real_http` no PostgreSQL. Voice Agent realtime WebSocket continua como V2.
+
 Para conferir a UI durante release local, rode a app e execute:
 
 ```bash

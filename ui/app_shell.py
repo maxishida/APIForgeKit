@@ -49,6 +49,7 @@ def get_services() -> AppServices:
 NAV_ITEMS = (
     ("Home", "/", "dashboard"),
     ("API Provider Lab", "/live-dashboard", "monitor_heart"),
+    ("Voice Lab", "/voice-lab", "graphic_eq"),
     ("Generic API Lab", "/api-test-lab", "api"),
     ("Algorithm Test Lab", "/algorithm-test-lab", "rule"),
     ("Token Calculator", "/token-calculator", "calculate"),

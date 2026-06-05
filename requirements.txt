@@ -10,3 +10,4 @@ pytest
 xai-sdk
 alembic
 agent-client-protocol
+requests

@@ -6,8 +6,10 @@
 - Shell visual com sidebar, header, cards e tema Dark/Neon Blue.
 - Home seed validation dashboard como tela principal.
 - API Provider Lab separado em `/live-dashboard`.
+- xAI Voice Lab REST em `/voice-lab`.
 - Tutorial open source dentro da UI em `/tutorial`.
 - xAI compact runner acionado pela UI.
+- xAI Voice runner REST por UI e CLI `npm run voice:run`.
 - Live Event Stream com atualização periódica.
 - Algorithm Test Lab em `/algorithm-test-lab`.
 - Generic API Lab em `/api-test-lab`.
@@ -234,14 +236,14 @@ Implementação mais rápida
 
 ## Próximos passos V2
 
-- Separar runner xAI em fases executáveis: connectivity, chat, structured outputs, streaming, agents, voice e benchmark.
+- Separar runner xAI em fases executáveis: connectivity, chat, structured outputs, streaming, agents, voice REST, voice realtime e benchmark.
 - Expandir Algorithm Test Lab para algoritmos customizados por API HTTP.
 - Criar harness HTTP para testar APIs de WhatsApp, webhooks e endpoints de SaaS.
 - Expandir o Generic API Lab com variáveis de ambiente seguras e autenticação guiada.
 - Adicionar provider pricing refresh manual com confirmação do usuário.
 - Criar dashboard de taxa de aprovação por algoritmo.
 - Adicionar teste real de `/v1/models` e endpoints REST de Responses API.
-- Implementar Voice Lab com áudio sintético, STT, TTS, Voice Agent WebSocket e métricas.
+- Expandir Voice Lab para fixtures sintéticas versionadas, Voice Agent WebSocket e métricas de streaming.
 - Implementar benchmark com repetições, p95, erro, custo e reliability score.
 - Adicionar migrations formais com Alembic.
 - Evoluir Alembic para cobrir todas as tabelas antigas como baseline versionada.
@@ -252,16 +254,16 @@ Implementação mais rápida
 
 - A UI depende do PostgreSQL para executar live runs; sem banco, abre em modo degradado.
 - Export CSV/JSONL grava arquivo local e mostra o caminho, sem download automático pelo navegador.
-- O runner compacto usa `xai-sdk`; endpoints REST completos ainda ficam para V2.
+- O runner compacto usa `xai-sdk`; Voice Lab REST usa `/v1/tts` e `/v1/stt`.
 - Os preços do Token Calculator são seeds de documentação; decisões financeiras exigem `docs_verified` com fonte oficial e preços revisados.
 - O WhatsApp pack é dry-run por padrão; chamadas reais dependem de credenciais e setup do usuário.
-- Agents e Voice aparecem como fases bloqueadas até haver fixtures, orçamento e critérios próprios.
+- Agents e Voice Agent realtime aparecem como fases bloqueadas até haver fixtures, orçamento e critérios próprios.
 
 ## Pendências
 
 - Rodar sequência xAI completa após cada mudança relevante.
 - Definir orçamento máximo de chamadas antes dos benchmarks.
-- Criar fixture sintética de áudio para Voice Lab.
+- Criar fixture sintética versionada de áudio para regressão do Voice Lab.
 - Registrar custo real quando a API retornar metadados suficientes.
 - Adicionar override de preços por provider/model pela UI.
 - Adicionar import de suites pela UI além das funções core.

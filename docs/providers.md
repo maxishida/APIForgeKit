@@ -37,7 +37,7 @@ Primary docs:
 - Multi Agent: https://docs.x.ai/developers/model-capabilities/text/multi-agent
 - Voice Overview: https://docs.x.ai/developers/model-capabilities/audio/voice
 - Speech to Text: https://docs.x.ai/developers/model-capabilities/audio/speech-to-text
-- Voice Agent API: https://docs.x.ai/docs/guides/voice/agent
+- Voice Agent API: https://docs.x.ai/developers/model-capabilities/audio/voice-agent
 - Rate Limits: https://docs.x.ai/developers/rate-limits
 - Errors / Debugging: https://docs.x.ai/developers/debugging
 - Models API reference: https://docs.x.ai/developers/rest-api-reference/inference/models
@@ -53,6 +53,7 @@ Important current findings from docs:
 - Models can be listed through `/v1/models`; richer language model metadata is available through `/v1/language-models`.
 - Rate limits are per team and per model using RPM and TPM.
 - Voice APIs are separate from text inference: Voice Agent realtime over WebSocket, Text to Speech, and Speech to Text.
+- The MVP implements the REST voice roundtrip with `/v1/tts` and `/v1/stt`; realtime Voice Agent remains V2.
 
 Current Live Studio compact coverage:
 
@@ -61,7 +62,8 @@ Current Live Studio compact coverage:
 - `schema_parse`
 - `stream`
 - `tools`
-- blocked placeholder events for `agents` and `voice`
+- blocked placeholder events for `agents` and realtime voice
+- real REST voice logs through the dedicated Voice Lab
 
 Expanded planned xAI coverage:
 

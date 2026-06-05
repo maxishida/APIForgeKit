@@ -28,7 +28,8 @@ Use este checklist antes de apresentação, release ou gravação.
 - [ ] Generic API Lab importa suite JSON pelo wizard visual.
 - [ ] Live Dashboard registra `real_http` quando provider real roda.
 - [ ] Live Dashboard mostra Evidence Modes, P95 Latency, Recent Failures e Last Event.
-- [ ] Voice/Agents aparecem como `blocked` até V2.
+- [ ] xAI Voice Lab REST registra `lead_received`, `tts_audio_received`, `transcript_received`, `agent_response_received` e `voice_call_completed`.
+- [ ] Voice Agent realtime WebSocket e Agents aparecem como `blocked` até V2.
 
 ## Contexto e logs
 

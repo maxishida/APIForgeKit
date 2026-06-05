@@ -38,6 +38,7 @@ O objetivo é simples: **economizar tempo e tokens de LLM usando evidência real
 - **Context Builder:** transforma evidências em contexto técnico para IA, com readiness `Ready`, `Needs tests` ou `Has failures`.
 - **Evidence Pack:** exporta Markdown, JSON, HTML e ZIP; `Download .md` serve para uso rápido.
 - **Token Calculator:** estima custo por provider/modelo/usuário, diferencia `seeded_estimate` de `docs_verified` e salva no histórico só quando solicitado.
+- **xAI Voice Lab:** executa roundtrip real TTS -> STT -> resposta do agente, salva logs no PostgreSQL e alimenta Dashboard, Logs e Context Builder.
 - **ACP Executor:** permite rodar o workflow por IDE/CLI/agente usando `SKILL.md` como contrato operacional.
 
 ## Quick Start
@@ -81,6 +82,7 @@ npm run db              # sobe PostgreSQL
 npm run dev             # roda o Studio
 npm run test            # roda a suíte de testes
 npm run algorithm:suite # valida lead_score e exporta evidência
+npm run voice:run       # roda xAI Voice Lab real com XAI_API_KEY
 npm run ui:smoke        # valida rotas principais com a UI rodando
 npm run acp:workflow    # testa ACP + SKILL.md seção por seção
 ```
@@ -91,6 +93,7 @@ npm run acp:workflow    # testa ACP + SKILL.md seção por seção
 - API contract pack de WhatsApp em `dry_run_contract`.
 - Context Builder com export Markdown, JSON, HTML e ZIP.
 - Token Calculator com estimativas e trilha de fonte de pricing.
+- xAI Voice Lab REST com TTS, STT, resposta textual do agente e logs de funil.
 - Dashboard, Logs e filtros por evidência.
 - ACP workflow com permissão para caminhos pagos ou HTTP real.
 
@@ -99,7 +102,7 @@ npm run acp:workflow    # testa ACP + SKILL.md seção por seção
 - `dry_run_contract` valida contrato local; não é API real.
 - `seed_validation` valida suite canônica; não é produção.
 - HTTP real exige URL, credenciais e permissão explícita.
-- Voice/Agents estão como V2/bloqueado.
+- Voice Lab REST é funcional com `XAI_API_KEY`; Voice Agent realtime WebSocket e Agents seguem como V2.
 - Next.js/Prisma é destino futuro, não geração automática no MVP.
 
 ## Documentação
