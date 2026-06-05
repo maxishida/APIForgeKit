@@ -116,6 +116,21 @@ Current implementation:
 - Uses seeded provider prices with official docs links for planning.
 - Supports `docs_verified` after the user checks the official provider pricing page and enters verified input/output/cached prices.
 
+### Voice REST Track
+
+Use xAI Voice Lab after provider readiness and budget approval are clear.
+
+Current implementation:
+
+- Route: `/voice-lab`
+- CLI: `npm run voice:run`
+- APIs: xAI `/v1/tts` and `/v1/stt`
+- Evidence: `real_http`
+- Tables: `test_runs`, `test_events`, `api_requests`, `api_responses`, `voice_tests`, `context_exports`
+- Logs: lead received, user message, TTS audio, STT transcript, agent response, API error, latency, origin and previous page
+
+Realtime Voice Agent WebSocket and private customer audio remain separate V2 tracks with explicit privacy and cost review.
+
 ### Legacy Provider Track
 
 The CLI provider lab remains available for isolated checks.
@@ -250,11 +265,11 @@ Follow `XAI_TEST_PLAN.md`:
 3. Chat / Responses
 4. Structured Outputs
 5. Streaming
-6. Agents
-7. Voice
+6. Voice REST
+7. Agents / realtime Voice Agent
 8. Benchmark
 
-Do not start Voice until connectivity, model access, basic text calls and budget boundaries are proven.
+Do not start Voice REST until connectivity, model access and budget boundaries are proven. Do not start realtime Voice Agent until fixtures, privacy rules and cost limits are explicit.
 
 ## Environment Rules
 

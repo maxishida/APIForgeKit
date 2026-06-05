@@ -108,8 +108,9 @@ http://localhost:8080
 - API Provider Lab para APIs de IA e logs ao vivo.
 - Generic API Lab para APIs, webhooks, contratos e WhatsApp pack.
 - Algorithm Test Lab para validar algoritmo determinístico com input, expected output e diff.
+- xAI Voice Lab para validar TTS, STT, resposta do agente e logs de contato.
 - Token Calculator para custo por usuário e economia de contexto.
-- Lead Algorithm Lab para algoritmo local.
+- Lead Algorithm Lab legado para referência local antiga.
 - Logs para ver JSON completo.
 - Context Builder para gerar contexto técnico.
 

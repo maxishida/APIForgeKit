@@ -9,11 +9,11 @@ Sequência recomendada para validar o projeto inteiro:
 ```bash
 npm run db
 python -m pytest -q
-python -m compileall app.py core ui agents run_algorithm_lab.py run_acp_prompt.py
+python -m compileall app.py core ui agents run_algorithm_lab.py run_acp_prompt.py run_acp_workflow.py run_xai_voice.py
 git diff --check
 npm run algorithm:suite
-python run_acp_prompt.py "/validate-lead-score"
-python run_acp_prompt.py "/validate-api-suite whatsapp_validation_pack --http-real"
+npm run acp:workflow
+npm run voice:run
 ```
 
 Smokes de UI:
@@ -43,6 +43,18 @@ GET /tutorial -> 200
 | ACP Harness | Functional | stdio server plus `run_acp_prompt.py` for CLI/IDE smoke prompts. |
 | xAI Voice Lab REST | Functional with credential | TTS, STT, agent response and voice events saved as `real_http`. |
 | xAI Voice Agent realtime / Agents | Blocked/V2 | Needs fixtures, budget, privacy rules and realtime/agent acceptance criteria. |
+
+## Latest Checklist Run
+
+Executed on June 5, 2026:
+
+- Pytest: `118 passed`
+- Compile: OK
+- Algorithm suite: `17/17 passed`
+- UI smoke: 9/9 routes returned HTTP 200
+- ACP workflow: 6/6 prompts passed
+- xAI Voice REST: success, 9 `real_http` events, classification `sales_intent`
+- Docs cleanup: removed obsolete `VALIDATION_CHECKLIST.md` and internal historical implementation plan
 
 ## Optimization Backlog
 

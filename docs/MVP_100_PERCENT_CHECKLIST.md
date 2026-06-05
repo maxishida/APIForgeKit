@@ -12,9 +12,11 @@ Use este checklist antes de apresentação, release ou gravação.
 ## Validação automática
 
 - [ ] `python -m pytest -q` passa.
-- [ ] `python -m compileall app.py core ui agents run_algorithm_lab.py run_acp_prompt.py` passa.
+- [ ] `python -m compileall app.py core ui agents run_algorithm_lab.py run_acp_prompt.py run_acp_workflow.py run_xai_voice.py` passa.
 - [ ] `git diff --check` passa.
 - [ ] `npm run algorithm:suite` passa com 17/17 casos.
+- [ ] `npm run acp:workflow` passa com todas as seções da `SKILL.md`.
+- [ ] `npm run voice:run` passa quando `XAI_API_KEY` está configurada e há orçamento aprovado.
 - [ ] Com a UI rodando, `npm run ui:smoke` retorna HTTP 200 para as páginas principais.
 
 ## Labs

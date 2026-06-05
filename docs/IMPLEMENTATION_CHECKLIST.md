@@ -82,6 +82,7 @@ Abra `http://localhost:8080`.
 
 ```bash
 python -m pytest -q
+python -m compileall app.py core ui agents run_algorithm_lab.py run_acp_prompt.py run_acp_workflow.py run_xai_voice.py
 ```
 
 Testes focados:
@@ -102,6 +103,12 @@ ACP executor:
 npm run acp
 ```
 
+Workflow completo:
+
+```bash
+npm run acp:workflow
+```
+
 ## Como ver o dashboard live
 
 1. Suba o banco com `npm run db`.
@@ -115,6 +122,14 @@ npm run acp
 - Pela UI: página Logs.
 - No banco: `test_runs`, `test_events`, `api_requests`, `api_responses`.
 - Exports locais: `exports/logs/`.
+
+## Como usar o xAI Voice Lab
+
+1. Configure `XAI_API_KEY` no `.env`.
+2. Suba PostgreSQL com `npm run db`.
+3. Pela UI, abra `/voice-lab` e execute o roundtrip.
+4. Pela CLI, rode `npm run voice:run`.
+5. Confira eventos em `/logs`, métricas em `/live-dashboard` e contexto em `/context-builder`.
 
 ## Como gerar contexto
 
@@ -201,12 +216,13 @@ Leia nesta ordem no GitHub:
 6. [`architecture.md`](./architecture.md)
 7. [`ALGORITHM_TEST_PLAN.md`](./ALGORITHM_TEST_PLAN.md)
 8. [`XAI_TEST_PLAN.md`](./XAI_TEST_PLAN.md)
-9. [`VALIDATION_CHECKLIST.md`](./VALIDATION_CHECKLIST.md)
+9. [`MVP_100_PERCENT_CHECKLIST.md`](./MVP_100_PERCENT_CHECKLIST.md)
 10. [`ACP_AGENT_ARCHITECTURE.md`](./ACP_AGENT_ARCHITECTURE.md)
 11. [`../SKILL.md`](../SKILL.md)
 12. Generic API Lab
 13. Algorithm Test Lab
-14. Token Calculator
+14. xAI Voice Lab
+15. Token Calculator
 
 Resumo:
 

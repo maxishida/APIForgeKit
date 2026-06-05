@@ -24,16 +24,11 @@ A raiz do repositório deve ficar simples:
 
 - [Algorithm Test Plan](./ALGORITHM_TEST_PLAN.md): validação de algoritmos determinísticos, com foco em `lead_score`.
 - [xAI Test Plan](./XAI_TEST_PLAN.md): fases de validação da API xAI.
-- [Validation Checklist](./VALIDATION_CHECKLIST.md): checklist antes de rodar validações reais.
 - [Providers](./providers.md): notas de provedores e documentação externa.
 
 ## ACP
 
 - [ACP Agent Architecture](./ACP_AGENT_ARCHITECTURE.md): executor ACP, comandos, permissões e integração com o fluxo da skill.
-
-## Histórico interno
-
-- [Superpowers Plan](./superpowers/plans/2026-06-01-algorithm-validation-lab.md): plano técnico usado durante a implementação do Algorithm Test Lab.
 
 ## Fluxo recomendado para novos usuários
 
@@ -83,6 +78,8 @@ Para custo de tokens, `docs_verified` exige conferência manual na fonte oficial
 SKILL.md
 ↓
 docs/workflow.md
+↓
+docs/MVP_100_PERCENT_CHECKLIST.md
 ↓
 docs/ALGORITHM_TEST_PLAN.md
 ↓
