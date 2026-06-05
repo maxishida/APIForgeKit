@@ -42,6 +42,7 @@ Use este checklist antes de apresentação, release ou gravação.
 ## ACP
 
 - [ ] `/validate-lead-score` retorna `end_turn`, `runId`, `contextPath` e `evidenceZip`.
+- [ ] `npm run acp:workflow` passa seguindo `SKILL.md` seção por seção.
 - [ ] `/validate-api-suite whatsapp_validation_pack --http-real` emite `session/request_permission`.
 - [ ] Caminho de permissão retorna `stopReason=refusal`.
 - [ ] Sessões/prompts ACP aparecem em `acp_sessions` e `acp_events`.

@@ -70,6 +70,7 @@ npm run algorithm:suite # valida lead_score e exporta evidências
 npm run ui:smoke        # valida rotas principais com a UI rodando
 npm run acp             # inicia executor ACP via stdio
 npm run acp:prompt -- "/validate-lead-score" # smoke local ACP via CLI
+npm run acp:workflow    # smoke oficial ACP seguindo SKILL.md seção por seção
 ```
 
 ## Fluxo recomendado

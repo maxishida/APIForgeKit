@@ -11,6 +11,7 @@
     "algorithm:suite": "python run_algorithm_lab.py --suite lead_score --export",
     "acp": "python -m agents.acp_agent",
     "acp:prompt": "python run_acp_prompt.py",
+    "acp:workflow": "python run_acp_workflow.py",
     "ui:smoke": "python scripts/ui_smoke.py"
   }
 }
