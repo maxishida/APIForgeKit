@@ -84,8 +84,19 @@ npm run test            # roda a suíte de testes
 npm run algorithm:suite # valida lead_score e exporta evidência
 npm run voice:run       # roda xAI Voice Lab real com XAI_API_KEY
 npm run ui:smoke        # valida rotas principais com a UI rodando
-npm run acp:workflow    # testa ACP + SKILL.md seção por seção
+npm run acp:workflow    # testa ACP + SKILL.md em 9 prompts seguros
 ```
+
+ACP quick prompts:
+
+```bash
+python run_acp_prompt.py "/validate-lead-score"
+python run_acp_prompt.py "/validate-token-cost provider=xai model=grok-4.3 users=10 requests=20"
+python run_acp_prompt.py "/validate-context-readiness"
+python run_acp_prompt.py "/validate-voice-roundtrip"
+```
+
+`/validate-voice-roundtrip` valida evidência de voz já salva. Para executar xAI Voice real, use `/voice-lab` ou `npm run voice:run`; pelo ACP, `--run-real` pede permissão e não roda automaticamente.
 
 ## O Que Está Pronto no MVP
 
@@ -96,6 +107,7 @@ npm run acp:workflow    # testa ACP + SKILL.md seção por seção
 - xAI Voice Lab REST com TTS, STT, resposta textual do agente e logs de funil.
 - Dashboard, Logs e filtros por evidência.
 - ACP workflow com permissão para caminhos pagos ou HTTP real.
+- ACP readiness commands para custo, contexto e evidência de voz sem overengineering.
 
 ## Importante
 

@@ -8,8 +8,20 @@ from pathlib import Path
 from core.acp_audit import build_acp_context
 from core.algorithm_test_lab import AlgorithmTestRunner, build_algorithm_context, ensure_default_algorithms, summarize_algorithm_invariants
 from core.api_test_lab import ApiTestRunner, build_api_context, ensure_default_api_suites
+from core.context_builder import build_guided_context_bundle, export_guided_context_bundle
+from core.observability import build_live_context
 from core.report_bundle import create_report_bundle
 from core.token_usage import TokenUsageRepository, build_token_usage_context, calculate_token_cost
+
+
+VOICE_REQUIRED_EVENT_TYPES = (
+    "lead_received",
+    "user_message_received",
+    "tts_audio_received",
+    "transcript_received",
+    "agent_response_received",
+    "voice_call_completed",
+)
 
 
 @dataclass(frozen=True)
@@ -20,6 +32,7 @@ class SkillExecutorServices:
     reports_dir: str | Path
     skill_path: str | Path = "SKILL.md"
     acp_repository: object | None = None
+    observability_repository: object | None = None
 
 
 class SkillExecutor:
@@ -44,8 +57,14 @@ class SkillExecutor:
             return self._validate_algorithm(args)
         if command == "/validate-api-suite":
             return self._validate_api_suite(args)
+        if command == "/validate-token-cost":
+            return self._validate_token_cost(args)
         if command == "/token-cost":
             return self._token_cost(args)
+        if command == "/validate-context-readiness":
+            return self._validate_context_readiness(args)
+        if command == "/validate-voice-roundtrip":
+            return self._validate_voice_roundtrip(args)
         if command == "/build-context":
             return self._build_context()
         if command == "/export-evidence":
@@ -219,6 +238,17 @@ class SkillExecutor:
             ),
         }
 
+    def _validate_token_cost(self, args: list[str]) -> dict[str, object]:
+        result = self._token_cost(args)
+        evidence = dict(result.get("evidence") or {})
+        evidence["command"] = "/validate-token-cost"
+        result["mode"] = "token_cost_validation"
+        result["evidence"] = evidence
+        self.last_evidence = evidence
+        if result.get("status") == "success":
+            result["message"] = "Token cost validation calculated through SKILL.md pricing gates."
+        return result
+
     def _invalid_token_cost_args(self, reason: str) -> dict[str, object]:
         message = f"Invalid /token-cost arguments: {reason}. Ajuste provider/modelo/números e execute novamente."
         return {
@@ -256,6 +286,130 @@ class SkillExecutor:
             "exports": {"context": str(path)},
             "errors": [],
             "message": "Technical context generated from current evidence.",
+        }
+
+    def _validate_context_readiness(self, args: list[str]) -> dict[str, object]:
+        values = _parse_key_values(args)
+        source_mode = str(values.get("mode") or values.get("source_mode") or (args[0] if args and "=" not in args[0] else "algorithm_api"))
+        live_runs = []
+        live_events = []
+        live_metrics: dict[str, object] = {}
+        if self.services.observability_repository is not None:
+            live_runs = self.services.observability_repository.list_runs(limit=50)
+            live_events = self.services.observability_repository.list_events(limit=200)
+            live_metrics = self.services.observability_repository.metrics()
+        token_metrics = _token_metrics(self.services.token_repository)
+        acp_context = ""
+        acp_metrics: dict[str, object] = {}
+        if self.services.acp_repository is not None:
+            acp_context = build_acp_context(self.services.acp_repository)
+            acp_metrics = self.services.acp_repository.metrics()
+        bundle = build_guided_context_bundle(
+            source_mode=source_mode,
+            live_context=build_live_context(live_runs, live_events) if self.services.observability_repository is not None else "",
+            algorithm_context=build_algorithm_context(self.services.algorithm_repository),
+            api_context=build_api_context(self.services.api_repository),
+            token_context=build_token_usage_context(self.services.token_repository),
+            acp_context=acp_context,
+            algorithm_metrics=self.services.algorithm_repository.metrics(),
+            api_metrics=self.services.api_repository.metrics(),
+            live_metrics=live_metrics,
+            token_metrics=token_metrics,
+            acp_metrics=acp_metrics,
+        )
+        exports = export_guided_context_bundle(self.reports_dir, bundle)
+        readiness = dict(bundle["readiness"])
+        overall = dict(readiness.get("overall") or {})
+        readiness_status = str(overall.get("status") or "Needs tests")
+        status = "success" if readiness_status == "Ready" else ("failed" if readiness_status == "Has failures" else "not_validated")
+        evidence = {
+            "command": "/validate-context-readiness",
+            "source_mode": bundle["source_mode"],
+            "readiness": readiness_status,
+            "required_sections": overall.get("required_sections", []),
+        }
+        self.last_context = str(bundle.get("context") or "")
+        self.last_evidence = evidence
+        return {
+            "status": status,
+            "mode": "context_readiness",
+            "permission_required": False,
+            "readiness": readiness,
+            "evidence": evidence,
+            "exports": exports,
+            "errors": [] if status != "failed" else [{"type": "context_readiness_failure", "message": str(overall.get("message") or "")}],
+            "message": str(overall.get("message") or "Context readiness calculated."),
+        }
+
+    def _validate_voice_roundtrip(self, args: list[str]) -> dict[str, object]:
+        options = set(args)
+        if "--run-real" in options or "--http-real" in options:
+            return self._permission_required(
+                kind="network",
+                reason="xAI Voice real usa API paga/externa e exige permissão antes de executar.",
+                command="/validate-voice-roundtrip --run-real",
+            )
+        if self.services.observability_repository is None:
+            return self._voice_not_validated("Observability repository is not configured for this ACP executor.")
+        runs = [
+            run
+            for run in self.services.observability_repository.list_runs(limit=100)
+            if run.get("provider") == "xai" and run.get("suite_name") == "voice_roundtrip"
+        ]
+        if not runs:
+            return self._voice_not_validated("Nenhum roundtrip de voz foi encontrado no PostgreSQL.")
+        latest_run = runs[0]
+        events = self.services.observability_repository.list_events(run_id=str(latest_run["id"]), limit=100)
+        success_events = [event for event in events if event.get("status") == "success"]
+        failed_events = [event for event in events if event.get("status") in {"failed", "blocked"}]
+        event_types = {str(event.get("event_type") or "") for event in events}
+        missing_event_types = [event_type for event_type in VOICE_REQUIRED_EVENT_TYPES if event_type not in event_types]
+        status = "success" if latest_run.get("status") == "success" and not failed_events and not missing_event_types else "failed"
+        evidence = {
+            "command": "/validate-voice-roundtrip",
+            "latest_run": latest_run,
+            "event_count": len(events),
+            "success_events": len(success_events),
+            "failed_events": len(failed_events),
+            "missing_event_types": missing_event_types,
+            "voice_status": latest_run.get("status"),
+            "evidence_modes": _event_evidence_modes(events),
+        }
+        context = build_live_context([latest_run], events)
+        context_path = self.reports_dir / f"voice_roundtrip_context_{_stamp()}.md"
+        context_path.write_text(context, encoding="utf-8")
+        self.last_context = context
+        self.last_evidence = evidence
+        return {
+            "status": status,
+            "mode": "voice_roundtrip_validation",
+            "permission_required": False,
+            "run": latest_run,
+            "evidence": evidence,
+            "exports": {"context": str(context_path)},
+            "errors": [
+                *[
+                    {"type": "voice_roundtrip_failure", "message": str(event.get("error") or event.get("message") or "")}
+                    for event in failed_events
+                ],
+                *[
+                    {"type": "voice_roundtrip_missing_events", "message": f"Missing required event type: {event_type}"}
+                    for event_type in missing_event_types
+                ],
+            ],
+            "message": "Voice roundtrip evidence validated from PostgreSQL.",
+        }
+
+    def _voice_not_validated(self, reason: str) -> dict[str, object]:
+        return {
+            "status": "not_validated",
+            "mode": "voice_roundtrip_validation",
+            "permission_required": False,
+            "message": f"{reason} Rode `npm run voice:run` ou use `/voice-lab` com XAI_API_KEY antes de validar via ACP.",
+            "evidence": {"command": "/validate-voice-roundtrip", "latest_run": None},
+            "exports": {},
+            "errors": [{"type": "voice_roundtrip_missing", "message": reason}],
+            "suggested_commands": ["npm run voice:run", "/validate-voice-roundtrip"],
         }
 
     def _export_evidence(self) -> dict[str, object]:
@@ -306,7 +460,10 @@ class SkillExecutor:
                 "/validate-lead-score",
                 "/validate-algorithm lead_score",
                 "/validate-api-suite whatsapp_validation_pack",
+                "/validate-token-cost provider=xai model=grok-4.3 users=10 requests=20",
                 "/token-cost provider=xai model=grok-4.3 users=10 requests=20",
+                "/validate-context-readiness",
+                "/validate-voice-roundtrip",
                 "/build-context",
                 "/export-evidence",
             ],
@@ -368,3 +525,21 @@ def _int_arg(values: dict[str, str], *names: str, default: int) -> int:
             except (TypeError, ValueError) as exc:
                 raise ValueError(f"{name} must be an integer, got {raw!r}") from exc
     return default
+
+
+def _token_metrics(repository: TokenUsageRepository) -> dict[str, object]:
+    estimates = repository.list_estimates(limit=10000)
+    evidence_modes: dict[str, int] = {}
+    for estimate in estimates:
+        summary = estimate.get("summary") or {}
+        mode = str(summary.get("pricing_mode") or "seeded_estimate")
+        evidence_modes[mode] = evidence_modes.get(mode, 0) + 1
+    return {"total_estimates": len(estimates), "evidence_modes": evidence_modes}
+
+
+def _event_evidence_modes(events: list[dict[str, object]]) -> dict[str, int]:
+    evidence_modes: dict[str, int] = {}
+    for event in events:
+        mode = str(event.get("evidence_mode") or "real_http")
+        evidence_modes[mode] = evidence_modes.get(mode, 0) + 1
+    return evidence_modes

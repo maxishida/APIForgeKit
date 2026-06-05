@@ -54,6 +54,9 @@ def test_session_new_registers_mcp_stdio_servers(tmp_path):
     names = [command["name"] for command in notification["params"]["update"]["availableCommands"]]
     assert "validate-api-suite" in names
     assert "validate-lead-score" in names
+    assert "validate-token-cost" in names
+    assert "validate-context-readiness" in names
+    assert "validate-voice-roundtrip" in names
     assert all(not name.startswith("/") for name in names)
     assert next(command for command in notification["params"]["update"]["availableCommands"] if command["name"] == "validate-algorithm")["input"]["hint"]
     schema.SessionNotification.model_validate(notification["params"])
@@ -85,6 +88,27 @@ def test_session_prompt_rejects_paid_http_real_without_permission(tmp_path):
         if update["method"] == "session/update" and update["params"]["update"]["sessionUpdate"] == "agent_message_chunk"
     )
     assert "permissão" in message["params"]["update"]["content"]["text"].lower()
+
+
+def test_session_prompt_rejects_voice_real_run_without_permission(tmp_path):
+    agent = AcpAgent(database_url="sqlite+pysqlite:///:memory:", reports_dir=tmp_path)
+    session = agent.new_session(cwd=str(tmp_path.resolve()), mcp_servers=[])
+
+    response = agent.handle_request(
+        {
+            "jsonrpc": "2.0",
+            "id": 44,
+            "method": "session/prompt",
+            "params": {"sessionId": session.session_id, "prompt": "/validate-voice-roundtrip --run-real"},
+        }
+    )
+
+    assert response["result"]["stopReason"] == "refusal"
+    schema.PromptResponse.model_validate(response["result"])
+    assert response["result"]["_meta"]["apiforgekit.permissionRequired"] is True
+    assert response["result"]["_meta"]["apiforgekit.command"] == "validate-voice-roundtrip"
+    request = next(request for request in agent.outbox if request["method"] == "session/request_permission")
+    schema.RequestPermissionRequest.model_validate(request["params"])
 
 
 def test_session_prompt_streams_plan_and_result_updates(tmp_path):
@@ -131,6 +155,77 @@ def test_build_context_prompt_streams_context_builder_plan(tmp_path):
 
     assert "Coletar evidências dos labs" in steps
     assert "Gerar contexto técnico" in steps
+
+
+def test_validate_context_readiness_prompt_streams_readiness_plan(tmp_path):
+    agent = AcpAgent(database_url="sqlite+pysqlite:///:memory:", reports_dir=tmp_path)
+    session = agent.new_session(cwd=str(tmp_path.resolve()), mcp_servers=[])
+
+    response = agent.handle_request(
+        {
+            "jsonrpc": "2.0",
+            "id": 56,
+            "method": "session/prompt",
+            "params": {"sessionId": session.session_id, "prompt": "/validate-context-readiness"},
+        }
+    )
+
+    assert response["result"]["stopReason"] == "end_turn"
+    assert response["result"]["_meta"]["apiforgekit.command"] == "validate-context-readiness"
+    plan = next(update for update in agent.outbox if update["params"]["update"]["sessionUpdate"] == "plan")
+    steps = [entry["content"] for entry in plan["params"]["update"]["entries"]]
+    assert "Calcular readiness do Context Builder" in steps
+
+
+def test_validate_token_cost_prompt_uses_new_command_meta(tmp_path):
+    agent = AcpAgent(database_url="sqlite+pysqlite:///:memory:", reports_dir=tmp_path)
+    session = agent.new_session(cwd=str(tmp_path.resolve()), mcp_servers=[])
+
+    response = agent.handle_request(
+        {
+            "jsonrpc": "2.0",
+            "id": 57,
+            "method": "session/prompt",
+            "params": {
+                "sessionId": session.session_id,
+                "prompt": "/validate-token-cost provider=xai model=grok-4.3 users=10 requests=20",
+            },
+        }
+    )
+
+    assert response["result"]["stopReason"] == "end_turn"
+    assert response["result"]["_meta"]["apiforgekit.command"] == "validate-token-cost"
+    message = next(
+        update
+        for update in agent.outbox
+        if update["params"]["update"]["sessionUpdate"] == "agent_message_chunk" and "token_cost_validation" in update["params"]["update"]["content"]["text"]
+    )
+    result = json.loads(message["params"]["update"]["content"]["text"])
+    assert result["mode"] == "token_cost_validation"
+
+
+def test_validate_voice_roundtrip_prompt_accepts_command_without_real_network(tmp_path):
+    agent = AcpAgent(database_url="sqlite+pysqlite:///:memory:", reports_dir=tmp_path)
+    session = agent.new_session(cwd=str(tmp_path.resolve()), mcp_servers=[])
+
+    response = agent.handle_request(
+        {
+            "jsonrpc": "2.0",
+            "id": 58,
+            "method": "session/prompt",
+            "params": {"sessionId": session.session_id, "prompt": "/validate-voice-roundtrip"},
+        }
+    )
+
+    assert response["result"]["stopReason"] == "end_turn"
+    assert response["result"]["_meta"]["apiforgekit.command"] == "validate-voice-roundtrip"
+    message = next(
+        update
+        for update in agent.outbox
+        if update["params"]["update"]["sessionUpdate"] == "agent_message_chunk" and "voice_roundtrip_validation" in update["params"]["update"]["content"]["text"]
+    )
+    result = json.loads(message["params"]["update"]["content"]["text"])
+    assert result["status"] == "not_validated"
 
 
 def test_session_prompt_accepts_content_blocks_and_validate_lead_score_runs_canonical_plan(tmp_path):

@@ -137,6 +137,9 @@ For a single local smoke prompt without writing JSON-RPC by hand:
 
 ```bash
 python run_acp_prompt.py "/validate-lead-score"
+python run_acp_prompt.py "/validate-token-cost provider=xai model=grok-4.3 users=10 requests=20"
+python run_acp_prompt.py "/validate-context-readiness"
+python run_acp_prompt.py "/validate-voice-roundtrip"
 python run_acp_prompt.py "/build-context"
 ```
 
@@ -183,11 +186,28 @@ Supported prompt commands:
 - announced: `validate-api-suite`, prompt: `/validate-api-suite whatsapp_validation_pack`
 - announced: `validate-lead-score`, prompt: `/validate-lead-score`
 - announced: `validate-algorithm`, prompt: `/validate-algorithm lead_score`
+- announced: `validate-token-cost`, prompt: `/validate-token-cost provider=xai model=grok-4.3 users=10 requests=20 input=1000 output=500 days=30`
 - announced: `token-cost`, prompt: `/token-cost provider=xai model=grok-4.3 users=10 requests=20 input=1000 output=500 days=30`
+- announced: `validate-context-readiness`, prompt: `/validate-context-readiness` or `/validate-context-readiness mode=algorithm_api`
+- announced: `validate-voice-roundtrip`, prompt: `/validate-voice-roundtrip`
 - persistence: `/token-cost` only saves to PostgreSQL when `save=true`; default mode is calculation-only to avoid noisy evidence.
+- validation alias: `/validate-token-cost` uses the same calculator but reports `token_cost_validation` for ACP clients.
 - docs verified pricing: add `pricing_mode=docs_verified pricing_source=<official_url> input_price=<usd> output_price=<usd> cached_price=<usd>` after checking provider docs.
 - announced: `build-context`, prompt: `/build-context`
 - announced: `export-evidence`, prompt: `/export-evidence`
+
+Voice rules:
+
+- `/validate-voice-roundtrip` reads the latest saved `xai/voice_roundtrip` evidence from PostgreSQL.
+- It does not call xAI by itself.
+- It requires the core voice events: `lead_received`, `user_message_received`, `tts_audio_received`, `transcript_received`, `agent_response_received` and `voice_call_completed`.
+- `/validate-voice-roundtrip --run-real` emits `session/request_permission` and returns `stopReason="refusal"` until a real permission continuation flow exists.
+
+Context readiness:
+
+- `/validate-context-readiness` builds the same guided Context Builder bundle used by the UI.
+- Default mode is `algorithm_api`.
+- It returns `success` for `Ready`, `not_validated` for `Needs tests` and `failed` for `Has failures`.
 
 ## Lead Score ACP Best Practice
 
@@ -260,4 +280,6 @@ This lets a user prove not only that a lab produced evidence, but also how an ag
 - Resource, image and audio blocks are refused until APIForgeKit has a specific resource validation path.
 - `session/request_permission` currently blocks risky execution and returns `stopReason="refusal"`; there is no continuation flow consuming a permission result yet.
 - `/token-cost` uses local seeded pricing by default. `docs_verified` is supported when the user provides an official source URL and manually verified input/output/cached prices.
+- `/validate-token-cost` is preferred for ACP validation, while `/token-cost` stays as compatibility syntax.
+- `/validate-voice-roundtrip` validates saved evidence only; actual xAI Voice execution remains UI/CLI-driven in this version.
 - PostgreSQL should be online for commands that persist evidence.

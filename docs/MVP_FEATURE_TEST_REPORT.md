@@ -52,7 +52,7 @@ Executed on June 5, 2026:
 - Compile: OK
 - Algorithm suite: `17/17 passed`
 - UI smoke: 9/9 routes returned HTTP 200
-- ACP workflow: 6/6 prompts passed
+- ACP workflow: 9/9 prompts passed
 - xAI Voice REST: success, 9 `real_http` events, classification `sales_intent`
 - Docs cleanup: removed obsolete `VALIDATION_CHECKLIST.md` and internal historical implementation plan
 

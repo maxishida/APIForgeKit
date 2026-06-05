@@ -10,7 +10,7 @@ Evidência desta rodada:
 - `python -m compileall app.py core ui agents run_algorithm_lab.py run_acp_prompt.py run_acp_workflow.py run_xai_voice.py`: OK.
 - `git diff --check`: OK.
 - `npm run algorithm:suite`: 17/17 passed.
-- `npm run acp:workflow`: 6/6 prompts passed.
+- `npm run acp:workflow`: 9/9 prompts passed.
 - `npm run voice:run`: success, 9 eventos `real_http`.
 - UI smoke: 9/9 rotas HTTP 200.
 - Secret scan: `XAI_API_KEY` presente localmente e 0 ocorrências em arquivos/exports escaneados.
@@ -58,7 +58,11 @@ Evidência desta rodada:
 ## ACP
 
 - [x] `/validate-lead-score` retorna `end_turn`, `runId`, `contextPath` e `evidenceZip`.
-- [x] `npm run acp:workflow` passa seguindo `SKILL.md` seção por seção.
+- [x] `/validate-token-cost` calcula custo/token sem quebrar `/token-cost`.
+- [x] `/validate-context-readiness` retorna `Ready`, `Needs tests` ou `Has failures` pelo Context Builder.
+- [x] `/validate-voice-roundtrip` valida a última evidência de voz salva sem chamar provider real.
+- [x] `/validate-voice-roundtrip --run-real` emite `session/request_permission`.
+- [x] `npm run acp:workflow` passa com 9 prompts seguindo `SKILL.md` seção por seção.
 - [x] `/validate-api-suite whatsapp_validation_pack --http-real` emite `session/request_permission`.
 - [x] Caminho de permissão retorna `stopReason=refusal`.
 - [x] Sessões/prompts ACP aparecem em `acp_sessions` e `acp_events`.

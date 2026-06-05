@@ -11,10 +11,13 @@ from agents.acp_agent import AcpAgent
 SKILL_WORKFLOW_PROMPTS = (
     ("Algorithm Path", "/validate-lead-score", "end_turn"),
     ("API Path", "/validate-api-suite whatsapp_validation_pack", "end_turn"),
-    ("Token Economy Path", "/token-cost provider=xai model=grok-4.3 users=10 requests=20 input=1000 output=500 days=30", "end_turn"),
+    ("Token Economy Path", "/validate-token-cost provider=xai model=grok-4.3 users=10 requests=20 input=1000 output=500 days=30", "end_turn"),
+    ("Context Readiness Gate", "/validate-context-readiness", "end_turn"),
     ("Context Builder Gate", "/build-context", "end_turn"),
     ("Evidence Contract", "/export-evidence", "end_turn"),
+    ("Voice Evidence Gate", "/validate-voice-roundtrip", "end_turn"),
     ("Stop Conditions", "/validate-api-suite whatsapp_validation_pack --http-real", "refusal"),
+    ("Voice Stop Conditions", "/validate-voice-roundtrip --run-real", "refusal"),
 )
 
 

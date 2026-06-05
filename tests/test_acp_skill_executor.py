@@ -7,6 +7,7 @@ from core.acp_audit import AcpAuditRepository
 from core.algorithm_test_lab import AlgorithmTestRepository
 from core.api_test_lab import ApiTestRepository
 from core.database import build_session_factory, init_db
+from core.observability import ObservabilityEventInput, ObservabilityRepository
 from core.token_usage import TokenUsageRepository
 
 
@@ -61,6 +62,22 @@ def _executor_with_acp(tmp_path):
         skill_path="SKILL.md",
     )
     return SkillExecutor(services)
+
+
+def _executor_with_observability(tmp_path):
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    init_db(engine)
+    session_factory = build_session_factory(engine)
+    observability_repository = ObservabilityRepository(session_factory)
+    services = SkillExecutorServices(
+        algorithm_repository=AlgorithmTestRepository(session_factory),
+        api_repository=ApiTestRepository(session_factory),
+        token_repository=TokenUsageRepository(session_factory),
+        observability_repository=observability_repository,
+        reports_dir=tmp_path,
+        skill_path="SKILL.md",
+    )
+    return SkillExecutor(services), observability_repository
 
 
 def test_unknown_command_returns_not_validated_with_safe_suggestions(tmp_path):
@@ -140,6 +157,21 @@ def test_token_cost_returns_pricing_source_url(tmp_path):
     assert result["errors"] == []
 
 
+def test_validate_token_cost_alias_returns_estimate_without_breaking_token_cost(tmp_path):
+    executor = _executor(tmp_path)
+
+    result = executor.execute("/validate-token-cost provider=xai model=grok-4.3 users=10 requests=20 input=1000 output=500 days=30")
+    legacy_result = executor.execute("/token-cost provider=xai model=grok-4.3 users=10 requests=20 input=1000 output=500 days=30")
+
+    assert result["status"] == "success"
+    assert result["mode"] == "token_cost_validation"
+    assert result["estimate"]["provider"] == "xai"
+    assert result["estimate"]["model"] == "grok-4.3"
+    assert result["estimate"]["total_tokens"] == legacy_result["estimate"]["total_tokens"]
+    assert result["evidence"]["command"] == "/validate-token-cost"
+    assert legacy_result["mode"] == "token_economy"
+
+
 def test_token_cost_save_true_persists_estimate(tmp_path):
     executor, repository = _executor_with_token_repository(tmp_path)
 
@@ -191,6 +223,117 @@ def test_build_context_includes_acp_protocol_trace_when_available(tmp_path):
     assert "Contexto Técnico - ACP Skill Executor" in context
     assert "protocol_trace" in context
     assert "/build-context" in context
+
+
+def test_validate_context_readiness_needs_tests_without_evidence(tmp_path):
+    result = _executor(tmp_path).execute("/validate-context-readiness")
+
+    assert result["status"] == "not_validated"
+    assert result["mode"] == "context_readiness"
+    assert result["readiness"]["overall"]["status"] == "Needs tests"
+    assert result["exports"]["markdown"].endswith(".md")
+
+
+def test_validate_context_readiness_ready_after_algorithm_and_api_evidence(tmp_path):
+    executor = _executor(tmp_path)
+    executor.execute("/validate-lead-score")
+    executor.execute("/validate-api-suite whatsapp_validation_pack")
+
+    result = executor.execute("/validate-context-readiness")
+
+    assert result["status"] == "success"
+    assert result["mode"] == "context_readiness"
+    assert result["readiness"]["source_mode"] == "algorithm_api"
+    assert result["readiness"]["overall"]["status"] == "Ready"
+    assert result["evidence"]["readiness"] == "Ready"
+    assert result["exports"]["zip"].endswith(".zip")
+
+
+def test_validate_voice_roundtrip_needs_tests_without_voice_evidence(tmp_path):
+    result = _executor_with_observability(tmp_path)[0].execute("/validate-voice-roundtrip")
+
+    assert result["status"] == "not_validated"
+    assert result["mode"] == "voice_roundtrip_validation"
+    assert result["evidence"]["latest_run"] is None
+    assert "npm run voice:run" in result["suggested_commands"]
+
+
+def test_validate_voice_roundtrip_succeeds_with_latest_voice_evidence(tmp_path):
+    executor, repository = _executor_with_observability(tmp_path)
+    run = repository.start_run("xai", "voice_roundtrip", ["lead_input", "tts", "stt", "agent_response", "voice_status"])
+    for event_type in [
+        "lead_received",
+        "user_message_received",
+        "tts_audio_received",
+        "transcript_received",
+        "agent_response_received",
+        "voice_call_completed",
+    ]:
+        repository.record_event(
+            ObservabilityEventInput(
+                run_id=str(run["id"]),
+                provider="xai",
+                module="voice",
+                test_name="voice_roundtrip",
+                event_type=event_type,
+                status="success",
+                message="Status da chamada/voz: concluída" if event_type == "voice_call_completed" else event_type,
+                latency_ms=1200 if event_type == "voice_call_completed" else 0,
+                request={"evidence_mode": "real_http", "origin": "whatsapp"},
+                response={"evidence_mode": "real_http", "classification": "sales_intent"},
+            )
+        )
+    repository.record_voice_test(
+        str(run["id"]),
+        audio_artifact=str(tmp_path / "voice.mp3"),
+        transcript="Quero orçamento hoje",
+        classification="sales_intent",
+        metrics={"total_latency_ms": 1200},
+        status="success",
+    )
+    repository.finish_run(str(run["id"]), "success", {"voice_status": "success"})
+
+    result = executor.execute("/validate-voice-roundtrip")
+
+    assert result["status"] == "success"
+    assert result["mode"] == "voice_roundtrip_validation"
+    assert result["evidence"]["latest_run"]["id"] == run["id"]
+    assert result["evidence"]["event_count"] == 6
+    assert result["evidence"]["missing_event_types"] == []
+    assert result["evidence"]["voice_status"] == "success"
+
+
+def test_validate_voice_roundtrip_fails_when_essential_events_are_missing(tmp_path):
+    executor, repository = _executor_with_observability(tmp_path)
+    run = repository.start_run("xai", "voice_roundtrip", ["lead_input", "tts", "stt", "agent_response", "voice_status"])
+    repository.record_event(
+        ObservabilityEventInput(
+            run_id=str(run["id"]),
+            provider="xai",
+            module="voice",
+            test_name="voice_roundtrip",
+            event_type="voice_call_completed",
+            status="success",
+            message="Status da chamada/voz: concluída",
+            request={"evidence_mode": "real_http"},
+            response={"evidence_mode": "real_http"},
+        )
+    )
+    repository.finish_run(str(run["id"]), "success", {"voice_status": "success"})
+
+    result = executor.execute("/validate-voice-roundtrip")
+
+    assert result["status"] == "failed"
+    assert "lead_received" in result["evidence"]["missing_event_types"]
+    assert result["errors"][0]["type"] == "voice_roundtrip_missing_events"
+
+
+def test_validate_voice_roundtrip_run_real_requires_permission(tmp_path):
+    result = _executor_with_observability(tmp_path)[0].execute("/validate-voice-roundtrip --run-real")
+
+    assert result["status"] == "permission_required"
+    assert result["permission"]["kind"] == "network"
+    assert result["permission"]["command"] == "/validate-voice-roundtrip --run-real"
 
 
 def test_export_evidence_creates_bundle_from_current_context(tmp_path):

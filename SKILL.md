@@ -87,7 +87,9 @@ Quick local harness:
 ```bash
 python run_acp_prompt.py "/validate-lead-score"
 python run_acp_prompt.py "/build-context"
-python run_acp_prompt.py "/token-cost provider=xai model=grok-4.3 users=10 requests=20"
+python run_acp_prompt.py "/validate-token-cost provider=xai model=grok-4.3 users=10 requests=20"
+python run_acp_prompt.py "/validate-context-readiness"
+python run_acp_prompt.py "/validate-voice-roundtrip"
 ```
 
 Implemented commands:
@@ -96,7 +98,10 @@ Implemented commands:
 /validate-lead-score
 /validate-algorithm lead_score
 /validate-api-suite whatsapp_validation_pack
+/validate-token-cost provider=xai model=grok-4.3 users=10 requests=20
 /token-cost provider=xai model=grok-4.3 users=10 requests=20
+/validate-context-readiness
+/validate-voice-roundtrip
 /build-context
 /export-evidence
 ```
@@ -156,6 +161,7 @@ Rules:
 - never present seeded pricing as billing truth
 - include source URL and verification timestamp when `docs_verified`
 - ACP `/token-cost` calculates without saving by default; add `save=true` only when the estimate should become evidence in PostgreSQL
+- ACP `/validate-token-cost` is the preferred validation alias; `/token-cost` remains compatible
 - recommend Context Builder to shrink prompts before implementation
 
 Provider pricing docs:
@@ -174,9 +180,13 @@ xAI references live in `docs/XAI_TEST_PLAN.md`; ACP architecture details live in
 
 Use `/voice-lab` or `npm run voice:run` for approved xAI REST voice validation. Log lead, user message, TTS, STT transcript, agent response, API error, latency, origin and previous page as `real_http`. Realtime WebSocket, private customer audio and benchmarks still require explicit approval, cost boundary and privacy review.
 
+ACP `/validate-voice-roundtrip` validates the latest saved voice evidence only, including required events `lead_received`, `user_message_received`, `tts_audio_received`, `transcript_received`, `agent_response_received` and `voice_call_completed`. ACP `/validate-voice-roundtrip --run-real` must request permission and refuse by default until the client permission flow approves paid provider execution.
+
 ## Context Builder Gate
 
 Before implementation, Context Builder must say `Ready` or the missing evidence/failures must be explicit.
+
+Use ACP `/validate-context-readiness` to verify this gate from IDE/CLI before handing context to another AI.
 
 Modes:
 

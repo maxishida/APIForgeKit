@@ -11,6 +11,7 @@ from core.algorithm_test_lab import AlgorithmTestRepository
 from core.api_test_lab import ApiTestRepository
 from core.config import get_settings
 from core.database import build_engine, build_session_factory, init_db
+from core.observability import ObservabilityRepository
 from core.token_usage import TokenUsageRepository
 
 from .acp_protocol import JsonRpcError, error_response, success_response
@@ -36,6 +37,21 @@ AVAILABLE_COMMANDS: list[dict[str, object]] = [
         "name": "token-cost",
         "description": "Calcula estimativa de uso/custo com fonte de pricing documentada.",
         "input": {"hint": "provider=xai model=grok-4.3 users=10 requests=20"},
+    },
+    {
+        "name": "validate-token-cost",
+        "description": "Valida estimativa de custo/token pelo contrato do SKILL.md.",
+        "input": {"hint": "provider=xai model=grok-4.3 users=10 requests=20"},
+    },
+    {
+        "name": "validate-context-readiness",
+        "description": "Verifica se o Context Builder possui evidência suficiente para implementação futura.",
+        "input": {"hint": "mode=algorithm_api"},
+    },
+    {
+        "name": "validate-voice-roundtrip",
+        "description": "Valida a última evidência xAI Voice salva no PostgreSQL; execução real exige permissão.",
+        "input": {"hint": "--run-real"},
     },
     {"name": "build-context", "description": "Gera contexto técnico a partir de logs e evidências."},
     {"name": "export-evidence", "description": "Exporta um pacote de evidências para revisão."},
@@ -283,6 +299,7 @@ class AcpAgent:
                     algorithm_repository=AlgorithmTestRepository(session_factory),
                     api_repository=ApiTestRepository(session_factory),
                     token_repository=TokenUsageRepository(session_factory),
+                    observability_repository=ObservabilityRepository(session_factory),
                     reports_dir=self.reports_dir,
                     skill_path="SKILL.md",
                     acp_repository=self._get_audit_repository(),
@@ -438,8 +455,14 @@ def _plan_for_prompt(prompt: str) -> list[dict[str, str]]:
         steps = ["Classificar pedido como algoritmo", "Executar suite", "Salvar evidência", "Exportar contexto"]
     elif command == "/validate-api-suite":
         steps = ["Classificar pedido como API", "Verificar permissão", "Executar dry-run", "Exportar contexto"]
+    elif command == "/validate-token-cost":
+        steps = ["Classificar pedido como custo", "Calcular estimativa", "Validar fonte de pricing", "Retornar economia projetada"]
     elif command == "/token-cost":
         steps = ["Classificar pedido como custo", "Calcular estimativa", "Registrar fonte de pricing"]
+    elif command == "/validate-context-readiness":
+        steps = ["Coletar evidências atuais", "Calcular readiness do Context Builder", "Exportar pacote de contexto"]
+    elif command == "/validate-voice-roundtrip":
+        steps = ["Verificar permissão para voz real", "Consultar última evidência de voz", "Validar eventos essenciais", "Retornar contexto de voz"]
     elif command == "/build-context":
         steps = ["Coletar evidências dos labs", "Gerar contexto técnico", "Exportar caminho do contexto"]
     elif command == "/export-evidence":
@@ -457,7 +480,10 @@ def _plan_for_prompt(prompt: str) -> list[dict[str, str]]:
 
 
 def _requires_network_permission(prompt: str) -> bool:
-    return _command_name(prompt) == "/validate-api-suite" and "--http-real" in prompt
+    command = _command_name(prompt)
+    if command == "/validate-api-suite" and "--http-real" in prompt:
+        return True
+    return command == "/validate-voice-roundtrip" and ("--run-real" in prompt or "--http-real" in prompt)
 
 
 def _session_meta(session_id: str) -> dict[str, str]:
