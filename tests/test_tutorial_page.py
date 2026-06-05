@@ -15,8 +15,18 @@ def test_tutorial_sections_explain_mvp_workflow_and_cli_harness():
     titles = [section["title"] for section in tutorial.TUTORIAL_SECTIONS]
     body = "\n".join(section["body"] for section in tutorial.TUTORIAL_SECTIONS)
 
-    assert "1. Evidence First" in titles
-    assert "2. Algorithm Test Lab" in titles
-    assert "3. ACP Harness" in titles
+    assert titles == [
+        "1. Abrir Tutorial",
+        "2. Rodar Algorithm Suite",
+        "3. Rodar API Contract Dry-run",
+        "4. Ver Dashboard",
+        "5. Abrir Logs",
+        "6. Gerar Context Builder",
+        "7. Baixar Evidence Pack",
+        "8. Usar contexto com IA",
+    ]
     assert "python run_acp_prompt.py" in body
-    assert "Teste -> Log -> PostgreSQL -> Dashboard -> Context Builder -> Evidence Pack" in body
+    assert "seed_validation" in body
+    assert "dry_run_contract" in body
+    assert "Download .md" in body
+    assert "Export ZIP" in body

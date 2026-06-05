@@ -154,7 +154,7 @@ Arquivos gerados:
 
 1. Abra `http://localhost:8080/api-test-lab`.
 2. Selecione `whatsapp_validation_pack`.
-3. Clique em `Executar Suite`.
+3. Clique em `Run Contract Dry-run`.
 4. Veja pass/fail, status HTTP, latência, diff e JSON estruturado.
 5. Exporte a suite JSON para compartilhar no GitHub.
 
@@ -166,12 +166,15 @@ Arquivos gerados:
 4. Clique em `Calcular e salvar`.
 5. Use `Context Savings` para comparar prompt cru versus contexto técnico.
 
-## Como usar Seed Validation Mode
+## Como usar a jornada oficial
 
 1. Abra Home.
-2. Clique em `Run Full Seed Validation`.
-3. O app executa `lead_score`, `whatsapp_validation_pack` e salva uma estimativa de custo.
-4. Abra Context Builder para exportar o bundle.
+2. Clique em `Open Tutorial`.
+3. Clique em `Run Algorithm Suite`.
+4. Clique em `Run API Dry-run`.
+5. Abra Dashboard e Logs.
+6. Abra Context Builder.
+7. Use `Download .md` para contexto rápido ou `Export ZIP` para Evidence Pack.
 
 ## Como usar o ACP Skill Executor
 

@@ -105,7 +105,7 @@ def render_algorithm_lab(services) -> None:
                 ui.button("Export Evidence Pack", icon="inventory_2", on_click=lambda: export_evidence_pack(definition)).classes("afk-ghost-btn")
                 ui.button("Export Suite JSON", icon="download", on_click=lambda: export_suite(definition)).classes("afk-ghost-btn")
                 ui.button("Import Suite JSON", icon="upload_file", on_click=lambda: import_suite(import_path.value)).classes("afk-ghost-btn")
-                ui.button("Generate AI Context", icon="integration_instructions", on_click=lambda: ui.navigate.to("/context-builder")).classes("afk-ghost-btn")
+                ui.button("Open Context Builder", icon="integration_instructions", on_click=lambda: ui.navigate.to("/context-builder")).classes("afk-ghost-btn")
                 ui.button("Atualizar", icon="refresh", on_click=lambda: ui.navigate.reload()).classes("afk-ghost-btn")
 
     def render_results() -> None:

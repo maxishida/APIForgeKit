@@ -14,9 +14,14 @@ def test_demo_dashboard_snapshot_separates_algorithm_and_provider_tracks():
     assert snapshot["provider"]["title"] == "API Provider Lab"
     assert snapshot["provider"]["primary_metric"] == "3"
     assert snapshot["recommended_flow"] == [
-        "Run canonical suite",
-        "Inspect structured JSON",
-        "Generate AI context",
+        "Abrir Tutorial",
+        "Rodar Algorithm Suite",
+        "Rodar API Contract Dry-run",
+        "Ver Dashboard",
+        "Abrir Logs",
+        "Gerar Context Builder",
+        "Baixar Evidence Pack",
+        "Usar contexto com IA",
     ]
 
 

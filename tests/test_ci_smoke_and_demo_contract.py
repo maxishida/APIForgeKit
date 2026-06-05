@@ -39,9 +39,34 @@ def test_demo_script_documents_evidence_first_walkthrough():
     for phrase in (
         "npm run db",
         "/tutorial",
-        "/token-calculator",
-        "/validate-lead-score",
+        "1. Abrir Tutorial",
+        "2. Rodar Algorithm Suite",
+        "3. Rodar API Contract Dry-run",
+        "4. Ver Dashboard",
+        "5. Abrir Logs",
+        "6. Gerar Context Builder",
+        "7. Baixar Evidence Pack",
+        "8. Usar contexto com IA",
+        "Download .md",
+        "Export ZIP",
         "Context Builder",
         "Evidence Pack",
     ):
         assert phrase in content
+
+
+def test_primary_copy_avoids_ambiguous_seed_and_context_labels():
+    combined = "\n".join(
+        path.read_text(encoding="utf-8")
+        for path in (
+            Path("ui/home.py"),
+            Path("ui/algorithm_lab.py"),
+            Path("docs/IMPLEMENTATION_CHECKLIST.md"),
+        )
+    )
+
+    assert "Run Full Seed Validation" not in combined
+    assert "Executar Suite" not in combined
+    assert "Generate AI Context" not in combined
+    assert "Run Contract Dry-run" in combined
+    assert "Open Context Builder" in combined

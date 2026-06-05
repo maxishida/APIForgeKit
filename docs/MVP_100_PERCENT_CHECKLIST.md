@@ -49,6 +49,9 @@ Use este checklist antes de apresentação, release ou gravação.
 
 ## Produto e docs
 
+- [ ] Home mostra a jornada oficial de 8 passos.
+- [ ] Tutorial mostra os 8 passos na mesma ordem da Home.
+- [ ] README e Demo Script explicam `Download .md` versus `Export ZIP`.
 - [ ] Nenhuma página principal usa texto ambíguo de mock ou dry-run.
 - [ ] Lead Algorithm Lab está marcado como legacy ou fora do menu principal.
 - [ ] Blueprint Archive está marcado como legacy/futuro.

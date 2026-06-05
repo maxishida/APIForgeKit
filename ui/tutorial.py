@@ -6,31 +6,21 @@ from pathlib import Path
 from nicegui import ui
 
 from core.config import ROOT_DIR
+from core.workflow import official_journey_steps
 
 
 TUTORIAL_DOC_PATH = ROOT_DIR / "docs" / "OPEN_SOURCE_TUTORIAL.md"
 
 TUTORIAL_SECTIONS = [
     {
-        "title": "1. Evidence First",
-        "body": "Teste -> Log -> PostgreSQL -> Dashboard -> Context Builder -> Evidence Pack. Esse é o caminho antes de pedir implementação para IA.",
-        "command": "npm run db && npm run dev",
-    },
-    {
-        "title": "2. Algorithm Test Lab",
-        "body": "Use a canonical suite para validar regras determinísticas como lead_score, comparar expected vs actual, ver diff e salvar seed_validation.",
-        "command": "npm run algorithm:suite",
-    },
-    {
-        "title": "3. ACP Harness",
-        "body": "Conecte IDE, cliente ACP ou CLI ao executor de skill. Para prompt local simples, use python run_acp_prompt.py \"/validate-lead-score\".",
-        "command": "python run_acp_prompt.py \"/validate-lead-score\"",
-    },
-    {
-        "title": "4. Context Builder",
-        "body": "Exporte Markdown, JSON, HTML e ZIP somente depois que a evidência tiver readiness Ready ou as falhas estiverem documentadas.",
-        "command": "python run_acp_prompt.py \"/build-context\"",
-    },
+        "title": f"{step['number']}. {step['title']}",
+        "body": f"{step['help']} Evidência esperada: {step['evidence']} Modo: {step['evidence_mode']}. {('Comando: ' + step['command']) if step['command'] else ''}",
+        "command": step["command"] or step["route"],
+        "route": step["route"],
+        "cta_label": step["cta_label"],
+        "evidence_mode": step["evidence_mode"],
+    }
+    for step in official_journey_steps()
 ]
 
 SYSTEM_DIAGRAM_LANES = [
@@ -111,8 +101,9 @@ def _render_workflow_cards() -> None:
         for section in TUTORIAL_SECTIONS:
             ui.html(
                 f"""
-                <article class="afk-card" style="padding:18px; min-height:190px; display:flex; flex-direction:column; gap:12px;">
+                <article class="afk-card" style="padding:18px; min-height:230px; display:flex; flex-direction:column; gap:12px;">
                   <h3 style="margin:0; color:#F9FAFB; font-size:16px; font-weight:800;">{escape(section["title"])}</h3>
+                  <div class="afk-badge" style="align-self:flex-start;color:#00D4FF;">{escape(str(section["evidence_mode"]))}</div>
                   <p style="margin:0; color:#9CA3AF; line-height:1.6; font-size:13px;">{escape(section["body"])}</p>
                   <code style="margin-top:auto; display:block; color:#00D4FF; background:rgba(0,212,255,.08); border:1px solid rgba(0,212,255,.18); padding:10px; border-radius:8px; white-space:normal;">{escape(section["command"])}</code>
                 </article>

@@ -5,18 +5,17 @@ Este mapa define o que está funcional no MVP, o que é contrato local, o que é
 ## Fluxo oficial
 
 ```txt
-Teste
-↓
-Log estruturado
-↓
-PostgreSQL
-↓
-Dashboard
-↓
-Context Builder
-↓
-Evidence Pack
+1. Abrir Tutorial
+2. Rodar Algorithm Suite
+3. Rodar API Contract Dry-run
+4. Ver Dashboard
+5. Abrir Logs
+6. Gerar Context Builder
+7. Baixar Evidence Pack
+8. Usar contexto com IA
 ```
+
+Este fluxo ainda segue a tese técnica: `Teste -> Log estruturado -> PostgreSQL -> Dashboard -> Context Builder -> Evidence Pack -> IA implementa depois`.
 
 ## Modos de evidência
 
@@ -80,6 +79,7 @@ npm run acp
 - Rodar xAI compact runner com `XAI_API_KEY` configurada.
 - Filtrar logs por `evidence_mode`.
 - Gerar Context Builder em Markdown, JSON, HTML e ZIP.
+- Baixar `Download .md` para contexto rápido.
 - Executar `/validate-lead-score` via ACP e obter evidence ZIP.
 - Ver rastro ACP no Context Builder como `ACP Evidence`.
 

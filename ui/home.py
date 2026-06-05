@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+from html import escape
+
 from nicegui import ui
 
 from core.algorithm_test_lab import AlgorithmTestRunner, ensure_default_algorithms
+from core.api_test_lab import ApiTestRunner, ensure_default_api_suites
 from core.database import database_status
 from core.demo_dashboard import build_demo_dashboard_snapshot
-from core.demo_mode import run_demo_mode
+from core.workflow import build_official_journey_progress
 from ui.components.alerts import db_offline
 from ui.components.cards import metric_card
 
@@ -23,6 +26,12 @@ def render_home(services) -> None:
     snapshot = build_demo_dashboard_snapshot(
         db_status=status,
         algorithm_metrics=algorithm_metrics,
+        provider_metrics=provider_metrics,
+    )
+    journey_steps = build_official_journey_progress(
+        db_online=bool(status["online"]),
+        algorithm_metrics=algorithm_metrics,
+        api_metrics=api_metrics,
         provider_metrics=provider_metrics,
     )
 
@@ -48,9 +57,9 @@ def render_home(services) -> None:
             title="Generic API Lab",
             badge="HTTP + Dry-run",
             caption="Valide APIs, webhooks e contratos como WhatsApp antes de conectar no SaaS real.",
-            primary_label="Run WhatsApp Pack",
+            primary_label="Run Contract Dry-run",
             primary_icon="api",
-            primary_action=lambda: _run_full_demo(services),
+            primary_action=lambda: _run_api_contract_dry_run(services),
             secondary_label="Open API Lab",
             secondary_target="/api-test-lab",
             accent="#00D4FF",
@@ -79,21 +88,19 @@ def render_home(services) -> None:
         )
 
     with ui.column().classes("afk-card w-full gap-4").style("padding:18px;"):
-        ui.label("Seed Validation Flow").classes("text-xl font-bold afk-title")
-        with ui.grid(columns=3).classes("w-full gap-3"):
-            for index, step in enumerate(snapshot["recommended_flow"], start=1):
-                ui.html(
-                    f"""
-                    <div style="border:1px solid rgba(0,212,255,.18);border-radius:8px;padding:16px;background:rgba(15,23,42,.58);">
-                      <div style="color:#00D4FF;font-weight:800;font-size:13px;">STEP {index}</div>
-                      <div style="color:#F9FAFB;font-weight:800;font-size:20px;margin-top:8px;">{step}</div>
-                    </div>
-                    """
-                )
+        with ui.row().classes("w-full items-center justify-between gap-4"):
+            with ui.column().classes("gap-1"):
+                ui.label("Official Validation Journey").classes("text-xl font-bold afk-title")
+                ui.label("Siga estes 8 passos para sair de teste validado para contexto pronto para IA.").classes("afk-muted")
+            ui.html("<span class='afk-badge' style='color:#00D4FF'>Evidence-first</span>")
+        with ui.grid(columns=4).classes("w-full gap-3"):
+            for step in journey_steps:
+                _journey_card(services, step)
         with ui.row().classes("gap-3"):
-            ui.button("Run Full Seed Validation", icon="play_arrow", on_click=lambda: _run_full_demo(services)).classes("afk-primary-btn")
-            ui.button("Generate AI Context", icon="integration_instructions", on_click=lambda: ui.navigate.to("/context-builder")).classes("afk-ghost-btn")
-            ui.button("Open Source Tutorial", icon="article", on_click=lambda: ui.navigate.to("/tutorial")).classes("afk-ghost-btn")
+            ui.button("Open Tutorial", icon="article", on_click=lambda: ui.navigate.to("/tutorial")).classes("afk-primary-btn")
+            ui.button("Run Algorithm Suite", icon="playlist_play", on_click=lambda: _run_algorithm_demo(services)).classes("afk-primary-btn")
+            ui.button("Run API Dry-run", icon="api", on_click=lambda: _run_api_contract_dry_run(services)).classes("afk-primary-btn")
+            ui.button("Open Context Builder", icon="integration_instructions", on_click=lambda: ui.navigate.to("/context-builder")).classes("afk-ghost-btn")
 
 
 def _track_card(
@@ -119,6 +126,49 @@ def _track_card(
             ui.button(secondary_label, icon="open_in_new", on_click=lambda: ui.navigate.to(secondary_target)).classes("afk-ghost-btn")
 
 
+def _journey_card(services, step: dict[str, object]) -> None:
+    status = str(step.get("status") or "Pending")
+    color = "#10B981" if status == "Ready" else "#F59E0B"
+    with ui.column().classes("afk-card gap-3").style("padding:16px;min-height:260px;background:rgba(15,23,42,.58);"):
+        with ui.row().classes("w-full items-center justify-between gap-2"):
+            ui.html(f"<span class='afk-badge' style='color:#00D4FF'>STEP {int(step['number'])}</span>")
+            ui.html(f"<span class='afk-badge' style='color:{color}'>{escape(status)}</span>")
+        ui.label(str(step["title"])).classes("text-lg font-extrabold afk-title")
+        ui.html(f"<span class='afk-badge' style='align-self:flex-start'>{escape(str(step['evidence_mode']))}</span>")
+        ui.label(str(step["help"])).classes("afk-muted").style("font-size:13px;line-height:1.55;")
+        ui.label(f"Evidência: {step['evidence']}").classes("afk-muted").style("font-size:12px;line-height:1.45;")
+        ui.space()
+        ui.button(
+            str(step["cta_label"]),
+            icon=_journey_icon(str(step["title"])),
+            on_click=lambda title=str(step["title"]), route=str(step["route"]): _run_journey_action(services, title, route),
+        ).classes("afk-ghost-btn")
+
+
+def _journey_icon(title: str) -> str:
+    icons = {
+        "Abrir Tutorial": "article",
+        "Rodar Algorithm Suite": "playlist_play",
+        "Rodar API Contract Dry-run": "api",
+        "Ver Dashboard": "monitor_heart",
+        "Abrir Logs": "terminal",
+        "Gerar Context Builder": "integration_instructions",
+        "Baixar Evidence Pack": "inventory_2",
+        "Usar contexto com IA": "psychology",
+    }
+    return icons.get(title, "arrow_forward")
+
+
+def _run_journey_action(services, title: str, route: str) -> None:
+    if title == "Rodar Algorithm Suite":
+        _run_algorithm_demo(services)
+        return
+    if title == "Rodar API Contract Dry-run":
+        _run_api_contract_dry_run(services)
+        return
+    ui.navigate.to(route)
+
+
 def _run_algorithm_demo(services) -> None:
     status = database_status(services.engine)
     if not status["online"]:
@@ -131,19 +181,16 @@ def _run_algorithm_demo(services) -> None:
     ui.navigate.to("/algorithm-test-lab")
 
 
-def _run_full_demo(services) -> None:
+def _run_api_contract_dry_run(services) -> None:
     status = database_status(services.engine)
     if not status["online"]:
-        ui.notify("PostgreSQL offline. Rode npm run db antes da validação seed.", type="negative")
+        ui.notify("PostgreSQL offline. Rode npm run db antes do dry-run de API.", type="negative")
         return
-    result = run_demo_mode(
-        algorithm_repository=services.algorithm_repository,
-        api_repository=services.api_test_repository,
-        token_repository=services.token_usage_repository,
-    )
-    summary = result["summary"]
+    ensure_default_api_suites(services.api_test_repository)
+    suite = services.api_test_repository.get_suite_by_name("whatsapp_validation_pack")
+    run = ApiTestRunner(services.api_test_repository).run_suite(str(suite["id"]))
     ui.notify(
-        f"Full seed validation pronta: {summary['algorithm_passed']} algorithm cases, {summary['api_passed']} API cases, ${summary['estimated_cost_usd']} estimado.",
-        type="positive" if summary["demo_ready"] else "warning",
+        f"API contract dry-run: {run['passed']} passed / {run['failed']} failed.",
+        type="positive" if run["failed"] == 0 else "warning",
     )
     ui.navigate.to("/api-test-lab")

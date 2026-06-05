@@ -77,12 +77,17 @@ npm run acp:prompt -- "/validate-lead-score" # smoke local ACP via CLI
 1. Suba o banco com `npm run db`.
 2. Rode a UI com `python app.py`.
 3. Abra `http://localhost:8080`.
-4. Entre em `Algorithm Test Lab`.
-5. Selecione `lead_score`.
-6. Execute a canonical suite.
-7. Veja passed/failed, diff, invariantes e `seed_validation`.
-8. Abra `Context Builder`.
-9. Exporte o relatório para usar como contexto em uma IA.
+
+Depois siga a jornada oficial:
+
+1. `Abrir Tutorial`: entenda a jornada oficial em `/tutorial`.
+2. `Rodar Algorithm Suite`: execute `lead_score` no `Algorithm Test Lab` ou rode `npm run algorithm:suite`.
+3. `Rodar API Contract Dry-run`: execute `Run Contract Dry-run` no `Generic API Lab`.
+4. `Ver Dashboard`: confira métricas e modos de evidência no `API Provider Lab`.
+5. `Abrir Logs`: inspecione JSON estruturado, status, latência e `evidence_mode`.
+6. `Gerar Context Builder`: selecione o modo de fonte e confira readiness.
+7. `Baixar Evidence Pack`: use `Download .md` para contexto rápido ou `Export ZIP` para pacote auditável.
+8. `Usar contexto com IA`: cole somente o contexto validado e peça implementação sem comportamento inventado.
 
 ## Context Builder
 

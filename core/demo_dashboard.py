@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from core.workflow import official_journey_titles
+
 
 def build_demo_dashboard_snapshot(
     *,
@@ -35,9 +37,5 @@ def build_demo_dashboard_snapshot(
             "target": "/live-dashboard",
             "accent": "#00D4FF",
         },
-        "recommended_flow": [
-            "Run canonical suite",
-            "Inspect structured JSON",
-            "Generate AI context",
-        ],
+        "recommended_flow": official_journey_titles(),
     }
