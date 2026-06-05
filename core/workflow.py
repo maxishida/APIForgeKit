@@ -116,7 +116,7 @@ def build_official_journey_progress(
     evidence_pack_ready = context_ready
     llm_ready = context_ready
     completed = {
-        1: db_online,
+        1: True,
         2: algorithm_ready,
         3: api_ready,
         4: dashboard_ready,

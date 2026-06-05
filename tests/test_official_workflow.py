@@ -1,4 +1,5 @@
 from core.workflow import OFFICIAL_VALIDATION_JOURNEY, official_journey_titles
+from core.workflow import build_official_journey_progress
 from scripts.ui_smoke import SMOKE_PATHS
 
 
@@ -33,3 +34,17 @@ def test_official_validation_journey_has_commands_for_automation_steps():
     assert commands["Rodar Algorithm Suite"] == "npm run algorithm:suite"
     assert commands["Gerar Context Builder"] == 'python run_acp_prompt.py "/build-context"'
     assert commands["Baixar Evidence Pack"] == "Export ZIP no Context Builder"
+
+
+def test_official_validation_journey_progress_keeps_tutorial_available_without_database():
+    progress = build_official_journey_progress(
+        db_online=False,
+        algorithm_metrics={},
+        api_metrics={},
+        provider_metrics={},
+    )
+    status_by_title = {step["title"]: step["status"] for step in progress}
+
+    assert status_by_title["Abrir Tutorial"] == "Ready"
+    assert status_by_title["Ver Dashboard"] == "Pending"
+    assert status_by_title["Rodar Algorithm Suite"] == "Pending"
