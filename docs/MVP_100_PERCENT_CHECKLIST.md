@@ -31,6 +31,7 @@ Evidência desta rodada:
 - [x] `npm run acp:workflow` passa com todas as seções da `SKILL.md`.
 - [x] `npm run voice:run` passa quando `XAI_API_KEY` está configurada e há orçamento aprovado.
 - [x] Com a UI rodando, `npm run ui:smoke` retorna HTTP 200 para as páginas principais.
+- [x] Sem UI aberta, `npm run ui:smoke:local` sobe o app temporariamente e valida as páginas principais.
 
 ## Labs
 
@@ -63,6 +64,7 @@ Evidência desta rodada:
 - [x] `/validate-voice-roundtrip` valida a última evidência de voz salva sem chamar provider real.
 - [x] `/validate-voice-roundtrip --run-real` emite `session/request_permission`.
 - [x] `npm run acp:workflow` passa com 9 prompts seguindo `SKILL.md` seção por seção.
+- [x] `npm run acp:workflow` exige `tool_call_update.rawOutput.status=success` nas etapas de validação; `end_turn` sozinho não basta.
 - [x] `/validate-api-suite whatsapp_validation_pack --http-real` emite `session/request_permission`.
 - [x] Caminho de permissão retorna `stopReason=refusal`.
 - [x] Sessões/prompts ACP aparecem em `acp_sessions` e `acp_events`.

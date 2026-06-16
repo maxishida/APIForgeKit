@@ -62,14 +62,20 @@ def run_workflow(argv: Sequence[str] | None = None) -> dict[str, object]:
         updates = list(agent.outbox)
         agent.outbox.clear()
         actual_stop = str(response.get("result", {}).get("stopReason", ""))
+        actual_result_status = _extract_tool_result_status(updates)
         permission_requested = any(update.get("method") == "session/request_permission" for update in updates)
+        if expected_stop == "refusal":
+            passed = actual_stop == expected_stop and permission_requested
+        else:
+            passed = actual_stop == expected_stop and actual_result_status == "success"
         steps.append(
             {
                 "skill_section": section,
                 "prompt": prompt_text,
                 "expected_stopReason": expected_stop,
                 "actual_stopReason": actual_stop,
-                "passed": actual_stop == expected_stop,
+                "actual_result_status": actual_result_status,
+                "passed": passed,
                 "permission_requested": permission_requested,
                 "response": response,
                 "updates": updates,
@@ -95,6 +101,20 @@ def main(argv: Sequence[str] | None = None) -> int:
     payload = run_workflow(argv)
     print(json.dumps(payload, ensure_ascii=False, indent=2))
     return 0 if int(payload["summary"]["failed"]) == 0 else 1
+
+
+def _extract_tool_result_status(updates: list[dict[str, object]]) -> str:
+    for update in reversed(updates):
+        params = update.get("params") if isinstance(update, dict) else {}
+        update_payload = params.get("update") if isinstance(params, dict) else {}
+        if not isinstance(update_payload, dict):
+            continue
+        if update_payload.get("sessionUpdate") != "tool_call_update":
+            continue
+        raw_output = update_payload.get("rawOutput")
+        if isinstance(raw_output, dict):
+            return str(raw_output.get("status") or "")
+    return ""
 
 
 if __name__ == "__main__":

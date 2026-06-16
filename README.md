@@ -83,8 +83,9 @@ npm run dev             # roda o Studio
 npm run test            # roda a suíte de testes
 npm run algorithm:suite # valida lead_score e exporta evidência
 npm run voice:run       # roda xAI Voice Lab real com XAI_API_KEY
-npm run ui:smoke        # valida rotas principais com a UI rodando
-npm run acp:workflow    # testa ACP + SKILL.md em 9 prompts seguros
+npm run ui:smoke        # valida rotas principais com a UI já rodando
+npm run ui:smoke:local  # sobe a UI se necessário e valida rotas
+npm run acp:workflow    # testa ACP + SKILL.md em 9 prompts; Voice precisa evidência salva
 ```
 
 ACP quick prompts:

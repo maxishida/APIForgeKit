@@ -184,9 +184,14 @@ class ObservabilityRepository:
             session.commit()
             return {"id": row.id, "path": path}
 
-    def list_runs(self, limit: int = 50) -> list[dict[str, object]]:
+    def list_runs(self, limit: int = 50, *, provider: str | None = None, suite_name: str | None = None) -> list[dict[str, object]]:
         with self.session_factory() as session:
-            rows = session.scalars(select(TestRun).order_by(desc(TestRun.created_at)).limit(limit)).all()
+            statement = select(TestRun)
+            if provider:
+                statement = statement.where(TestRun.provider == provider)
+            if suite_name:
+                statement = statement.where(TestRun.suite_name == suite_name)
+            rows = session.scalars(statement.order_by(desc(TestRun.created_at)).limit(limit)).all()
             return [row.to_dict() for row in rows]
 
     def list_events(self, limit: int = 200, run_id: str | None = None) -> list[dict[str, object]]:

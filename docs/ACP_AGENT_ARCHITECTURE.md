@@ -180,6 +180,7 @@ Protocol behavior implemented in the seed:
 - Final summaries stream through `agent_message_chunk` using text content blocks; `PromptResponse` keeps only `stopReason` and `_meta`.
 - HTTP real/provider-paid paths emit `session/request_permission` before execution and return `PromptResponse.stopReason="refusal"` with `_meta.apiforgekit.permissionRequired=true`.
 - `_meta.apiforgekit.sessionId`, command, algorithm, run ID, context path and evidence ZIP are included when available so clients can correlate updates and evidence.
+- `run_acp_workflow.py` treats validation prompts as passed only when `stopReason=end_turn` and the latest `tool_call_update.rawOutput.status` is `success`; permission gates must return `stopReason=refusal` and emit `session/request_permission`.
 
 Supported prompt commands:
 

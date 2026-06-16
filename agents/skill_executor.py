@@ -351,11 +351,7 @@ class SkillExecutor:
             )
         if self.services.observability_repository is None:
             return self._voice_not_validated("Observability repository is not configured for this ACP executor.")
-        runs = [
-            run
-            for run in self.services.observability_repository.list_runs(limit=100)
-            if run.get("provider") == "xai" and run.get("suite_name") == "voice_roundtrip"
-        ]
+        runs = self.services.observability_repository.list_runs(limit=1, provider="xai", suite_name="voice_roundtrip")
         if not runs:
             return self._voice_not_validated("Nenhum roundtrip de voz foi encontrado no PostgreSQL.")
         latest_run = runs[0]

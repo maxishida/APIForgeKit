@@ -303,6 +303,42 @@ def test_validate_voice_roundtrip_succeeds_with_latest_voice_evidence(tmp_path):
     assert result["evidence"]["voice_status"] == "success"
 
 
+def test_validate_voice_roundtrip_finds_voice_evidence_after_many_other_runs(tmp_path):
+    executor, repository = _executor_with_observability(tmp_path)
+    run = repository.start_run("xai", "voice_roundtrip", ["lead_input", "tts", "stt", "agent_response", "voice_status"])
+    for event_type in [
+        "lead_received",
+        "user_message_received",
+        "tts_audio_received",
+        "transcript_received",
+        "agent_response_received",
+        "voice_call_completed",
+    ]:
+        repository.record_event(
+            ObservabilityEventInput(
+                run_id=str(run["id"]),
+                provider="xai",
+                module="voice",
+                test_name="voice_roundtrip",
+                event_type=event_type,
+                status="success",
+                message=event_type,
+                request={"evidence_mode": "real_http"},
+                response={"evidence_mode": "real_http"},
+            )
+        )
+    repository.record_voice_test(str(run["id"]), transcript="Quero preço", classification="sales_intent", status="success")
+    repository.finish_run(str(run["id"]), "success", {"voice_status": "success"})
+    for index in range(120):
+        other = repository.start_run("other", f"noise_{index}", ["noise"])
+        repository.finish_run(str(other["id"]), "success", {"noise": index})
+
+    result = executor.execute("/validate-voice-roundtrip")
+
+    assert result["status"] == "success"
+    assert result["evidence"]["latest_run"]["id"] == run["id"]
+
+
 def test_validate_voice_roundtrip_fails_when_essential_events_are_missing(tmp_path):
     executor, repository = _executor_with_observability(tmp_path)
     run = repository.start_run("xai", "voice_roundtrip", ["lead_input", "tts", "stt", "agent_response", "voice_status"])
