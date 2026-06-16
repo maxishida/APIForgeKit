@@ -1,4 +1,5 @@
 from ui.logs import _filter_records
+from ui.logs import LOG_MODULE_OPTIONS
 
 
 def test_logs_filter_records_by_evidence_mode():
@@ -18,3 +19,7 @@ def test_logs_filter_records_by_evidence_mode():
     )
 
     assert [record["id"] for record in filtered] == ["2"]
+
+
+def test_logs_module_options_include_responses_api():
+    assert "responses_api" in LOG_MODULE_OPTIONS

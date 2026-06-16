@@ -35,9 +35,11 @@ O objetivo é simples: **economizar tempo e tokens de LLM usando evidência real
 - **Generic API Lab:** testa contratos de APIs/webhooks em `dry_run_contract` ou HTTP real com permissão.
 - **Live Dashboard:** mostra métricas, eventos, latência, falhas recentes e modos de evidência.
 - **Logs:** permite buscar e filtrar JSON estruturado por provider, módulo, status, latência e `evidence_mode`.
-- **Context Builder:** transforma evidências em contexto técnico para IA, com readiness `Ready`, `Needs tests` ou `Has failures`.
+- **Context Builder:** transforma evidências em contexto técnico para IA, com readiness `Ready`, `Needs tests`, `Has failures` e `Generate AI Prompt`.
 - **Evidence Pack:** exporta Markdown, JSON, HTML e ZIP; `Download .md` serve para uso rápido e exports auditáveis ficam em `context_exports`.
 - **Token Calculator:** estima custo por provider/modelo/usuário, diferencia `seeded_estimate` de `docs_verified` e salva no histórico só quando solicitado.
+- **Project Health:** resume PostgreSQL, último run xAI, último export de contexto, falhas e modos de evidência.
+- **xAI Responses API:** o runner compacto prioriza `/v1/responses` para novas validações e mantém Chat Completions como compatibilidade legado.
 - **xAI Voice Lab:** executa roundtrip real TTS -> STT -> resposta do agente, salva logs no PostgreSQL e alimenta Dashboard, Logs e Context Builder.
 - **ACP Executor:** permite rodar o workflow por IDE/CLI/agente usando `SKILL.md` como contrato operacional.
 
@@ -86,6 +88,8 @@ npm run voice:run       # roda xAI Voice Lab real com XAI_API_KEY
 npm run ui:smoke        # valida rotas principais com a UI já rodando
 npm run ui:smoke:local  # sobe a UI se necessário e valida rotas
 npm run acp:workflow    # testa ACP + SKILL.md em 9 prompts; Voice precisa evidência salva
+npm run demo:clean:dry  # lista artefatos de demo que seriam removidos
+npm run demo:clean      # remove caches/exports gerados sem tocar .env, tests ou banco
 ```
 
 ACP quick prompts:
@@ -104,7 +108,9 @@ python run_acp_prompt.py "/validate-voice-roundtrip"
 - `lead_score` com 17 casos canônicos e invariantes.
 - API contract pack de WhatsApp em `dry_run_contract`.
 - Context Builder com export Markdown, JSON, HTML e ZIP.
+- Context Builder com `Generate AI Prompt` para entregar instruções curtas e baseadas em evidência para outra IA.
 - Token Calculator com estimativas e trilha de fonte de pricing.
+- xAI compact runner com Responses API, Chat legacy, structured outputs, streaming e tools.
 - xAI Voice Lab REST com TTS, STT, resposta textual do agente e logs de funil.
 - Dashboard, Logs e filtros por evidência.
 - ACP workflow com permissão para caminhos pagos ou HTTP real.

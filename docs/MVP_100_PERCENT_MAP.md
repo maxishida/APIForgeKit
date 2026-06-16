@@ -32,11 +32,12 @@ Este fluxo ainda segue a tese técnica: `Teste -> Log estruturado -> PostgreSQL 
 | --- | --- | --- | --- |
 | Algorithm Test Lab | Funcional real local | `seed_validation` | Caminho canônico para `lead_score`, expected vs actual, diff e invariantes. |
 | Generic API Lab | Funcional | `dry_run_contract` e `real_http` | Dry-run valida contrato; HTTP real exige casos com URL real e confirmação. |
-| Live Dashboard / xAI compact runner | Funcional com credencial | `real_http` e `blocked` | Connectivity, chat, structured outputs, streaming e tools rodam com `XAI_API_KEY`. |
+| Live Dashboard / xAI compact runner | Funcional com credencial | `real_http` e `blocked` | Responses API, connectivity, chat legacy, structured outputs, streaming e tools rodam com `XAI_API_KEY`. |
 | xAI Voice Lab REST | Funcional com credencial | `real_http` | TTS gera áudio, STT transcreve, agente responde e eventos entram em Logs/Dashboard/Context Builder. |
 | Logs | Funcional | todos os modos | Filtro por provider, módulo, status, evidência, latência e busca JSON. |
 | Token Calculator | Funcional como estimativa | `seeded_estimate` | Decisão financeira exige conferir docs oficiais e registrar fonte. |
-| Context Builder | Funcional | todos os modos | Readiness: `Ready`, `Needs tests`, `Has failures`; inclui `ACP Evidence`. |
+| Context Builder | Funcional | todos os modos | Readiness: `Ready`, `Needs tests`, `Has failures`; inclui `ACP Evidence` e `Generate AI Prompt`. |
+| Project Health | Funcional | todos os modos | Home mostra PostgreSQL, último run xAI, último export de contexto, falhas e modos de evidência. |
 | ACP Executor | Funcional local | `protocol_trace`, `seed_validation`, `dry_run_contract`, `blocked` | Executa skill gates, persiste sessão/prompt/resposta e exporta evidência; HTTP real pede permissão. |
 | Lead Algorithm Lab | Legacy | `legacy` | Mantido como referência; use Algorithm Test Lab no MVP. |
 | Blueprint Archive | Legacy/futuro | `legacy` | Não faz parte do fluxo atual de validação. |
@@ -71,6 +72,8 @@ npm run dev
 npm run test
 npm run algorithm:suite
 npm run acp
+npm run demo:clean:dry
+npm run demo:clean
 ```
 
 ## O que pode ser demonstrado hoje
@@ -78,9 +81,11 @@ npm run acp
 - Rodar `lead_score` no Algorithm Test Lab com 17 casos canônicos.
 - Rodar WhatsApp validation pack como `dry_run_contract`.
 - Rodar xAI compact runner com `XAI_API_KEY` configurada.
+- Ver `responses_api/basic` como evidência preferida para xAI text.
 - Rodar xAI Voice Lab REST com `XAI_API_KEY` configurada.
 - Filtrar logs por `evidence_mode`.
 - Gerar Context Builder em Markdown, JSON, HTML e ZIP.
+- Gerar AI Prompt final baseado em evidências.
 - Baixar `Download .md` para contexto rápido.
 - Confirmar que Markdown, JSON, HTML e ZIP foram registrados em `context_exports`.
 - Executar `/validate-lead-score` via ACP e obter evidence ZIP.

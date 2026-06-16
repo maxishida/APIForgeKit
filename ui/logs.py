@@ -12,6 +12,9 @@ from ui.components.alerts import db_offline, empty_state
 from ui.components.tables import observability_grid
 
 
+LOG_MODULE_OPTIONS = ["", "connectivity", "responses_api", "chat_legacy", "chat", "structured_outputs", "streaming", "function_calling", "agents", "voice"]
+
+
 def render_logs(services) -> None:
     status = database_status(services.engine)
     if not status["online"]:
@@ -28,7 +31,7 @@ def render_logs(services) -> None:
         ui.label("Filtros").classes("text-lg font-bold")
         with ui.grid(columns=6).classes("w-full gap-3"):
             provider = ui.select(["", "xai"], value="", label="Provider").classes("w-full")
-            module = ui.select(["", "connectivity", "chat", "structured_outputs", "streaming", "function_calling", "agents", "voice"], value="", label="Módulo").classes("w-full")
+            module = ui.select(LOG_MODULE_OPTIONS, value="", label="Módulo").classes("w-full")
             record_status = ui.select(["", "running", "success", "failed", "blocked"], value="", label="Status").classes("w-full")
             evidence_mode = ui.select(["", "real_http", "dry_run_contract", "seed_validation", "blocked", "legacy"], value="", label="Evidência").classes("w-full")
             min_latency = ui.number("Latência mínima", value=0, min=0).classes("w-full")

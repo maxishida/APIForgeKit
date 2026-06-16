@@ -13,6 +13,7 @@ from core.observability import ObservabilityEventInput, ObservabilityRepository
 
 
 DEFAULT_XAI_MODEL = "grok-4.3"
+XAI_RESPONSES_URL = "https://api.x.ai/v1/responses"
 
 
 @dataclass(frozen=True)
@@ -23,14 +24,21 @@ class RunnerCase:
 
 
 class XaiLiveRunner:
-    def __init__(self, repository: ObservabilityRepository, model: str | None = None, load_env: bool = True):
+    def __init__(
+        self,
+        repository: ObservabilityRepository,
+        model: str | None = None,
+        load_env: bool = True,
+        http_post: Callable[..., object] | None = None,
+    ):
         if load_env:
             load_dotenv(ROOT_DIR / ".env")
         self.repository = repository
         self.model = model or os.getenv("XAI_MODEL") or DEFAULT_XAI_MODEL
+        self.http_post = http_post or _requests_post
 
     def run_compact_sequence(self, stop_on_failure: bool = False) -> dict[str, object]:
-        phases = ["connectivity", "chat", "structured_outputs", "streaming", "function_calling", "agents", "voice"]
+        phases = ["connectivity", "responses_api", "chat_legacy", "structured_outputs", "streaming", "function_calling", "agents", "voice"]
         run = self.repository.start_run("xai", "live_observability_compact", phases)
         failed = False
         if not os.getenv("XAI_API_KEY"):
@@ -48,8 +56,9 @@ class XaiLiveRunner:
             return self.repository.finish_run(run["id"], "failed", {"reason": "missing_xai_api_key"})
 
         cases = [
+            RunnerCase("responses_api", "basic", "_run_responses_basic"),
             RunnerCase("connectivity", "auth", "_run_auth"),
-            RunnerCase("chat", "basic", "_run_basic"),
+            RunnerCase("chat_legacy", "basic", "_run_chat_legacy_basic"),
             RunnerCase("structured_outputs", "schema_parse", "_run_structured"),
             RunnerCase("streaming", "stream", "_run_stream"),
             RunnerCase("function_calling", "tools", "_run_tools"),
@@ -66,7 +75,7 @@ class XaiLiveRunner:
                     "test_failed",
                     "failed",
                     f"{case.test_name} falhou",
-                    error=str(exc),
+                    error=self._sanitize_text(str(exc)),
                     recommendation="Registrar payload e comparar com docs xAI antes de corrigir.",
                 )
                 if stop_on_failure:
@@ -92,6 +101,45 @@ class XaiLiveRunner:
             "user": user,
         }
 
+    def _run_responses_basic(self, run_id: str) -> None:
+        request = {
+            "model": self.model,
+            "store": False,
+            "input": [
+                {"role": "system", "content": "You are a concise API validation assistant."},
+                {"role": "user", "content": "Reply with exactly: api-lab-ok"},
+            ],
+            "docs_source": "https://docs.x.ai/developers/model-capabilities/text/generate-text",
+        }
+        started = self._start(run_id, "responses_api", "basic", request, endpoint=XAI_RESPONSES_URL)
+        response = self.http_post(
+            XAI_RESPONSES_URL,
+            headers={
+                "Authorization": f"Bearer {os.getenv('XAI_API_KEY')}",
+                "Content-Type": "application/json",
+            },
+            json=request,
+            timeout=120,
+        )
+        status_code = int(getattr(response, "status_code", 0) or 0)
+        payload = _response_json(response)
+        if status_code >= 400:
+            raise RuntimeError(f"xAI Responses API HTTP {status_code}: {self._sanitize_text(str(payload)[:500])}")
+        output_text = _extract_responses_output_text(payload)
+        self._finish(
+            run_id,
+            started,
+            "responses_api",
+            "basic",
+            "Responses API validada",
+            {
+                "response_id": str(payload.get("id") or ""),
+                "output_text_preview": output_text[:500],
+                "raw": self._safe_response(payload),
+            },
+            recommendation="Preferir Responses API para novas integrações xAI; manter Chat Completions apenas como compatibilidade legado.",
+        )
+
     def _run_auth(self, run_id: str) -> None:
         client, chat_types = self._get_client()
         started = self._start(run_id, "connectivity", "auth", {"model": self.model})
@@ -109,9 +157,9 @@ class XaiLiveRunner:
             recommendation="Chave e modelo acessíveis para testes compactos.",
         )
 
-    def _run_basic(self, run_id: str) -> None:
+    def _run_chat_legacy_basic(self, run_id: str) -> None:
         client, chat_types = self._get_client()
-        started = self._start(run_id, "chat", "basic", {"model": self.model, "prompt": "api-lab-ok"})
+        started = self._start(run_id, "chat_legacy", "basic", {"model": self.model, "prompt": "api-lab-ok"})
         chat = client.chat.create(model=self.model)
         chat.append(chat_types["system"]("You are a concise API lab assistant."))
         chat.append(chat_types["user"]("Reply with exactly: api-lab-ok"))
@@ -120,7 +168,7 @@ class XaiLiveRunner:
         self._finish(
             run_id,
             started,
-            "chat",
+            "chat_legacy",
             "basic",
             "Resposta de chat recebida",
             {"content": content},
@@ -253,8 +301,9 @@ class XaiLiveRunner:
             recommendation="Planejar teste real separado com orçamento, fixtures e critérios de aceite.",
         )
 
-    def _start(self, run_id: str, module: str, test_name: str, request: dict[str, object]) -> float:
+    def _start(self, run_id: str, module: str, test_name: str, request: dict[str, object], endpoint: str = "xai_sdk.chat") -> float:
         started = time.perf_counter()
+        event_request = {"endpoint": endpoint, **request}
         event = self._event(
             run_id,
             module,
@@ -262,9 +311,9 @@ class XaiLiveRunner:
             "request_started",
             "running",
             "xAI Request Started",
-            request=request,
+            request=event_request,
         )
-        self.repository.record_api_request(run_id, str(event["id"]), "xai", test_name, "xai_sdk.chat", request)
+        self.repository.record_api_request(run_id, str(event["id"]), "xai", test_name, endpoint, request)
         return started
 
     def _finish(
@@ -278,6 +327,7 @@ class XaiLiveRunner:
         recommendation: str,
     ) -> None:
         latency = round((time.perf_counter() - started) * 1000, 2)
+        tokens = self._usage_from_response(response)
         event = self._event(
             run_id,
             module,
@@ -286,10 +336,11 @@ class XaiLiveRunner:
             "success",
             message,
             latency_ms=latency,
+            tokens=tokens,
             response=response,
             recommendation=recommendation,
         )
-        self.repository.record_api_response(run_id, str(event["id"]), 200, response, self._usage_from_response(response), 0)
+        self.repository.record_api_response(run_id, str(event["id"]), 200, response, tokens, 0)
 
     def _event(
         self,
@@ -342,3 +393,39 @@ class XaiLiveRunner:
             if isinstance(usage, dict):
                 return usage
         return {}
+
+    def _sanitize_text(self, value: str) -> str:
+        secret = os.getenv("XAI_API_KEY") or ""
+        if secret:
+            value = value.replace(secret, "[REDACTED_XAI_API_KEY]")
+        return value
+
+
+def _response_json(response: object) -> dict[str, object]:
+    try:
+        payload = response.json()
+    except Exception:  # noqa: BLE001 - defensive for provider failures
+        return {"raw_text": str(getattr(response, "text", ""))}
+    return payload if isinstance(payload, dict) else {"payload": payload}
+
+
+def _extract_responses_output_text(payload: dict[str, object]) -> str:
+    texts: list[str] = []
+    output = payload.get("output")
+    if isinstance(output, list):
+        for item in output:
+            if not isinstance(item, dict):
+                continue
+            content = item.get("content")
+            if not isinstance(content, list):
+                continue
+            for block in content:
+                if isinstance(block, dict) and block.get("type") == "output_text":
+                    texts.append(str(block.get("text") or ""))
+    return "".join(texts)
+
+
+def _requests_post(url: str, **kwargs: object) -> object:
+    import requests
+
+    return requests.post(url, **kwargs)

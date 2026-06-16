@@ -7,7 +7,7 @@ def test_github_actions_ci_runs_core_validation_commands():
     assert workflow.exists()
     content = workflow.read_text(encoding="utf-8")
     assert "python -m pytest -q" in content
-    assert "python -m compileall app.py core ui agents run_algorithm_lab.py run_acp_prompt.py" in content
+    assert "python -m compileall app.py core ui agents scripts run_algorithm_lab.py run_acp_prompt.py run_acp_workflow.py run_xai_voice.py" in content
     assert "git diff --check" in content
 
 
@@ -30,6 +30,8 @@ def test_ui_smoke_script_and_npm_helper_cover_main_pages():
     ):
         assert route in content
     assert '"ui:smoke": "python scripts/ui_smoke.py"' in package_json
+    assert '"demo:clean:dry": "python scripts/clean_demo_artifacts.py"' in package_json
+    assert '"demo:clean": "python scripts/clean_demo_artifacts.py --apply"' in package_json
 
 
 def test_demo_script_documents_evidence_first_walkthrough():

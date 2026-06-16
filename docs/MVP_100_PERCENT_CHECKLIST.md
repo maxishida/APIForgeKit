@@ -13,6 +13,7 @@ Evidência desta rodada:
 - `npm run acp:workflow`: 9/9 prompts passed.
 - `npm run voice:run`: success, 9 eventos `real_http`.
 - UI smoke: 9/9 rotas HTTP 200.
+- `npm run demo:clean:dry`: lista artefatos sem apagar.
 - Secret scan: `XAI_API_KEY` presente localmente e 0 ocorrências em arquivos/exports escaneados.
 
 ## Ambiente
@@ -43,7 +44,9 @@ Evidência desta rodada:
 - [x] `docs_verified` usa preços verificados de input/output/cache e grava `pricing_verified_at` + `pricing_verified_source_url` quando salvo.
 - [x] Generic API Lab importa suite JSON pelo wizard visual.
 - [x] Live Dashboard registra `real_http` quando provider real roda.
+- [x] Live Dashboard registra `responses_api/basic` para xAI quando `XAI_API_KEY` está configurada.
 - [x] Live Dashboard mostra Evidence Modes, P95 Latency, Recent Failures e Last Event.
+- [x] Home mostra Project Health com PostgreSQL, último run xAI, último context export, falhas e evidence modes.
 - [x] xAI Voice Lab REST registra `lead_received`, `tts_audio_received`, `transcript_received`, `agent_response_received` e `voice_call_completed`.
 - [x] Voice Agent realtime WebSocket e Agents aparecem como `blocked` até V2.
 
@@ -51,6 +54,7 @@ Evidência desta rodada:
 
 - [x] Context Builder exportando Markdown, JSON, HTML e ZIP.
 - [x] Context Builder permite baixar o contexto atual como `.md` direto pela UI.
+- [x] Context Builder gera `AI Prompt` final sem inventar payloads, regras ou endpoints.
 - [x] Context Builder mostra `Ready`, `Needs tests` ou `Has failures`.
 - [x] Logs filtráveis por provider, módulo, status, evidência, latência e busca.
 - [x] Todo mock/dry-run rotulado como `dry_run_contract`.
@@ -80,6 +84,7 @@ Evidência desta rodada:
 - [x] Lead Algorithm Lab está marcado como legacy ou fora do menu principal.
 - [x] Blueprint Archive está marcado como legacy/futuro.
 - [x] README tem passo a passo curto.
+- [x] README documenta `demo:clean:dry`, `demo:clean`, Responses API e Project Health.
 - [x] SKILL está alinhado com evidência antes de implementação.
 - [x] `docs/MVP_100_PERCENT_MAP.md` está atualizado.
 - [x] `docs/SYSTEM_DIAGRAM.md` mostra ACP, SKILL, labs, PostgreSQL, Context Builder e Evidence Pack.

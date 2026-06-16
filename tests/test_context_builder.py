@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 
 from core.context_builder import (
+    build_final_ai_prompt,
     build_context_readiness,
     build_guided_context_bundle,
     build_technical_context,
@@ -116,3 +117,26 @@ def test_guided_context_builder_exports_markdown_json_html_and_zip(tmp_path):
     assert payload["readiness"]["overall"]["status"] == "Ready"
     assert payload["algorithm_metrics"]["total_results"] == 17
     assert "lead_score passou" in payload["context"]
+
+
+def test_final_ai_prompt_is_short_and_evidence_bounded():
+    bundle = build_guided_context_bundle(
+        source_mode="algorithm_api",
+        live_context="# Live\n\n- responses_api validada",
+        algorithm_context="# Algorithm\n\n- lead_score passou",
+        api_context="# API\n\n- whatsapp dry-run passou",
+        token_context="# Token\n\n- custo estimado",
+        algorithm_metrics={"total_results": 17, "passed": 17, "failed": 0, "evidence_modes": {"seed_validation": 17}},
+        api_metrics={"total_results": 4, "passed": 4, "failed": 0, "evidence_modes": {"dry_run_contract": 4}},
+        live_metrics={"total_tests": 1, "success": 1, "failures": 0, "evidence_modes": {"real_http": 3}},
+        token_metrics={"total_estimates": 1, "evidence_modes": {"seeded_estimate": 1}},
+    )
+
+    prompt = build_final_ai_prompt(bundle)
+
+    assert "Readiness: Ready" in prompt
+    assert "seed_validation=17" in prompt
+    assert "dry_run_contract=4" in prompt
+    assert "real_http=3" in prompt
+    assert "Nao invente payloads, regras ou endpoints" in prompt
+    assert "Implementar somente comportamento validado" in prompt

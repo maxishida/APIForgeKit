@@ -23,7 +23,7 @@ jobs:
         run: python -m pytest -q
 
       - name: Compile modules
-        run: python -m compileall app.py core ui agents run_algorithm_lab.py run_acp_prompt.py
+        run: python -m compileall app.py core ui agents scripts run_algorithm_lab.py run_acp_prompt.py run_acp_workflow.py run_xai_voice.py
 
       - name: Check whitespace
         run: git diff --check

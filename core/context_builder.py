@@ -267,6 +267,37 @@ def export_guided_context_bundle(output_dir: str | Path, bundle: Mapping[str, ob
     )
 
 
+def build_final_ai_prompt(bundle: Mapping[str, object]) -> str:
+    readiness = bundle.get("readiness") if isinstance(bundle.get("readiness"), Mapping) else {}
+    overall = readiness.get("overall", {}) if isinstance(readiness.get("overall"), Mapping) else {}
+    contexts = bundle.get("contexts") if isinstance(bundle.get("contexts"), Mapping) else {}
+    source_label = str(bundle.get("source_label") or bundle.get("source_mode") or "Full evidence")
+    evidence_modes = _bundle_evidence_modes(bundle)
+    selected_context = str(bundle.get("context") or "")
+    compact_context = selected_context[:6000]
+    return "\n".join(
+        [
+            "Use este contexto técnico validado pelo APIForgeKit.",
+            "",
+            f"Fonte: {source_label}",
+            f"Readiness: {overall.get('status', 'Needs tests')}",
+            f"Evidências: {_render_modes(evidence_modes)}",
+            "",
+            "Regras obrigatórias:",
+            "- Implementar somente comportamento validado.",
+            "- Nao invente payloads, regras ou endpoints.",
+            "- Se faltar evidência, pare e peça novo teste no APIForgeKit.",
+            "- Preserve tratamento de erro, telemetria e limites descritos no contexto.",
+            "",
+            "Resumo das fontes:",
+            _render_context_presence(contexts),
+            "",
+            "Contexto validado:",
+            compact_context,
+        ]
+    )
+
+
 def _normalize_source_mode(source_mode: str) -> str:
     mode = str(source_mode or "algorithm_api").strip().lower().replace("-", "_")
     aliases = {
@@ -441,6 +472,30 @@ def _render_modes(modes: Mapping[str, object]) -> str:
     if not modes:
         return "none"
     return ", ".join(f"{mode}={count}" for mode, count in sorted(modes.items()))
+
+
+def _bundle_evidence_modes(bundle: Mapping[str, object]) -> dict[str, int]:
+    modes: dict[str, int] = {}
+    for metrics_key in ("algorithm_metrics", "api_metrics", "live_metrics", "token_metrics", "acp_metrics"):
+        metrics = bundle.get(metrics_key)
+        if not isinstance(metrics, Mapping):
+            continue
+        for mode, count in _mapping(metrics, "evidence_modes").items():
+            try:
+                modes[str(mode)] = modes.get(str(mode), 0) + int(count or 0)
+            except (TypeError, ValueError):
+                modes[str(mode)] = modes.get(str(mode), 0)
+    return modes
+
+
+def _render_context_presence(contexts: Mapping[str, object]) -> str:
+    if not contexts:
+        return "- Nenhuma fonte de contexto anexada."
+    lines = []
+    for key in ("algorithm", "api", "live", "token", "acp"):
+        text = str(contexts.get(key) or "").strip()
+        lines.append(f"- {SECTION_LABELS.get(key, key)}: {'incluida' if text else 'ausente'}")
+    return "\n".join(lines)
 
 
 def _render_blockers(missing: list[str], failures: list[str]) -> str:

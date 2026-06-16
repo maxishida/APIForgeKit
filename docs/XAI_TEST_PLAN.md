@@ -31,8 +31,9 @@ The NiceGUI Live Dashboard includes a compact xAI runner.
 
 Implemented compact coverage:
 
+- Responses API basic call through `POST /v1/responses` with `store=false`
 - authentication/readiness
-- basic chat
+- basic chat legacy compatibility
 - structured output parsing with Pydantic
 - streaming response and chunk logging
 - function calling loop
@@ -109,7 +110,7 @@ Evidence:
 
 Important rule:
 
-Use Responses API concepts first for future integrations. Chat Completions and `xai-sdk` validation remain useful for local Python evidence.
+Use Responses API first for future integrations. Chat Completions and `xai-sdk` validation remain useful as `chat_legacy` compatibility evidence only.
 
 ## Phase 3 - Structured Outputs
 

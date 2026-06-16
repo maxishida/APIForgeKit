@@ -5,6 +5,7 @@ def test_context_builder_exposes_markdown_download_action():
     labels = {action["label"] for action in context_builder.CONTEXT_EXPORT_ACTIONS}
 
     assert "Download .md" in labels
+    assert "Generate AI Prompt" in labels
     assert "Export Markdown" in labels
     assert "Export JSON" in labels
     assert "Export HTML" in labels

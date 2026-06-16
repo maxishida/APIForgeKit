@@ -5,7 +5,7 @@ description: Use when an agent operates APIForgeKit to validate APIs, algorithms
 
 # APIForgeKit Operational Brain
 
-Use this file as the short execution contract for ACP and human-driven agents. Keep detailed explanations in `docs/`; keep this skill small enough to load in prompt context.
+Short execution contract for ACP and human agents. Keep details in `docs/`.
 
 ## Prime Directive
 
@@ -61,7 +61,7 @@ Evidence modes:
 - `real_http`: real external/local HTTP or SDK call
 - `dry_run_contract`: local contract validation with expected vs actual
 - `seed_validation`: canonical deterministic seed suite
-- `protocol_trace`: ACP/CLI/IDE execution trace proving which gate, command, response and permission path ran
+- `protocol_trace`: ACP/CLI/IDE trace of gate, command, response and permission path
 - `blocked`: not executed because permission, credential, cost, fixture or V2 scope is missing
 - `legacy`: preserved feature outside the canonical MVP
 
@@ -80,7 +80,7 @@ Handshake for IDE/CLI clients:
 5. Read `available_commands_update`; command names are announced without `/`.
 6. Send `session/prompt` with text `ContentBlock[]`.
 7. Read `session/update` notifications for `plan`, `tool_call`, `tool_call_update` and `agent_message_chunk`.
-8. Treat final `PromptResponse` as stop metadata; ACP sessions/prompts persist as `protocol_trace` for Context Builder.
+8. Treat final `PromptResponse` as stop metadata; ACP traces persist as `protocol_trace`.
 
 Quick local harness:
 
@@ -112,7 +112,7 @@ ACP limitations:
 - Accept text `ContentBlock[]`; keep legacy string prompt support.
 - Refuse image/audio/resource blocks until a specific resource validation path exists.
 - For real HTTP/provider-paid paths, emit `session/request_permission` and return `stopReason="refusal"`.
-- Full result JSON belongs in `agent_message_chunk`; `_meta` should include session, command, run ID, context path and evidence ZIP when available.
+- Full result JSON belongs in `agent_message_chunk`; `_meta` includes session, command, run ID, context path and evidence ZIP when available.
 
 ## Algorithm Path
 
@@ -157,28 +157,26 @@ Rules:
 
 - record `pricing_mode`
 - use `seeded_estimate` for local catalog estimates
-- use `docs_verified` only after checking current official pricing docs and entering verified input/output/cached prices when they differ from seeds
+- use `docs_verified` only after checking official pricing docs and entering verified prices
 - never present seeded pricing as billing truth
 - include source URL and verification timestamp when `docs_verified`
-- ACP `/token-cost` calculates without saving by default; add `save=true` only when the estimate should become evidence in PostgreSQL
+- ACP `/token-cost` calculates without saving; add `save=true` only for PostgreSQL evidence
 - ACP `/validate-token-cost` is the preferred validation alias; `/token-cost` remains compatible
 - recommend Context Builder to shrink prompts before implementation
 
-Provider pricing docs:
-- xAI: https://docs.x.ai/developers/pricing
-- OpenAI: https://platform.openai.com/docs/pricing
-- Anthropic: https://docs.anthropic.com/en/docs/about-claude/pricing
-- Gemini: https://ai.google.dev/gemini-api/docs/pricing
+Provider pricing docs: xAI https://docs.x.ai/developers/pricing; OpenAI https://platform.openai.com/docs/pricing; Anthropic https://docs.anthropic.com/en/docs/about-claude/pricing; Gemini https://ai.google.dev/gemini-api/docs/pricing.
 
 ## Provider Validation
 
-For provider behavior, use official docs when the endpoint, model, pricing or limits may have changed. Start with the smallest safe test and log all request/response evidence. Do not print secrets.
+For provider behavior, use official docs when endpoints, models, pricing or limits may have changed. Start small, log sanitized evidence and never print secrets.
 
-xAI references live in `docs/XAI_TEST_PLAN.md`; ACP architecture details live in `docs/ACP_AGENT_ARCHITECTURE.md`.
+xAI default: check current docs; prefer Responses API (`/v1/responses`); keep Chat Completions as `chat_legacy`; log response id, output preview, usage/tokens, endpoint, latency and docs source; use `store=false` unless state is tested. Official refs: https://docs.x.ai/developers/model-capabilities/text/comparison, https://docs.x.ai/developers/model-capabilities/text/generate-text, https://docs.x.ai/developers/model-capabilities/text/structured-outputs, https://docs.x.ai/developers/model-capabilities/text/streaming.
+
+xAI details live in `docs/XAI_TEST_PLAN.md`; ACP details live in `docs/ACP_AGENT_ARCHITECTURE.md`.
 
 ## Voice Validation Path
 
-Use `/voice-lab` or `npm run voice:run` for approved xAI REST voice validation. Log lead, user message, TTS, STT transcript, agent response, API error, latency, origin and previous page as `real_http`. Realtime WebSocket, private customer audio and benchmarks still require explicit approval, cost boundary and privacy review.
+Use `/voice-lab` or `npm run voice:run` for approved xAI REST voice validation. Log lead, user message, TTS, STT, agent response, API error, latency, origin and previous page as `real_http`. Realtime WebSocket, private audio and benchmarks require approval.
 
 ACP `/validate-voice-roundtrip` validates the latest saved voice evidence only, including required events `lead_received`, `user_message_received`, `tts_audio_received`, `transcript_received`, `agent_response_received` and `voice_call_completed`. ACP `/validate-voice-roundtrip --run-real` must request permission and refuse by default until the client permission flow approves paid provider execution.
 
@@ -202,6 +200,8 @@ Readiness:
 - `Has failures`: diffs/errors must be fixed or documented
 
 Exports should include Markdown, JSON, HTML and ZIP when requested.
+
+Use `Generate AI Prompt` for the final handoff to another AI. That prompt must be short, evidence-bounded and say not to invent payloads, rules or endpoints.
 
 ## Stop Conditions
 

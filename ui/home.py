@@ -8,6 +8,7 @@ from core.algorithm_test_lab import AlgorithmTestRunner, ensure_default_algorith
 from core.api_test_lab import ApiTestRunner, ensure_default_api_suites
 from core.database import database_status
 from core.demo_dashboard import build_demo_dashboard_snapshot
+from core.project_health import build_project_health
 from core.workflow import build_official_journey_progress
 from ui.components.alerts import db_offline
 from ui.components.cards import metric_card
@@ -23,6 +24,15 @@ def render_home(services) -> None:
     algorithm_metrics = services.algorithm_repository.metrics() if status["online"] else {}
     api_metrics = services.api_test_repository.metrics() if status["online"] else {}
     provider_metrics = services.observability_repository.metrics() if status["online"] else {}
+    provider_events = services.observability_repository.list_events(limit=200) if status["online"] else []
+    context_exports = services.observability_repository.list_context_exports(limit=5) if status["online"] else []
+    xai_runs = services.observability_repository.list_runs(limit=1, provider="xai") if status["online"] else []
+    project_health = build_project_health(
+        db_status=status,
+        xai_runs=xai_runs,
+        context_exports=context_exports,
+        events=provider_events,
+    )
     snapshot = build_demo_dashboard_snapshot(
         db_status=status,
         algorithm_metrics=algorithm_metrics,
@@ -40,6 +50,8 @@ def render_home(services) -> None:
         metric_card("Algorithm Pass Rate", snapshot["algorithm"]["primary_metric"], snapshot["algorithm"]["caption"], snapshot["algorithm"]["accent"])
         metric_card("Generic API Pass", f"{float(api_metrics.get('pass_rate') or 0):g}%", f"{int(api_metrics.get('passed') or 0)} passed", "#00D4FF")
         metric_card("Provider Runs", snapshot["provider"]["primary_metric"], snapshot["provider"]["caption"], "#2563EB")
+
+    _project_health_panel(project_health)
 
     with ui.grid(columns=2).classes("w-full gap-4"):
         _track_card(
@@ -194,3 +206,36 @@ def _run_api_contract_dry_run(services) -> None:
         type="positive" if run["failed"] == 0 else "warning",
     )
     ui.navigate.to("/api-test-lab")
+
+
+def _project_health_panel(health: dict[str, object]) -> None:
+    database = health.get("database", {}) if isinstance(health.get("database"), dict) else {}
+    xai = health.get("latest_xai_run", {}) if isinstance(health.get("latest_xai_run"), dict) else {}
+    context = health.get("latest_context_export", {}) if isinstance(health.get("latest_context_export"), dict) else {}
+    failed = health.get("failed_events", {}) if isinstance(health.get("failed_events"), dict) else {}
+    readiness = health.get("readiness", {}) if isinstance(health.get("readiness"), dict) else {}
+    modes = health.get("evidence_modes", {}) if isinstance(health.get("evidence_modes"), dict) else {}
+    mode_text = ", ".join(f"{key}={value}" for key, value in sorted(modes.items())) or "none"
+    with ui.column().classes("afk-card w-full gap-4").style("padding:18px;"):
+        with ui.row().classes("w-full items-center justify-between gap-4"):
+            with ui.column().classes("gap-1"):
+                ui.label("Project Health").classes("text-xl font-bold afk-title")
+                ui.label("Estado operacional do harness antes de gravar demo ou entregar contexto para IA.").classes("afk-muted")
+            ui.html(f"<span class='afk-badge' style='color:{_health_color(str(readiness.get('status') or ''))}'>{escape(str(readiness.get('status') or 'Unknown'))}</span>")
+        with ui.grid(columns=5).classes("w-full gap-3"):
+            metric_card("PostgreSQL", str(database.get("status") or "Unknown"), f"{database.get('latency_ms', 0)} ms", "#00D4FF")
+            metric_card("Latest xAI Run", str(xai.get("status") or "No runs"), str(xai.get("suite_name") or ""), "#2563EB")
+            metric_card("Context Export", str(context.get("status") or "No exports"), f"{context.get('path_count', 0)} arquivos", "#10B981")
+            metric_card("Failed Events", int(failed.get("count") or 0), "eventos failed", "#EF4444")
+            metric_card("Evidence Modes", mode_text, "últimos eventos", "#F59E0B")
+        missing = context.get("missing_paths") if isinstance(context.get("missing_paths"), list) else []
+        if missing:
+            ui.label("Context exports apontam para arquivos ausentes. Gere o Evidence Pack novamente antes de demo.").classes("afk-muted").style("color:#F59E0B;")
+
+
+def _health_color(status: str) -> str:
+    if status == "Ready":
+        return "#10B981"
+    if status == "Needs attention":
+        return "#F59E0B"
+    return "#EF4444"

@@ -62,6 +62,19 @@ Use `Algorithm + API` quando quiser validar uma futura feature de SaaS com regra
 
 Na UI, `Download .md` baixa o contexto técnico atual para uso imediato. `Export Markdown/JSON/HTML/ZIP` grava o pacote em `exports/reports/` com metadata para auditoria.
 
+O botão `Generate AI Prompt` cria um prompt curto para outra IA, limitado ao que foi validado. Ele instrui explicitamente a não inventar payloads, regras ou endpoints.
+
+O `Project Health` aparece na Home e resume PostgreSQL, último run xAI, último export de contexto, eventos com falha e modos de evidência.
+
+Para xAI, o caminho preferido de texto é Responses API (`/v1/responses`). Chat Completions permanece como evidência `chat_legacy` para compatibilidade.
+
+Para limpar artefatos antes de demo:
+
+```bash
+npm run demo:clean:dry
+npm run demo:clean
+```
+
 Para voz, use `/voice-lab` ou `npm run voice:run`. O fluxo REST atual gera áudio via xAI TTS, transcreve via xAI STT, registra resposta do agente e salva tudo como `real_http` no PostgreSQL. Voice Agent realtime WebSocket continua como V2.
 
 Para conferir a UI durante release local, rode a app e execute:

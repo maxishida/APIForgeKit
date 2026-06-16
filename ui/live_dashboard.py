@@ -31,6 +31,7 @@ DASHBOARD_SIGNAL_CARDS = [
 ]
 
 LIVE_DASHBOARD_EMPTY_STATE_COPY = "Nenhum evento encontrado para os filtros atuais."
+LIVE_DASHBOARD_MODULE_OPTIONS = ["", "connectivity", "responses_api", "chat_legacy", "chat", "structured_outputs", "streaming", "function_calling", "agents", "voice"]
 
 
 def render_live_dashboard(services) -> None:
@@ -62,7 +63,7 @@ def render_live_dashboard(services) -> None:
         with ui.grid(columns=5).classes("w-full gap-3"):
             status_filter = ui.select(["", "running", "success", "failed", "blocked"], value="", label="Status").classes("w-full")
             module_filter = ui.select(
-                ["", "connectivity", "chat", "structured_outputs", "streaming", "function_calling", "agents", "voice"],
+                LIVE_DASHBOARD_MODULE_OPTIONS,
                 value="",
                 label="Módulo",
             ).classes("w-full")

@@ -8,7 +8,7 @@ from nicegui import ui
 from core.acp_audit import build_acp_context
 from core.algorithm_test_lab import build_algorithm_context
 from core.api_test_lab import build_api_context
-from core.context_builder import SOURCE_MODE_LABELS, build_guided_context_bundle, export_guided_context_bundle
+from core.context_builder import SOURCE_MODE_LABELS, build_final_ai_prompt, build_guided_context_bundle, export_guided_context_bundle
 from core.database import database_status
 from core.observability import build_live_context
 from core.token_usage import build_token_usage_context
@@ -18,6 +18,7 @@ from ui.components.cards import metric_card
 
 CONTEXT_EXPORT_ACTIONS = (
     {"action": "download_markdown", "label": "Download .md", "icon": "download"},
+    {"action": "generate_ai_prompt", "label": "Generate AI Prompt", "icon": "psychology"},
     {"action": "export", "format": "markdown", "label": "Export Markdown", "icon": "article"},
     {"action": "export", "format": "json", "label": "Export JSON", "icon": "data_object"},
     {"action": "export", "format": "html", "label": "Export HTML", "icon": "html"},
@@ -127,6 +128,9 @@ def render_context_builder(services) -> None:
                     if action["action"] == "download_markdown":
                         ui.button(action["label"], icon=action["icon"], on_click=download_markdown).classes("afk-primary-btn")
                         continue
+                    if action["action"] == "generate_ai_prompt":
+                        ui.button(action["label"], icon=action["icon"], on_click=copy_ai_prompt).classes("afk-primary-btn")
+                        continue
                     ui.button(
                         action["label"],
                         icon=action["icon"],
@@ -141,6 +145,7 @@ def render_context_builder(services) -> None:
             ui.label("Preview e metadados").classes("text-xl font-bold afk-title")
             tabs_payload = {
                 "Contexto": bundle["context"],
+                "AI Prompt": build_final_ai_prompt(bundle),
                 "Readiness": bundle["readiness"],
                 "Métricas": {
                     "algorithm": bundle["algorithm_metrics"],
@@ -157,6 +162,8 @@ def render_context_builder(services) -> None:
             with ui.tab_panels(tabs, value=tab_map["Contexto"]).classes("w-full"):
                 with ui.tab_panel(tab_map["Contexto"]):
                     ui.markdown(str(bundle["context"])).classes("w-full")
+                with ui.tab_panel(tab_map["AI Prompt"]):
+                    ui.code(str(tabs_payload["AI Prompt"]), language="markdown").classes("w-full")
                 for name in ["Readiness", "Métricas", "Fontes", "Export JSON"]:
                     with ui.tab_panel(tab_map[name]):
                         ui.code(json.dumps(tabs_payload[name], ensure_ascii=False, indent=2), language="json").classes("w-full")
@@ -182,6 +189,11 @@ def render_context_builder(services) -> None:
         bundle = build_bundle()
         ui.run_javascript(f"navigator.clipboard.writeText({json.dumps(str(bundle['context']))})")
         ui.notify("Contexto copiado para a área de transferência.", type="positive")
+
+    def copy_ai_prompt() -> None:
+        prompt = build_final_ai_prompt(build_bundle())
+        ui.run_javascript(f"navigator.clipboard.writeText({json.dumps(prompt)})")
+        ui.notify("AI Prompt gerado e copiado para a área de transferência.", type="positive")
 
     def refresh() -> None:
         bundle = build_bundle()
