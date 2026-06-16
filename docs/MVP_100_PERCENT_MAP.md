@@ -82,6 +82,7 @@ npm run acp
 - Filtrar logs por `evidence_mode`.
 - Gerar Context Builder em Markdown, JSON, HTML e ZIP.
 - Baixar `Download .md` para contexto rápido.
+- Confirmar que Markdown, JSON, HTML e ZIP foram registrados em `context_exports`.
 - Executar `/validate-lead-score` via ACP e obter evidence ZIP.
 - Ver rastro ACP no Context Builder como `ACP Evidence`.
 

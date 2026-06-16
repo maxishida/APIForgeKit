@@ -36,6 +36,18 @@ def test_official_validation_journey_has_commands_for_automation_steps():
     assert commands["Baixar Evidence Pack"] == "Export ZIP no Context Builder"
 
 
+def test_evidence_pack_step_mentions_context_export_registry():
+    step_by_title = {step["title"]: step for step in OFFICIAL_VALIDATION_JOURNEY}
+    evidence_pack = step_by_title["Baixar Evidence Pack"]
+    text = f"{evidence_pack['evidence']} {evidence_pack['help']}"
+
+    assert "context_exports" in text
+    assert "Markdown" in text
+    assert "JSON" in text
+    assert "HTML" in text
+    assert "ZIP" in text
+
+
 def test_official_validation_journey_progress_keeps_tutorial_available_without_database():
     progress = build_official_journey_progress(
         db_online=False,

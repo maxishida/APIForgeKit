@@ -107,6 +107,7 @@ No `Context Builder`:
 - `Download .md`: contexto rápido para colar em uma IA.
 - `Export ZIP`: pacote auditável com metadata.
 - `Export JSON/HTML`: revisão técnica e compartilhamento.
+- `context_exports`: trilha no PostgreSQL com os caminhos Markdown, JSON, HTML e ZIP.
 
 ### 8. Usar contexto com IA
 

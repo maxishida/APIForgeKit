@@ -36,7 +36,7 @@ O objetivo é simples: **economizar tempo e tokens de LLM usando evidência real
 - **Live Dashboard:** mostra métricas, eventos, latência, falhas recentes e modos de evidência.
 - **Logs:** permite buscar e filtrar JSON estruturado por provider, módulo, status, latência e `evidence_mode`.
 - **Context Builder:** transforma evidências em contexto técnico para IA, com readiness `Ready`, `Needs tests` ou `Has failures`.
-- **Evidence Pack:** exporta Markdown, JSON, HTML e ZIP; `Download .md` serve para uso rápido.
+- **Evidence Pack:** exporta Markdown, JSON, HTML e ZIP; `Download .md` serve para uso rápido e exports auditáveis ficam em `context_exports`.
 - **Token Calculator:** estima custo por provider/modelo/usuário, diferencia `seeded_estimate` de `docs_verified` e salva no histórico só quando solicitado.
 - **xAI Voice Lab:** executa roundtrip real TTS -> STT -> resposta do agente, salva logs no PostgreSQL e alimenta Dashboard, Logs e Context Builder.
 - **ACP Executor:** permite rodar o workflow por IDE/CLI/agente usando `SKILL.md` como contrato operacional.
@@ -72,7 +72,7 @@ Depois de abrir a UI, siga esta ordem:
 4. **Ver Dashboard:** confira métricas e modos de evidência.
 5. **Abrir Logs:** inspecione request, response, erro, latência e `evidence_mode`.
 6. **Gerar Context Builder:** selecione o modo de fonte e confira readiness.
-7. **Baixar Evidence Pack:** use `Download .md` para contexto rápido ou `Export ZIP` para pacote auditável.
+7. **Baixar Evidence Pack:** use `Download .md` para contexto rápido ou `Export ZIP`; os caminhos auditáveis ficam em `context_exports`.
 8. **Usar contexto com IA:** peça implementação somente com base no contexto validado.
 
 ## Comandos Principais

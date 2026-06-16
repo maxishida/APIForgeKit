@@ -71,9 +71,9 @@ OFFICIAL_VALIDATION_JOURNEY = (
         "route": "/context-builder",
         "cta_label": "Download Evidence Pack",
         "command": "Export ZIP no Context Builder",
-        "evidence": "Download .md para uso rápido ou Export ZIP para pacote auditável.",
+        "evidence": "Markdown, JSON, HTML e ZIP exportados e registrados em context_exports.",
         "evidence_mode": "evidence_pack",
-        "help": "Download .md serve para colar em IA; Export ZIP/JSON serve para revisão e auditoria.",
+        "help": "Use Download .md para IA rápida; use Export ZIP/JSON/HTML para revisão e auditoria pelo registro context_exports.",
     },
     {
         "number": 8,

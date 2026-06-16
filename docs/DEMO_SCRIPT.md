@@ -91,6 +91,7 @@ No `/context-builder`:
 - Use `Download .md` para baixar contexto rápido para colar em uma IA.
 - Use `Export ZIP` para pacote auditável com metadata.
 - Use JSON/HTML quando precisar revisar fontes ou compartilhar relatório.
+- Mostre que o export também fica registrado em `context_exports`.
 
 ### 8. Usar contexto com IA
 
