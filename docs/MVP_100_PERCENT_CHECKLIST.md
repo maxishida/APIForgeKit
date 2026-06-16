@@ -61,6 +61,7 @@ Evidência desta rodada:
 - [x] `/validate-lead-score` retorna `end_turn`, `runId`, `contextPath` e `evidenceZip`.
 - [x] `/validate-token-cost` calcula custo/token sem quebrar `/token-cost`.
 - [x] `/validate-context-readiness` retorna `Ready`, `Needs tests` ou `Has failures` pelo Context Builder.
+- [x] `/validate-context-readiness` grava caminhos Markdown, JSON, HTML e ZIP em `context_exports`.
 - [x] `/validate-voice-roundtrip` valida a última evidência de voz salva sem chamar provider real.
 - [x] `/validate-voice-roundtrip --run-real` emite `session/request_permission`.
 - [x] `npm run acp:workflow` passa com 9 prompts seguindo `SKILL.md` seção por seção.

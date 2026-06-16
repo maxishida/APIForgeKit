@@ -209,6 +209,7 @@ Context readiness:
 - `/validate-context-readiness` builds the same guided Context Builder bundle used by the UI.
 - Default mode is `algorithm_api`.
 - It returns `success` for `Ready`, `not_validated` for `Needs tests` and `failed` for `Has failures`.
+- When observability is configured, it records the generated Markdown/JSON/HTML/ZIP paths in `context_exports`.
 
 ## Lead Score ACP Best Practice
 

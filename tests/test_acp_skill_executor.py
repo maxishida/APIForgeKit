@@ -249,6 +249,21 @@ def test_validate_context_readiness_ready_after_algorithm_and_api_evidence(tmp_p
     assert result["exports"]["zip"].endswith(".zip")
 
 
+def test_validate_context_readiness_records_exports_when_observability_exists(tmp_path):
+    executor, repository = _executor_with_observability(tmp_path)
+    run = repository.start_run("xai", "live_observability_compact", ["context"])
+    repository.finish_run(run["id"], "success")
+
+    result = executor.execute("/validate-context-readiness")
+
+    exports = repository.list_context_exports(limit=1, run_id=run["id"])
+    assert exports
+    assert exports[0]["format"] == "multi"
+    assert exports[0]["summary"]["source"] == "acp_context_readiness"
+    assert exports[0]["summary"]["readiness"] == result["readiness"]["overall"]["status"]
+    assert result["exports"]["markdown"] in exports[0]["summary"]["paths"].values()
+
+
 def test_validate_voice_roundtrip_needs_tests_without_voice_evidence(tmp_path):
     result = _executor_with_observability(tmp_path)[0].execute("/validate-voice-roundtrip")
 

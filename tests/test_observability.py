@@ -47,6 +47,25 @@ def test_observability_repository_records_run_events_requests_and_responses():
     assert events[0]["message"] == "xAI request started"
 
 
+def test_observability_repository_lists_context_exports_newest_first(tmp_path):
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    init_db(engine)
+    repository = ObservabilityRepository(build_session_factory(engine))
+
+    run = repository.start_run("xai", "compact_validation", ["context"])
+    older_path = tmp_path / "older.md"
+    newer_path = tmp_path / "newer.md"
+    repository.record_context_export(run["id"], "markdown", str(older_path), {"source": "first"})
+    repository.record_context_export(run["id"], "json", str(newer_path), {"source": "second"})
+
+    exports = repository.list_context_exports(limit=2, run_id=run["id"])
+
+    assert [export["format"] for export in exports] == ["json", "markdown"]
+    assert exports[0]["path"] == str(newer_path)
+    assert exports[0]["summary"]["source"] == "second"
+    assert exports[0]["run_id"] == run["id"]
+
+
 def test_live_context_and_report_are_built_from_observability_logs():
     run = {"id": "run-1", "provider": "xai", "suite_name": "compact_validation", "status": "success"}
     events = [

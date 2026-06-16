@@ -184,6 +184,29 @@ class ObservabilityRepository:
             session.commit()
             return {"id": row.id, "path": path}
 
+    def list_context_exports(self, limit: int = 50, run_id: str | None = None) -> list[dict[str, object]]:
+        with self.session_factory() as session:
+            statement = select(ContextExport).order_by(desc(ContextExport.created_at)).limit(limit)
+            if run_id:
+                statement = (
+                    select(ContextExport)
+                    .where(ContextExport.run_id == run_id)
+                    .order_by(desc(ContextExport.created_at))
+                    .limit(limit)
+                )
+            rows = session.scalars(statement).all()
+            return [
+                {
+                    "id": row.id,
+                    "created_at": row.created_at.isoformat() if row.created_at else "",
+                    "run_id": row.run_id,
+                    "format": row.format,
+                    "path": row.path,
+                    "summary": row.summary,
+                }
+                for row in rows
+            ]
+
     def list_runs(self, limit: int = 50, *, provider: str | None = None, suite_name: str | None = None) -> list[dict[str, object]]:
         with self.session_factory() as session:
             statement = select(TestRun)

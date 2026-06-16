@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import shlex
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -318,6 +319,17 @@ class SkillExecutor:
             acp_metrics=acp_metrics,
         )
         exports = export_guided_context_bundle(self.reports_dir, bundle)
+        self._record_observability_context_export(
+            paths=exports,
+            summary={
+                "source": "acp_context_readiness",
+                "source_mode": bundle["source_mode"],
+                "readiness": bundle["readiness"]["overall"]["status"],
+                "evidence_mode": "mixed",
+                "generated_at": bundle["generated_at"],
+                "paths": exports,
+            },
+        )
         readiness = dict(bundle["readiness"])
         overall = dict(readiness.get("overall") or {})
         readiness_status = str(overall.get("status") or "Needs tests")
@@ -340,6 +352,19 @@ class SkillExecutor:
             "errors": [] if status != "failed" else [{"type": "context_readiness_failure", "message": str(overall.get("message") or "")}],
             "message": str(overall.get("message") or "Context readiness calculated."),
         }
+
+    def _record_observability_context_export(self, *, paths: dict[str, str], summary: dict[str, object]) -> None:
+        if self.services.observability_repository is None:
+            return
+        runs = self.services.observability_repository.list_runs(limit=1)
+        if not runs:
+            return
+        self.services.observability_repository.record_context_export(
+            str(runs[0]["id"]),
+            "multi",
+            json.dumps(paths, ensure_ascii=False),
+            summary,
+        )
 
     def _validate_voice_roundtrip(self, args: list[str]) -> dict[str, object]:
         options = set(args)
