@@ -10,6 +10,7 @@ from core.api_test_lab import (
     ensure_default_api_suites,
     export_api_suite,
     import_api_suite,
+    validate_real_http_url,
     validate_api_response,
 )
 from core.database import build_session_factory, init_db
@@ -89,6 +90,19 @@ def test_real_http_case_records_real_http_evidence_mode_when_request_fails():
     assert result["structured_log"]["evidence_mode"] == "real_http"
     assert result["request"]["evidence_mode"] == "real_http"
     assert result["structured_log"]["error"]
+
+
+def test_real_http_url_guard_blocks_private_targets_by_default():
+    try:
+        validate_real_http_url("http://127.0.0.1:8080/internal")
+    except ValueError as exc:
+        assert "rede local/privada" in str(exc)
+    else:  # pragma: no cover - contract failure should be explicit
+        raise AssertionError("Private HTTP target should be blocked by default")
+
+
+def test_real_http_url_guard_allows_private_targets_with_explicit_opt_in():
+    validate_real_http_url("http://127.0.0.1:8080/internal", allow_private_network=True)
 
 
 def test_api_suite_export_and_import_roundtrip(tmp_path):

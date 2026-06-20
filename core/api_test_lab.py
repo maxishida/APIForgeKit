@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import ipaddress
 import json
+import socket
 import urllib.error
+import urllib.parse
 import urllib.request
 from datetime import UTC, datetime
 from pathlib import Path
@@ -15,6 +18,7 @@ from core.models import ApiTestCase, ApiTestResult, ApiTestRun, ApiTestSuite
 
 
 SECRET_HEADER_NAMES = {"authorization", "x-api-key", "api-key", "cookie", "set-cookie"}
+LOCALHOST_NAMES = {"localhost", "localhost.localdomain"}
 
 
 DEFAULT_WHATSAPP_CASES = [
@@ -397,6 +401,7 @@ def execute_api_case(case: dict[str, object]) -> dict[str, object]:
     if bool(case.get("dry_run", True)):
         return normalize_response(dict(case.get("mock_response") or {}))
 
+    validate_real_http_url(str(case["url"]), allow_private_network=bool(case.get("allow_private_network")))
     data = json.dumps(case.get("body") or {}).encode("utf-8")
     headers = {str(key): str(value) for key, value in dict(case.get("headers") or {}).items()}
     request = urllib.request.Request(
@@ -412,6 +417,59 @@ def execute_api_case(case: dict[str, object]) -> dict[str, object]:
     except urllib.error.HTTPError as exc:
         text = exc.read().decode("utf-8", errors="replace")
         return normalize_response({"status_code": exc.code, "text": text})
+
+
+def validate_real_http_url(url: str, *, allow_private_network: bool = False) -> None:
+    parsed = urllib.parse.urlparse(url)
+    if parsed.scheme not in {"http", "https"} or not parsed.hostname:
+        raise ValueError("Run Real HTTP exige URL http:// ou https:// com host.")
+    if allow_private_network:
+        return
+
+    host = parsed.hostname.strip("[]").lower()
+    if host in LOCALHOST_NAMES:
+        raise ValueError(_private_http_target_message())
+
+    addresses = _resolve_http_target_addresses(host)
+    if any(_is_private_http_address(address) for address in addresses):
+        raise ValueError(_private_http_target_message())
+
+
+def _resolve_http_target_addresses(host: str) -> list[ipaddress.IPv4Address | ipaddress.IPv6Address]:
+    try:
+        return [ipaddress.ip_address(host)]
+    except ValueError:
+        pass
+
+    try:
+        infos = socket.getaddrinfo(host, None, type=socket.SOCK_STREAM)
+    except socket.gaierror:
+        return []
+    addresses: list[ipaddress.IPv4Address | ipaddress.IPv6Address] = []
+    for info in infos:
+        try:
+            addresses.append(ipaddress.ip_address(info[4][0]))
+        except ValueError:
+            continue
+    return addresses
+
+
+def _is_private_http_address(address: ipaddress.IPv4Address | ipaddress.IPv6Address) -> bool:
+    return (
+        address.is_private
+        or address.is_loopback
+        or address.is_link_local
+        or address.is_reserved
+        or address.is_multicast
+        or address.is_unspecified
+    )
+
+
+def _private_http_target_message() -> str:
+    return (
+        "Run Real HTTP para rede local/privada bloqueado por padrão. "
+        "Use um endpoint público, Contract Dry-run, ou allow_private_network=true em runners controlados."
+    )
 
 
 def normalize_response(response: dict[str, object]) -> dict[str, object]:

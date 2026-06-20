@@ -68,6 +68,8 @@ def _health_readiness(database_online: bool, context: Mapping[str, object], fail
         return {"status": "Offline", "message": "PostgreSQL offline."}
     if context.get("status") == "Missing files" or failed_count > 0:
         return {"status": "Needs attention", "message": "Revise falhas ou exports ausentes antes de demo."}
-    if context.get("status") in {"Ready", "No exports"}:
+    if context.get("status") == "No exports":
+        return {"status": "Needs tests", "message": "Gere um Context Builder export antes de implementar."}
+    if context.get("status") == "Ready":
         return {"status": "Ready", "message": "Harness operacional para validação evidence-first."}
     return {"status": str(context.get("status") or "Needs tests"), "message": "Revise readiness antes de implementar."}

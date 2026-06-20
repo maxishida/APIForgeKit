@@ -98,6 +98,13 @@ def test_validate_mvp_unix_runner_mirrors_windows_validation_flow():
     assert '"validate:mvp:provider:unix": "bash scripts/validate_mvp.sh --provider-smoke"' in package_json
 
 
+def test_local_ai_context_state_is_ignored_by_git():
+    gitignore = Path(".gitignore").read_text(encoding="utf-8")
+
+    assert ".context/" in gitignore
+    assert ".codex/" in gitignore
+
+
 def test_docs_explain_windows_and_unix_mvp_validation_commands():
     combined = "\n".join(
         path.read_text(encoding="utf-8")

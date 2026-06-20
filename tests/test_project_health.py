@@ -65,3 +65,15 @@ def test_project_health_warns_when_context_export_points_to_missing_file(tmp_pat
     assert health["latest_context_export"]["missing_paths"] == [str(missing)]
     assert health["failed_events"]["count"] == 1
     assert health["readiness"]["status"] == "Needs attention"
+
+
+def test_project_health_needs_tests_when_context_builder_has_no_exports():
+    health = build_project_health(
+        db_status={"online": True, "latency_ms": 4.2},
+        xai_runs=[],
+        context_exports=[],
+        events=[],
+    )
+
+    assert health["latest_context_export"]["status"] == "No exports"
+    assert health["readiness"]["status"] == "Needs tests"
