@@ -104,6 +104,7 @@ def render_home(services) -> None:
             with ui.column().classes("gap-1"):
                 ui.label("Official Validation Journey").classes("text-xl font-bold afk-title")
                 ui.label("Siga estes 8 passos para sair de teste validado para contexto pronto para IA.").classes("afk-muted")
+                ui.label("Sem Context Builder Ready = não implementar. Primeiro gere contexto/evidence pack validado.").classes("afk-muted").style("color:#F59E0B;")
             ui.html("<span class='afk-badge' style='color:#00D4FF'>Evidence-first</span>")
         with ui.grid(columns=4).classes("w-full gap-3"):
             for step in journey_steps:

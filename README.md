@@ -88,6 +88,8 @@ npm run voice:run       # roda xAI Voice Lab real com XAI_API_KEY
 npm run ui:smoke        # valida rotas principais com a UI já rodando
 npm run ui:smoke:local  # sobe a UI se necessário e valida rotas
 npm run acp:workflow    # testa ACP + SKILL.md em 9 prompts; Voice precisa evidência salva
+npm run validate:mvp    # valida o MVP inteiro via Docker Python
+npm run validate:mvp:provider # valida o MVP e roda xAI real com aprovação/custo
 npm run demo:clean:dry  # lista artefatos de demo que seriam removidos
 npm run demo:clean      # remove caches/exports gerados sem tocar .env, tests ou banco
 ```
@@ -122,6 +124,8 @@ python run_acp_prompt.py "/validate-voice-roundtrip"
 - `seed_validation` valida suite canônica; não é produção.
 - HTTP real exige URL, credenciais e permissão explícita.
 - Voice Lab REST é funcional com `XAI_API_KEY`; Voice Agent realtime WebSocket e Agents seguem como V2.
+- Sem Context Builder Ready = não implementar; gere contexto/evidence pack validado primeiro.
+- Antes de `npm run demo:clean`, preserve exports if Project Health depends on them.
 - Next.js/Prisma é destino futuro, não geração automática no MVP.
 
 ## Documentação

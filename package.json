@@ -15,6 +15,8 @@
     "acp:workflow": "python run_acp_workflow.py",
     "ui:smoke": "python scripts/ui_smoke.py",
     "ui:smoke:local": "python scripts/ui_smoke_local.py",
+    "validate:mvp": "powershell -ExecutionPolicy Bypass -File scripts/validate_mvp.ps1",
+    "validate:mvp:provider": "powershell -ExecutionPolicy Bypass -File scripts/validate_mvp.ps1 -RunProviderSmoke",
     "demo:clean:dry": "python scripts/clean_demo_artifacts.py",
     "demo:clean": "python scripts/clean_demo_artifacts.py --apply"
   }

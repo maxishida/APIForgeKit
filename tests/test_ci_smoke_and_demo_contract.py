@@ -34,6 +34,44 @@ def test_ui_smoke_script_and_npm_helper_cover_main_pages():
     assert '"demo:clean": "python scripts/clean_demo_artifacts.py --apply"' in package_json
 
 
+def test_validate_mvp_single_command_uses_docker_python_runner():
+    script = Path("scripts/validate_mvp.ps1")
+    package_json = Path("package.json").read_text(encoding="utf-8")
+
+    assert script.exists()
+    content = script.read_text(encoding="utf-8")
+    for expected in (
+        "docker compose up -d",
+        "git diff --check",
+        "python:3.13-slim",
+        "host.docker.internal",
+        "python -m pytest -q",
+        "python -m compileall app.py core ui agents scripts run_algorithm_lab.py run_acp_prompt.py run_acp_workflow.py run_xai_voice.py",
+        "python run_algorithm_lab.py --suite lead_score --export",
+        "python run_acp_workflow.py",
+        "python scripts/ui_smoke_local.py",
+        "python scripts/clean_demo_artifacts.py",
+    ):
+        assert expected in content
+    assert '"validate:mvp": "powershell -ExecutionPolicy Bypass -File scripts/validate_mvp.ps1"' in package_json
+    assert '"validate:mvp:provider": "powershell -ExecutionPolicy Bypass -File scripts/validate_mvp.ps1 -RunProviderSmoke"' in package_json
+
+
+def test_primary_copy_makes_context_ready_a_hard_gate():
+    combined = "\n".join(
+        path.read_text(encoding="utf-8")
+        for path in (
+            Path("ui/home.py"),
+            Path("ui/tutorial.py"),
+            Path("ui/context_builder.py"),
+            Path("docs/MVP_TEST_CHECKLIST.md"),
+        )
+    )
+
+    assert "Sem Context Builder Ready = não implementar" in combined
+    assert "preserve exports if Project Health depends on them" in combined
+
+
 def test_demo_script_documents_evidence_first_walkthrough():
     demo_doc = Path("docs/DEMO_SCRIPT.md")
 

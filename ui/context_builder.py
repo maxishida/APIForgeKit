@@ -118,6 +118,7 @@ def render_context_builder(services) -> None:
                 with ui.column().classes("gap-1"):
                     ui.label("Context Builder Workflow").classes("text-xl font-bold afk-title")
                     ui.label("Transforme logs reais em contexto técnico antes de pedir implementação para IA.").classes("afk-muted")
+                    ui.label("Sem Context Builder Ready = não implementar; corrija testes faltantes ou falhas antes do handoff.").classes("afk-muted").style("color:#F59E0B;")
                 ui.html(f"<span class='afk-badge' style='color:{_status_color(readiness['overall']['status'])}'>{readiness['overall']['status']}</span>")
             with ui.row().classes("gap-2"):
                 for step in ["Teste Real", "Logs Estruturados", "Evidências", "Contexto Técnico", "Implementação"]:

@@ -2,19 +2,22 @@
 
 Use este checklist antes de apresentação, release ou gravação.
 
-Última validação completa: 2026-06-05.
+Última validação completa: 2026-06-20.
 
 Evidência desta rodada:
 
-- `python -m pytest -q`: 118 passed.
-- `python -m compileall app.py core ui agents run_algorithm_lab.py run_acp_prompt.py run_acp_workflow.py run_xai_voice.py`: OK.
+- `npm run db`: PostgreSQL online em Docker.
+- `npm run validate:mvp`: comando único recomendado para validação local via Docker Python.
+- `python -m pytest -q`: 147 passed, executado em container Python 3.13.
+- `python -m compileall app.py core ui agents scripts run_algorithm_lab.py run_acp_prompt.py run_acp_workflow.py run_xai_voice.py`: OK.
 - `git diff --check`: OK.
 - `npm run algorithm:suite`: 17/17 passed.
 - `npm run acp:workflow`: 9/9 prompts passed.
-- `npm run voice:run`: success, 9 eventos `real_http`.
+- `npm run voice:run`: success, 9 eventos `real_http`, run `874ee302-a3cb-484d-9a98-2205f862b7a0`.
+- xAI Responses API smoke: `responses_api/basic` success, endpoint `/v1/responses`, preview `api-lab-ok`.
 - UI smoke: 9/9 rotas HTTP 200.
 - `npm run demo:clean:dry`: lista artefatos sem apagar.
-- Secret scan: `XAI_API_KEY` presente localmente e 0 ocorrências em arquivos/exports escaneados.
+- Observação de ambiente: `python` no host Windows aponta para alias da Microsoft Store; validação Python foi rodada via Docker `python:3.13-slim`.
 
 ## Ambiente
 
@@ -33,6 +36,7 @@ Evidência desta rodada:
 - [x] `npm run voice:run` passa quando `XAI_API_KEY` está configurada e há orçamento aprovado.
 - [x] Com a UI rodando, `npm run ui:smoke` retorna HTTP 200 para as páginas principais.
 - [x] Sem UI aberta, `npm run ui:smoke:local` sobe o app temporariamente e valida as páginas principais.
+- [x] `npm run validate:mvp` cobre testes, compile, algoritmo, ACP, UI smoke e limpeza dry-run.
 
 ## Labs
 
@@ -55,6 +59,7 @@ Evidência desta rodada:
 - [x] Context Builder exportando Markdown, JSON, HTML e ZIP.
 - [x] Context Builder permite baixar o contexto atual como `.md` direto pela UI.
 - [x] Context Builder gera `AI Prompt` final sem inventar payloads, regras ou endpoints.
+- [x] Sem Context Builder Ready = não implementar.
 - [x] Context Builder mostra `Ready`, `Needs tests` ou `Has failures`.
 - [x] Logs filtráveis por provider, módulo, status, evidência, latência e busca.
 - [x] Todo mock/dry-run rotulado como `dry_run_contract`.

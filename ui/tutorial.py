@@ -46,7 +46,7 @@ SYSTEM_DIAGRAM_LANES = [
     },
     {
         "label": "Dashboard + Context",
-        "detail": "Live metrics, logs, readiness and technical context",
+        "detail": "Live metrics, logs, readiness and technical context. Sem Context Builder Ready = não implementar",
         "badge": "observe",
     },
     {
