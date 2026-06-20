@@ -90,9 +90,25 @@ npm run ui:smoke:local  # sobe a UI se necessário e valida rotas
 npm run acp:workflow    # testa ACP + SKILL.md em 9 prompts; Voice precisa evidência salva
 npm run validate:mvp    # valida o MVP inteiro via Docker Python
 npm run validate:mvp:provider # valida o MVP e roda xAI real com aprovação/custo
+npm run validate:mvp:unix # Linux/macOS: valida o MVP inteiro via Docker Python
+npm run validate:mvp:provider:unix # Linux/macOS: valida o MVP e roda xAI real
 npm run demo:clean:dry  # lista artefatos de demo que seriam removidos
 npm run demo:clean      # remove caches/exports gerados sem tocar .env, tests ou banco
 ```
+
+Atalho por sistema:
+
+```bash
+# Windows/PowerShell
+npm run validate:mvp
+npm run validate:mvp:provider
+
+# Linux/macOS
+npm run validate:mvp:unix
+npm run validate:mvp:provider:unix
+```
+
+No Windows, prefira os comandos PowerShell. Os comandos `:unix` são para Linux/macOS; em Windows eles só fazem sentido se Git Bash estiver antes do launcher WSL no `PATH`.
 
 ACP quick prompts:
 

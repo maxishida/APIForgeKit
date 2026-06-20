@@ -20,7 +20,21 @@ Comando recomendado:
 npm run validate:mvp
 ```
 
-Este comando usa Docker `python:3.13-slim`, sobe PostgreSQL, roda testes, compile, Algorithm Suite, ACP workflow, UI smoke local e limpeza em dry-run.
+No Windows/PowerShell, use:
+
+```bash
+npm run validate:mvp
+```
+
+No Linux/macOS, use:
+
+```bash
+npm run validate:mvp:unix
+```
+
+No Windows, mantenha o comando PowerShell como padrão. O runner Unix também funciona em Git Bash, desde que Git Bash esteja antes do launcher WSL no `PATH`.
+
+Esses comandos usam Docker `python:3.13-slim`, sobem PostgreSQL, rodam testes, compile, Algorithm Suite, ACP workflow, UI smoke local e limpeza em dry-run.
 
 Quando Python local estiver funcional e você quiser rodar manualmente:
 
@@ -63,7 +77,13 @@ Resultado de 2026-06-20:
 npm run validate:mvp:provider
 ```
 
-Esse comando roda a validação base e depois executa xAI Voice REST + xAI Responses API real. Use apenas com `XAI_API_KEY`, orçamento e aprovação explícita.
+Linux/macOS:
+
+```bash
+npm run validate:mvp:provider:unix
+```
+
+Esses comandos rodam a validação base e depois executam xAI Voice REST + xAI Responses API real. Use apenas com `XAI_API_KEY`, orçamento e aprovação explícita.
 
 ## 3. Features Canônicas
 

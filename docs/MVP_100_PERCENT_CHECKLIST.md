@@ -8,7 +8,8 @@ Evidência desta rodada:
 
 - `npm run db`: PostgreSQL online em Docker.
 - `npm run validate:mvp`: comando único recomendado para validação local via Docker Python.
-- `python -m pytest -q`: 147 passed, executado em container Python 3.13.
+- `npm run validate:mvp:unix`: equivalente Linux/macOS via `scripts/validate_mvp.sh`.
+- `python -m pytest -q`: 150 passed, executado em container Python 3.13.
 - `python -m compileall app.py core ui agents scripts run_algorithm_lab.py run_acp_prompt.py run_acp_workflow.py run_xai_voice.py`: OK.
 - `git diff --check`: OK.
 - `npm run algorithm:suite`: 17/17 passed.
@@ -37,6 +38,7 @@ Evidência desta rodada:
 - [x] Com a UI rodando, `npm run ui:smoke` retorna HTTP 200 para as páginas principais.
 - [x] Sem UI aberta, `npm run ui:smoke:local` sobe o app temporariamente e valida as páginas principais.
 - [x] `npm run validate:mvp` cobre testes, compile, algoritmo, ACP, UI smoke e limpeza dry-run.
+- [x] `npm run validate:mvp:unix` cobre o mesmo fluxo em Linux/macOS via Bash.
 
 ## Labs
 

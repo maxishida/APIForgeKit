@@ -71,6 +71,48 @@ def test_validate_mvp_provider_uses_dedicated_responses_smoke_script():
     assert "python scripts/xai_responses_smoke.py" in shell_script
 
 
+def test_validate_mvp_unix_runner_mirrors_windows_validation_flow():
+    script = Path("scripts/validate_mvp.sh")
+    package_json = Path("package.json").read_text(encoding="utf-8")
+
+    assert script.exists()
+    content = script.read_text(encoding="utf-8")
+    for expected in (
+        "set -euo pipefail",
+        "docker compose up -d",
+        "git diff --check",
+        "python:3.13-slim",
+        "host.docker.internal",
+        "python -m pytest -q",
+        "python -m compileall app.py core ui agents scripts run_algorithm_lab.py run_acp_prompt.py run_acp_workflow.py run_xai_voice.py",
+        "python run_algorithm_lab.py --suite lead_score --export",
+        "python run_acp_workflow.py",
+        "python scripts/ui_smoke_local.py",
+        "python scripts/clean_demo_artifacts.py",
+        "python scripts/xai_responses_smoke.py",
+    ):
+        assert expected in content
+    assert "MSYS_NO_PATHCONV=1" in content
+    assert "cygpath -w" in content
+    assert '"validate:mvp:unix": "bash scripts/validate_mvp.sh"' in package_json
+    assert '"validate:mvp:provider:unix": "bash scripts/validate_mvp.sh --provider-smoke"' in package_json
+
+
+def test_docs_explain_windows_and_unix_mvp_validation_commands():
+    combined = "\n".join(
+        path.read_text(encoding="utf-8")
+        for path in (
+            Path("README.md"),
+            Path("docs/MVP_TEST_CHECKLIST.md"),
+        )
+    )
+
+    assert "Windows/PowerShell" in combined
+    assert "Linux/macOS" in combined
+    assert "npm run validate:mvp:unix" in combined
+    assert "npm run validate:mvp:provider:unix" in combined
+
+
 def test_primary_copy_makes_context_ready_a_hard_gate():
     combined = "\n".join(
         path.read_text(encoding="utf-8")

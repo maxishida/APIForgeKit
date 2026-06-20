@@ -84,10 +84,17 @@ Para validar o MVP inteiro em uma máquina Windows sem Python local funcional:
 npm run validate:mvp
 ```
 
+Para validar o mesmo fluxo em Linux/macOS:
+
+```bash
+npm run validate:mvp:unix
+```
+
 Para validar providers reais com orçamento aprovado:
 
 ```bash
 npm run validate:mvp:provider
+npm run validate:mvp:provider:unix
 ```
 
 Para voz, use `/voice-lab` ou `npm run voice:run`. O fluxo REST atual gera áudio via xAI TTS, transcreve via xAI STT, registra resposta do agente e salva tudo como `real_http` no PostgreSQL. Voice Agent realtime WebSocket continua como V2.
