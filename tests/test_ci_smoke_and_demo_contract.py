@@ -53,8 +53,22 @@ def test_validate_mvp_single_command_uses_docker_python_runner():
         "python scripts/clean_demo_artifacts.py",
     ):
         assert expected in content
+    assert "$LASTEXITCODE" in content
     assert '"validate:mvp": "powershell -ExecutionPolicy Bypass -File scripts/validate_mvp.ps1"' in package_json
     assert '"validate:mvp:provider": "powershell -ExecutionPolicy Bypass -File scripts/validate_mvp.ps1 -RunProviderSmoke"' in package_json
+
+
+def test_validate_mvp_provider_uses_dedicated_responses_smoke_script():
+    shell_script = Path("scripts/validate_mvp.ps1").read_text(encoding="utf-8")
+    python_script = Path("scripts/xai_responses_smoke.py")
+
+    assert python_script.exists()
+    content = python_script.read_text(encoding="utf-8")
+    assert "sys.path.insert" in content
+    assert "XaiLiveRunner" in content
+    assert "_run_responses_basic" in content
+    assert "response_id" not in shell_script
+    assert "python scripts/xai_responses_smoke.py" in shell_script
 
 
 def test_primary_copy_makes_context_ready_a_hard_gate():
