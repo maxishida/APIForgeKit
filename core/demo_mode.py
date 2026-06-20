@@ -18,7 +18,7 @@ def run_demo_mode(
     algorithm_run = AlgorithmTestRunner(algorithm_repository).run_suite(str(algorithm_definition["id"]))
 
     api_suite = api_repository.get_suite_by_name("whatsapp_validation_pack")
-    api_run = ApiTestRunner(api_repository).run_suite(str(api_suite["id"]))
+    api_run = ApiTestRunner(api_repository).run_contract_suite(str(api_suite["id"]))
 
     estimate = calculate_token_cost(
         provider="xai",

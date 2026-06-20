@@ -44,7 +44,7 @@ class VoiceLeadInput:
     tts_language: str = DEFAULT_TTS_LANGUAGE
     stt_language: str = DEFAULT_STT_LANGUAGE
 
-    def to_log_payload(self) -> dict[str, object]:
+    def to_log_payload(self, *, evidence_mode: str = "real_http") -> dict[str, object]:
         return {
             "lead_name": self.lead_name,
             "user_message": self.user_message,
@@ -53,7 +53,7 @@ class VoiceLeadInput:
             "voice_id": self.voice_id,
             "tts_language": self.tts_language,
             "stt_language": self.stt_language,
-            "evidence_mode": "real_http",
+            "evidence_mode": evidence_mode,
         }
 
 
@@ -82,7 +82,7 @@ class XaiVoiceRunner:
         self.repository = repository
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
-        self.api_key = api_key or os.getenv("XAI_API_KEY") or ""
+        self.api_key = api_key if api_key is not None else os.getenv("XAI_API_KEY") or ""
         self.model = model or os.getenv("XAI_MODEL") or DEFAULT_VOICE_MODEL
         self.http_post = http_post or _requests_post
         self.agent_responder = agent_responder
@@ -96,7 +96,8 @@ class XaiVoiceRunner:
         run_id = str(run["id"])
         started = time.perf_counter()
         try:
-            self._record_lead_input(run_id, lead)
+            input_evidence_mode = "real_http" if self.api_key else "blocked"
+            self._record_lead_input(run_id, lead, evidence_mode=input_evidence_mode)
             if not self.api_key:
                 raise XaiVoiceApiError("readiness", 0, "XAI_API_KEY ausente no .env local")
 
@@ -186,14 +187,14 @@ class XaiVoiceRunner:
                 },
             )
 
-    def _record_lead_input(self, run_id: str, lead: VoiceLeadInput) -> None:
+    def _record_lead_input(self, run_id: str, lead: VoiceLeadInput, *, evidence_mode: str) -> None:
         self._event(
             run_id,
             "lead_received",
             "success",
             "Lead recebido",
-            request=lead.to_log_payload(),
-            response={"accepted": True, "evidence_mode": "real_http"},
+            request=lead.to_log_payload(evidence_mode=evidence_mode),
+            response={"accepted": True, "evidence_mode": evidence_mode},
             recommendation="Persistir origem e página anterior para atribuição do funil.",
         )
         self._event(
@@ -201,8 +202,8 @@ class XaiVoiceRunner:
             "user_message_received",
             "success",
             "Mensagem enviada pelo usuário",
-            request=lead.to_log_payload(),
-            response={"message_chars": len(lead.user_message), "evidence_mode": "real_http"},
+            request=lead.to_log_payload(evidence_mode=evidence_mode),
+            response={"message_chars": len(lead.user_message), "evidence_mode": evidence_mode},
             recommendation="Usar esta mensagem como entrada canônica do fluxo de voz.",
         )
 

@@ -107,6 +107,27 @@ def test_voice_runner_records_missing_key_as_blocked(tmp_path, monkeypatch):
     assert any(event["status"] == "blocked" for event in events)
     assert any(event["evidence_mode"] == "blocked" for event in events)
     assert "XAI_API_KEY" in events[0]["message"] or "XAI_API_KEY" in (events[0]["error"] or "")
+    assert all(event["evidence_mode"] == "blocked" for event in events)
+
+
+def test_voice_runner_respects_explicit_empty_key_without_calling_environment_provider(tmp_path, monkeypatch):
+    monkeypatch.setenv("XAI_API_KEY", "xai-env-key-must-not-be-used")
+    _, _, repository = _repository()
+
+    def fail_if_called(*args, **kwargs):
+        raise AssertionError("Provider HTTP must not run with an explicit empty API key")
+
+    runner = XaiVoiceRunner(
+        repository,
+        output_dir=tmp_path,
+        api_key="",
+        http_post=fail_if_called,
+        load_env=False,
+    )
+
+    run = runner.run_roundtrip(VoiceLeadInput(lead_name="Lead", user_message="Comprar hoje", origin="WhatsApp"))
+
+    assert run["status"] == "blocked"
 
 
 def test_voice_runner_records_api_error_without_secret(tmp_path):

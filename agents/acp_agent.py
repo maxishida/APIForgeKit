@@ -9,13 +9,13 @@ from uuid import uuid4
 from core.acp_audit import AcpAuditRepository
 from core.algorithm_test_lab import AlgorithmTestRepository
 from core.api_test_lab import ApiTestRepository
-from core.config import get_settings
+from core.config import ROOT_DIR, get_settings
 from core.database import build_engine, build_session_factory, init_db
 from core.observability import ObservabilityRepository
 from core.token_usage import TokenUsageRepository
 
 from .acp_protocol import JsonRpcError, error_response, success_response
-from .skill_executor import SkillExecutor, SkillExecutorServices
+from .skill_executor import SkillExecutor, SkillExecutorServices, load_skill_contract
 
 
 AVAILABLE_COMMANDS: list[dict[str, object]] = [
@@ -73,6 +73,7 @@ class AcpAgent:
         self.reports_dir = Path(reports_dir or settings.reports_dir)
         self.sessions: dict[str, AcpSession] = {}
         self.outbox: list[dict[str, object]] = []
+        self.skill_contract = load_skill_contract(ROOT_DIR / "SKILL.md")
         self._executor: SkillExecutor | None = None
         self._audit_repository: AcpAuditRepository | None = None
 
@@ -121,7 +122,11 @@ class AcpAgent:
                 "mcpCapabilities": {"http": False, "sse": False},
             },
             "authMethods": [],
-            "_meta": {"apiforgekit.supportsMcpStdio": True},
+            "_meta": {
+                "apiforgekit.supportsMcpStdio": True,
+                "apiforgekit.permissionContinuation": False,
+                "apiforgekit.skillContract": self.skill_contract,
+            },
         }
 
     def new_session(self, *, cwd: str, mcp_servers: list[dict[str, object]]) -> AcpSession:
@@ -352,7 +357,7 @@ class AcpAgent:
                 message=message,
                 request=request or {},
                 response=response or {},
-                metadata=metadata or {},
+                metadata={"skill_contract": self.skill_contract, **(metadata or {})},
                 evidence_mode=evidence_mode,
             )
         except Exception:
@@ -519,6 +524,7 @@ def _permission_meta(session_id: str, command_text: str, permission: dict[str, o
         "apiforgekit.blockedCommand": command_text,
         "apiforgekit.permissionKind": str(permission.get("kind", "unknown")),
         "apiforgekit.permissionReason": str(permission.get("reason", "")),
+        "apiforgekit.permissionContinuation": False,
     }
 
 

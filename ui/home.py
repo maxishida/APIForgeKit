@@ -201,7 +201,7 @@ def _run_api_contract_dry_run(services) -> None:
         return
     ensure_default_api_suites(services.api_test_repository)
     suite = services.api_test_repository.get_suite_by_name("whatsapp_validation_pack")
-    run = ApiTestRunner(services.api_test_repository).run_suite(str(suite["id"]))
+    run = ApiTestRunner(services.api_test_repository).run_contract_suite(str(suite["id"]))
     ui.notify(
         f"API contract dry-run: {run['passed']} passed / {run['failed']} failed.",
         type="positive" if run["failed"] == 0 else "warning",

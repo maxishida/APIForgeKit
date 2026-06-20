@@ -1,10 +1,10 @@
 ---
 name: apiforgekit-operational-brain
+version: 1
 description: Use when an agent operates APIForgeKit to validate APIs, algorithms, token cost, logs, evidence, Context Builder exports or ACP commands before suggesting implementation.
 ---
 
 # APIForgeKit Operational Brain
-
 Short execution contract for ACP and human agents. Keep details in `docs/`.
 
 ## Prime Directive
@@ -80,7 +80,7 @@ Handshake for IDE/CLI clients:
 5. Read `available_commands_update`; command names are announced without `/`.
 6. Send `session/prompt` with text `ContentBlock[]`.
 7. Read `session/update` notifications for `plan`, `tool_call`, `tool_call_update` and `agent_message_chunk`.
-8. Treat final `PromptResponse` as stop metadata; ACP traces persist as `protocol_trace`.
+8. Treat final `PromptResponse` as stop metadata; risky prompts emit `session/request_permission` then `stopReason=refusal` (continuation disabled; use UI/CLI); ACP traces persist as `protocol_trace` with the `SKILL.md` version/SHA-256.
 
 Quick local harness:
 

@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import hashlib
 import json
+import re
 import shlex
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -42,6 +44,7 @@ class SkillExecutor:
         self.reports_dir = Path(services.reports_dir)
         self.reports_dir.mkdir(parents=True, exist_ok=True)
         self.skill_text = Path(services.skill_path).read_text(encoding="utf-8") if Path(services.skill_path).exists() else ""
+        self.skill_contract = skill_contract_from_text(self.skill_text)
         self.last_context = ""
         self.last_evidence: dict[str, object] = {}
 
@@ -564,3 +567,17 @@ def _event_evidence_modes(events: list[dict[str, object]]) -> dict[str, int]:
         mode = str(event.get("evidence_mode") or "real_http")
         evidence_modes[mode] = evidence_modes.get(mode, 0) + 1
     return evidence_modes
+
+
+def load_skill_contract(skill_path: str | Path) -> dict[str, str]:
+    path = Path(skill_path)
+    text = path.read_text(encoding="utf-8") if path.exists() else ""
+    return skill_contract_from_text(text)
+
+
+def skill_contract_from_text(skill_text: str) -> dict[str, str]:
+    match = re.search(r"^version:\s*([^\r\n]+)$", skill_text, flags=re.MULTILINE)
+    return {
+        "version": match.group(1).strip() if match else "unknown",
+        "sha256": hashlib.sha256(skill_text.encode("utf-8")).hexdigest(),
+    }

@@ -187,9 +187,6 @@ def build_context_readiness(
     elif required_statuses and all(status == "Ready" for status in required_statuses):
         overall = "Ready"
         message = "Evidência suficiente para gerar contexto técnico reutilizável."
-    elif mode == "full" and any(section["status"] == "Ready" for section in sections.values()):
-        overall = "Ready"
-        message = "Há evidência real suficiente para um pacote completo, com lacunas documentadas."
     else:
         overall = "Needs tests"
         message = "Rode pelo menos uma suite exigida pelo modo selecionado antes de implementar."

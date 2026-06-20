@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 
+import pytest
 from sqlalchemy import create_engine
 
 from core.api_test_lab import (
@@ -83,7 +84,7 @@ def test_real_http_case_records_real_http_evidence_mode_when_request_fails():
         tags=["real_http"],
     )
 
-    run = ApiTestRunner(repository).run_single_case(case["id"])
+    run = ApiTestRunner(repository).run_single_case(case["id"], allow_real_http=True)
     result = repository.list_results(run_id=run["id"])[0]
 
     assert run["status"] == "failed"
@@ -105,6 +106,131 @@ def test_real_http_url_guard_allows_private_targets_with_explicit_opt_in():
     validate_real_http_url("http://127.0.0.1:8080/internal", allow_private_network=True)
 
 
+def test_contract_suite_excludes_real_http_cases_without_network_permission():
+    repository = _repository()
+    suite = repository.create_suite(
+        name="mixed_execution_modes",
+        provider="local",
+        description="Mixed contract and real HTTP cases",
+        docs_url="https://example.com/docs",
+    )
+    repository.create_case(
+        suite_id=suite["id"],
+        name="dry-run case",
+        method="POST",
+        url="dry-run://local/validate",
+        headers={},
+        body={"ok": True},
+        expected={"status_code": 200},
+        dry_run=True,
+        mock_response={"status_code": 200, "json": {"ok": True}},
+    )
+    repository.create_case(
+        suite_id=suite["id"],
+        name="real-http case",
+        method="GET",
+        url="http://127.0.0.1:9/should-not-run",
+        headers={},
+        body={},
+        expected={"status_code": 200},
+        dry_run=False,
+    )
+
+    run = ApiTestRunner(repository).run_contract_suite(suite["id"])
+    results = repository.list_results(run_id=run["id"])
+
+    assert run["status"] == "passed"
+    assert run["total_cases"] == 1
+    assert len(results) == 1
+    assert results[0]["structured_log"]["evidence_mode"] == "dry_run_contract"
+
+
+def test_generic_suite_defaults_to_contract_only_execution():
+    repository = _repository()
+    suite = repository.create_suite(
+        name="safe_default_execution",
+        provider="local",
+        description="Default suite execution must stay local.",
+        docs_url="https://example.com/docs",
+    )
+    repository.create_case(
+        suite_id=suite["id"],
+        name="contract case",
+        method="POST",
+        url="dry-run://local/validate",
+        headers={},
+        body={"ok": True},
+        expected={"status_code": 200},
+        dry_run=True,
+        mock_response={"status_code": 200, "json": {"ok": True}},
+    )
+    repository.create_case(
+        suite_id=suite["id"],
+        name="real case",
+        method="GET",
+        url="http://127.0.0.1:9/should-not-run",
+        headers={},
+        body={},
+        expected={"status_code": 200},
+        dry_run=False,
+    )
+
+    run = ApiTestRunner(repository).run_suite(suite["id"])
+
+    assert run["status"] == "passed"
+    assert run["total_cases"] == 1
+
+
+def test_contract_suite_rejects_a_suite_without_dry_run_cases():
+    repository = _repository()
+    suite = repository.create_suite(
+        name="real_only_execution",
+        provider="local",
+        description="Suite requiring explicit HTTP authorization.",
+        docs_url="https://example.com/docs",
+    )
+    repository.create_case(
+        suite_id=suite["id"],
+        name="real case",
+        method="GET",
+        url="http://127.0.0.1:9/should-not-run",
+        headers={},
+        body={},
+        expected={"status_code": 200},
+        dry_run=False,
+    )
+
+    with pytest.raises(ValueError, match="No test cases match"):
+        ApiTestRunner(repository).run_contract_suite(suite["id"])
+
+
+def test_real_http_single_case_is_blocked_without_explicit_authorization():
+    repository = _repository()
+    suite = repository.create_suite(
+        name="single_real_http",
+        provider="local",
+        description="Single real HTTP case",
+        docs_url="https://example.com/docs",
+    )
+    case = repository.create_case(
+        suite_id=suite["id"],
+        name="private endpoint",
+        method="GET",
+        url="http://127.0.0.1:9/should-not-run",
+        headers={},
+        body={},
+        expected={"status_code": 200},
+        dry_run=False,
+    )
+
+    run = ApiTestRunner(repository).run_single_case(case["id"], allow_real_http=False)
+    result = repository.list_results(run_id=run["id"])[0]
+
+    assert run["status"] == "failed"
+    assert result["structured_log"]["evidence_mode"] == "blocked"
+    assert "explicit authorization" in (result["structured_log"]["error"] or "")
+
+
 def test_api_suite_export_and_import_roundtrip(tmp_path):
     repository = _repository()
     ensure_default_api_suites(repository)
@@ -117,6 +243,35 @@ def test_api_suite_export_and_import_roundtrip(tmp_path):
     assert imported["name"] == "whatsapp_validation_pack"
     assert len(imported_repository.list_cases(imported["id"])) == len(repository.list_cases(suite["id"]))
     assert "api_test_suites" in Path(export_path).read_text(encoding="utf-8")
+
+
+def test_api_suite_export_replaces_secret_headers_with_safe_placeholder(tmp_path):
+    repository = _repository()
+    suite = repository.create_suite(
+        name="secret_export_suite",
+        provider="custom",
+        description="Suite with a secret header",
+        docs_url="https://example.com/docs",
+    )
+    repository.create_case(
+        suite_id=suite["id"],
+        name="secret header",
+        method="GET",
+        url="dry-run://custom/validate",
+        headers={"Authorization": "Bearer super-secret-token", "Content-Type": "application/json"},
+        body={},
+        expected={"status_code": 200},
+        dry_run=True,
+        mock_response={"status_code": 200, "json": {}},
+    )
+
+    export_path = export_api_suite(repository, suite["id"], tmp_path)
+    payload = json.loads(Path(export_path).read_text(encoding="utf-8"))
+    headers = payload["api_test_cases"][0]["headers"]
+
+    assert "super-secret-token" not in Path(export_path).read_text(encoding="utf-8")
+    assert headers["Authorization"] == "{{REDACTED_SECRET}}"
+    assert headers["Content-Type"] == "application/json"
 
 
 def test_api_runner_records_failed_diff_for_wrong_expectation():

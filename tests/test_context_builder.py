@@ -92,6 +92,19 @@ def test_guided_context_builder_marks_failures_as_has_failures():
     assert readiness["algorithm"]["status"] == "Has failures"
 
 
+def test_full_evidence_requires_every_declared_source_before_ready():
+    readiness = build_context_readiness(
+        source_mode="full",
+        algorithm_metrics={"total_results": 17, "passed": 17, "failed": 0},
+        api_metrics={"total_results": 0, "passed": 0, "failed": 0},
+        live_metrics={"total_tests": 0, "success": 0, "failures": 0},
+        token_metrics={"total_estimates": 0},
+        acp_metrics={"total_events": 0, "successful_prompts": 0, "failed_prompts": 0},
+    )
+
+    assert readiness["overall"]["status"] == "Needs tests"
+
+
 def test_guided_context_builder_exports_markdown_json_html_and_zip(tmp_path):
     bundle = build_guided_context_bundle(
         source_mode="algorithm",

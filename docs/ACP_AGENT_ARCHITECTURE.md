@@ -179,6 +179,8 @@ Protocol behavior implemented in the seed:
 - `session/prompt` emits `plan`, `tool_call`, `tool_call_update` and final `agent_message_chunk`.
 - Final summaries stream through `agent_message_chunk` using text content blocks; `PromptResponse` keeps only `stopReason` and `_meta`.
 - HTTP real/provider-paid paths emit `session/request_permission` before execution and return `PromptResponse.stopReason="refusal"` with `_meta.apiforgekit.permissionRequired=true`.
+- ACP V1 is refusal-only for permissions: it does not consume a permission-response continuation or execute a paid request after the prompt. Use the approved local UI/CLI path for real execution.
+- `initialize` and persisted ACP events include the `SKILL.md` version and SHA-256 fingerprint so a trace can be tied to the contract used at runtime.
 - `_meta.apiforgekit.sessionId`, command, algorithm, run ID, context path and evidence ZIP are included when available so clients can correlate updates and evidence.
 - `run_acp_workflow.py` treats validation prompts as passed only when `stopReason=end_turn` and the latest `tool_call_update.rawOutput.status` is `success`; permission gates must return `stopReason=refusal` and emit `session/request_permission`.
 

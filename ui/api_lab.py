@@ -94,7 +94,7 @@ def render_api_lab(services) -> None:
                 evidence_badge("real_http")
             allow_real_http = ui.checkbox("Confirmo execução de HTTP real para casos com URL http/https e dry-run desligado.").classes("w-full")
             with ui.row().classes("gap-3"):
-                ui.button("Run Contract Dry-run", icon="playlist_play", on_click=lambda: run_suite(suite)).classes("afk-primary-btn")
+                ui.button("Run Contract Dry-run", icon="playlist_play", on_click=lambda: run_contract_suite(suite)).classes("afk-primary-btn")
                 ui.button("Run Real HTTP", icon="public", on_click=lambda: run_real_http_suite(suite, bool(allow_real_http.value))).classes("afk-ghost-btn")
                 ui.button("Exportar Suite JSON", icon="download", on_click=lambda: export_suite(suite)).classes("afk-ghost-btn")
                 ui.button("Atualizar", icon="refresh", on_click=lambda: refresh_all()).classes("afk-ghost-btn")
@@ -269,16 +269,20 @@ def render_api_lab(services) -> None:
         if not label:
             ui.notify("Selecione um caso.", type="warning")
             return
+        case = cases[str(label)]
+        if not bool(case.get("dry_run", True)):
+            ui.notify("Caso HTTP real exige confirmação no botão Run Real HTTP.", type="warning")
+            return
         try:
-            run = ApiTestRunner(services.api_test_repository).run_single_case(str(cases[str(label)]["id"]))
+            run = ApiTestRunner(services.api_test_repository).run_single_case(str(case["id"]))
             ui.notify(f"Caso concluído: {run['status']}", type="positive" if run["status"] == "passed" else "warning")
             refresh_all()
         except Exception as exc:  # noqa: BLE001
             ui.notify(f"Erro ao executar: {exc}", type="negative")
 
-    def run_suite(suite: dict[str, object]) -> None:
+    def run_contract_suite(suite: dict[str, object]) -> None:
         try:
-            run = ApiTestRunner(services.api_test_repository).run_suite(str(suite["id"]))
+            run = ApiTestRunner(services.api_test_repository).run_contract_suite(str(suite["id"]))
             ui.notify(f"Suite: {run['passed']} passed / {run['failed']} failed.", type="positive" if run["failed"] == 0 else "warning")
             refresh_all()
         except Exception as exc:  # noqa: BLE001
@@ -298,15 +302,8 @@ def render_api_lab(services) -> None:
             ui.notify("Nenhum caso HTTP real configurado nesta suite.", type="warning")
             return
         runner = ApiTestRunner(services.api_test_repository)
-        passed = 0
-        failed = 0
-        for case in real_cases:
-            run = runner.run_single_case(str(case["id"]))
-            if run["status"] == "passed":
-                passed += 1
-            else:
-                failed += 1
-        ui.notify(f"HTTP real concluído: {passed} passed / {failed} failed.", type="positive" if failed == 0 else "warning")
+        run = runner.run_real_http_suite(str(suite["id"]), permission_confirmed=True)
+        ui.notify(f"HTTP real concluído: {run['passed']} passed / {run['failed']} failed.", type="positive" if run["failed"] == 0 else "warning")
         refresh_all()
 
     def export_suite(suite: dict[str, object]) -> None:

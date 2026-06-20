@@ -15,6 +15,7 @@ def test_skill_keeps_operational_acp_contract():
     skill = (ROOT / "SKILL.md").read_text(encoding="utf-8")
 
     for expected in [
+        "version: 1",
         "No implementation without evidence",
         "ACP Execution Contract",
         "/validate-lead-score",

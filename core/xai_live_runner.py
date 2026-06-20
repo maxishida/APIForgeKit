@@ -266,20 +266,21 @@ class XaiLiveRunner:
         chat.append(chat_types["user"]("Use the tool to get lab weather for Tokyo."))
         response = chat.sample()
         tool_calls = getattr(response, "tool_calls", None) or []
-        if tool_calls:
-            self._event(
-                run_id,
-                "function_calling",
-                "tools",
-                "tool_call_received",
-                "running",
-                "Tool call recebido",
-                response={"tool_calls": self._safe_response(tool_calls)},
-            )
-            chat.append(response)
-            for _ in tool_calls:
-                chat.append(chat_types["tool_result"](json.dumps({"city": "Tokyo", "weather": "lab-clear"})))
-            response = chat.sample()
+        if not tool_calls:
+            raise RuntimeError("xAI function-calling validation returned no tool call.")
+        self._event(
+            run_id,
+            "function_calling",
+            "tools",
+            "tool_call_received",
+            "running",
+            "Tool call recebido",
+            response={"tool_calls": self._safe_response(tool_calls)},
+        )
+        chat.append(response)
+        for _ in tool_calls:
+            chat.append(chat_types["tool_result"](json.dumps({"city": "Tokyo", "weather": "lab-clear"})))
+        response = chat.sample()
         self._finish(
             run_id,
             started,

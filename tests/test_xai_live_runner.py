@@ -1,4 +1,5 @@
 from sqlalchemy import create_engine
+import pytest
 
 from core.database import build_session_factory, init_db
 from core.models import ApiRequest
@@ -94,3 +95,39 @@ def test_xai_live_runner_records_responses_api_failure_with_redacted_error(monke
     assert run["status"] == "failed"
     assert "xai-test-secret" not in (failed["error"] or "")
     assert "[REDACTED_XAI_API_KEY]" in (failed["error"] or "")
+
+
+def test_xai_live_runner_rejects_function_calling_without_tool_call(monkeypatch):
+    monkeypatch.setenv("XAI_API_KEY", "xai-test-secret")
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    init_db(engine)
+    repository = ObservabilityRepository(build_session_factory(engine))
+
+    class FakeChat:
+        def append(self, value):
+            return None
+
+        def sample(self):
+            return type("Response", (), {"tool_calls": [], "content": "No tool needed"})()
+
+    class FakeClient:
+        class ChatFactory:
+            @staticmethod
+            def create(**kwargs):
+                return FakeChat()
+
+        chat = ChatFactory()
+
+    runner = XaiLiveRunner(repository, load_env=False)
+    runner._get_client = lambda: (
+        FakeClient(),
+        {
+            "tool": lambda **kwargs: kwargs,
+            "user": lambda text: text,
+            "tool_result": lambda text: text,
+        },
+    )
+    run = repository.start_run("xai", "function_calling", ["function_calling"])
+
+    with pytest.raises(RuntimeError, match="tool call"):
+        runner._run_tools(run["id"])

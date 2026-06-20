@@ -36,6 +36,7 @@ def test_acp_agent_persists_session_prompt_and_final_response(tmp_path):
     assert sessions[0]["cwd"] == str(tmp_path.resolve())
     assert any(event["event_type"] == "session_prompt" for event in events)
     assert any(event["event_type"] == "prompt_response" and event["status"] == "success" for event in events)
+    assert all(event["metadata"]["skill_contract"]["version"] == "1" for event in events)
     assert repository.metrics()["total_sessions"] == 1
     assert repository.metrics()["successful_prompts"] == 1
 

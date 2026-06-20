@@ -241,11 +241,7 @@ class ObservabilityRepository:
             event_rows = session.scalars(select(TestEvent)).all()
             tokens = 0
             for row in response_rows:
-                usage = row.tokens or {}
-                for key in ("total_tokens", "total", "input_tokens", "output_tokens"):
-                    value = usage.get(key)
-                    if isinstance(value, (int, float)):
-                        tokens += int(value)
+                tokens += _usage_total_tokens(row.tokens or {})
             durations = [
                 (row.completed_at - row.created_at).total_seconds() * 1000
                 for row in completed_runs
@@ -373,3 +369,11 @@ def _render_evidence_modes(evidence_modes: dict[str, int]) -> str:
     if not evidence_modes:
         return "nenhum"
     return ", ".join(f"{mode}={count}" for mode, count in sorted(evidence_modes.items()))
+
+
+def _usage_total_tokens(usage: dict[str, object]) -> int:
+    for key in ("total_tokens", "total"):
+        value = usage.get(key)
+        if isinstance(value, (int, float)):
+            return int(value)
+    return sum(int(value) for key in ("input_tokens", "output_tokens") if isinstance((value := usage.get(key)), (int, float)))

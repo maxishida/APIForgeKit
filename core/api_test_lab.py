@@ -302,10 +302,10 @@ class ApiTestRunner:
     def __init__(self, repository: ApiTestRepository):
         self.repository = repository
 
-    def run_single_case(self, case_id: str) -> dict[str, object]:
+    def run_single_case(self, case_id: str, *, allow_real_http: bool = False) -> dict[str, object]:
         case = self.repository.get_case(case_id)
         run = self.repository.start_run(str(case["suite_id"]), 1)
-        result = self._execute_case(run["id"], case)
+        result = self._execute_case(run["id"], case, allow_real_http=allow_real_http)
         return self.repository.finish_run(
             run["id"],
             passed=1 if result["status"] == "passed" else 0,
@@ -313,20 +313,43 @@ class ApiTestRunner:
             summary={"case": case["name"]},
         )
 
-    def run_suite(self, suite_id: str) -> dict[str, object]:
-        cases = [case for case in self.repository.list_cases(suite_id) if case.get("enabled")]
+    def run_contract_suite(self, suite_id: str) -> dict[str, object]:
+        return self.run_suite(suite_id, include_real_http=False)
+
+    def run_real_http_suite(self, suite_id: str, *, permission_confirmed: bool) -> dict[str, object]:
+        if not permission_confirmed:
+            raise PermissionError("Real HTTP suite requires explicit authorization.")
+        return self.run_suite(suite_id, include_dry_run=False, allow_real_http=True)
+
+    def run_suite(
+        self,
+        suite_id: str,
+        *,
+        include_dry_run: bool = True,
+        include_real_http: bool = False,
+        allow_real_http: bool = False,
+    ) -> dict[str, object]:
+        cases = []
+        for case in self.repository.list_cases(suite_id):
+            if not case.get("enabled"):
+                continue
+            is_dry_run = bool(case.get("dry_run", True))
+            if (is_dry_run and include_dry_run) or (not is_dry_run and include_real_http):
+                cases.append(case)
+        if not cases:
+            raise ValueError("No test cases match the selected execution mode.")
         run = self.repository.start_run(suite_id, len(cases))
         passed = 0
         failed = 0
         for case in cases:
-            result = self._execute_case(run["id"], case)
+            result = self._execute_case(run["id"], case, allow_real_http=allow_real_http)
             if result["status"] == "passed":
                 passed += 1
             else:
                 failed += 1
         return self.repository.finish_run(run["id"], passed=passed, failed=failed, summary={"total_cases": len(cases)})
 
-    def _execute_case(self, run_id: str, case: dict[str, object]) -> dict[str, object]:
+    def _execute_case(self, run_id: str, case: dict[str, object], *, allow_real_http: bool = False) -> dict[str, object]:
         suite = self.repository.get_suite(str(case["suite_id"]))
         evidence_mode = _evidence_mode_for_case(case)
         request_payload = {
@@ -339,11 +362,17 @@ class ApiTestRunner:
         }
         started = perf_counter()
         error = None
-        try:
-            response_payload = execute_api_case(case)
-        except Exception as exc:  # noqa: BLE001 - captured as structured evidence
+        if not bool(case.get("dry_run", True)) and not allow_real_http:
+            evidence_mode = "blocked"
             response_payload = {"status_code": 0, "json": {}, "text": ""}
-            error = str(exc)
+            error = "Real HTTP case requires explicit authorization."
+        else:
+            try:
+                response_payload = execute_api_case(case)
+            except Exception as exc:  # noqa: BLE001 - captured as structured evidence
+                response_payload = {"status_code": 0, "json": {}, "text": ""}
+                error = str(exc)
+        request_payload["evidence_mode"] = evidence_mode
         response_payload["evidence_mode"] = evidence_mode
         latency = round((perf_counter() - started) * 1000, 2)
         diff = validate_api_response(dict(case["expected"]), response_payload)
@@ -509,7 +538,7 @@ def validate_api_response(expected: dict[str, object], actual: dict[str, object]
 
 def export_api_suite(repository: ApiTestRepository, suite_id: str, output_dir: str | Path) -> str:
     suite = repository.get_suite(suite_id)
-    cases = repository.list_cases(suite_id)
+    cases = [_exportable_api_case(case) for case in repository.list_cases(suite_id)]
     payload = {"api_test_suites": [suite], "api_test_cases": cases}
     directory = Path(output_dir)
     directory.mkdir(parents=True, exist_ok=True)
@@ -611,6 +640,23 @@ def redact_headers(headers: dict[str, object]) -> dict[str, object]:
     for key, value in headers.items():
         redacted[key] = "***REDACTED***" if str(key).lower() in SECRET_HEADER_NAMES else value
     return redacted
+
+
+def _exportable_api_case(case: dict[str, object]) -> dict[str, object]:
+    exported = dict(case)
+    exported["headers"] = _sanitize_headers_for_export(dict(case.get("headers") or {}))
+    return exported
+
+
+def _sanitize_headers_for_export(headers: dict[str, object]) -> dict[str, object]:
+    sanitized: dict[str, object] = {}
+    for key, value in headers.items():
+        text = str(value)
+        if str(key).lower() in SECRET_HEADER_NAMES and "{{" not in text:
+            sanitized[key] = "{{REDACTED_SECRET}}"
+        else:
+            sanitized[key] = value
+    return sanitized
 
 
 def _evidence_mode_for_case(case: dict[str, object]) -> str:

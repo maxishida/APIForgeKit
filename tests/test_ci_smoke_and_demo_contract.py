@@ -58,6 +58,18 @@ def test_validate_mvp_single_command_uses_docker_python_runner():
     assert '"validate:mvp:provider": "powershell -ExecutionPolicy Bypass -File scripts/validate_mvp.ps1 -RunProviderSmoke"' in package_json
 
 
+def test_npm_test_uses_cross_platform_docker_validation_runner():
+    package_json = Path("package.json").read_text(encoding="utf-8")
+    runner = Path("scripts/test_mvp.js")
+
+    assert runner.exists()
+    assert '"test": "npm run test:docker"' in package_json
+    assert '"test:docker": "node scripts/test_mvp.js"' in package_json
+    content = runner.read_text(encoding="utf-8")
+    assert "validate_mvp.ps1" in content
+    assert "validate_mvp.sh" in content
+
+
 def test_validate_mvp_provider_uses_dedicated_responses_smoke_script():
     shell_script = Path("scripts/validate_mvp.ps1").read_text(encoding="utf-8")
     python_script = Path("scripts/xai_responses_smoke.py")

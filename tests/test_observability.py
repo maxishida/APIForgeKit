@@ -47,6 +47,34 @@ def test_observability_repository_records_run_events_requests_and_responses():
     assert events[0]["message"] == "xAI request started"
 
 
+def test_observability_metrics_prefer_provider_total_tokens_without_double_counting():
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    init_db(engine)
+    repository = ObservabilityRepository(build_session_factory(engine))
+
+    run = repository.start_run("xai", "usage_validation", ["responses_api"])
+    event = repository.record_event(
+        ObservabilityEventInput(
+            run_id=run["id"],
+            provider="xai",
+            module="responses_api",
+            test_name="basic",
+            event_type="response_received",
+            status="success",
+            message="usage received",
+        )
+    )
+    repository.record_api_response(
+        run["id"],
+        event["id"],
+        200,
+        {"content": "ok"},
+        {"input_tokens": 4, "output_tokens": 3, "total_tokens": 7},
+    )
+
+    assert repository.metrics()["tokens"] == 7
+
+
 def test_observability_repository_lists_context_exports_newest_first(tmp_path):
     engine = create_engine("sqlite+pysqlite:///:memory:")
     init_db(engine)

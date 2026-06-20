@@ -18,8 +18,23 @@ def test_initialize_returns_minimal_capabilities():
     assert payload.agent_info.name == "apiforgekit-acp-skill-executor"
     assert payload.auth_methods == []
     assert payload.field_meta["apiforgekit.supportsMcpStdio"] is True
+    assert payload.field_meta["apiforgekit.permissionContinuation"] is False
+    assert payload.field_meta["apiforgekit.skillContract"]["version"] == "1"
+    assert len(payload.field_meta["apiforgekit.skillContract"]["sha256"]) == 64
     assert response["result"]["agentCapabilities"]["mcpCapabilities"]["http"] is False
     assert response["result"]["agentCapabilities"]["mcpCapabilities"]["sse"] is False
+
+
+def test_initialize_loads_skill_contract_when_started_outside_repository(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+
+    response = AcpAgent(database_url="sqlite+pysqlite:///:memory:", reports_dir=tmp_path).handle_request(
+        {"jsonrpc": "2.0", "id": 11, "method": "initialize", "params": {}}
+    )
+
+    contract = response["result"]["_meta"]["apiforgekit.skillContract"]
+    assert contract["version"] == "1"
+    assert len(contract["sha256"]) == 64
 
 
 def test_session_new_requires_absolute_cwd():
@@ -78,6 +93,7 @@ def test_session_prompt_rejects_paid_http_real_without_permission(tmp_path):
     assert response["result"]["stopReason"] == "refusal"
     schema.PromptResponse.model_validate(response["result"])
     assert response["result"]["_meta"]["apiforgekit.permissionRequired"] is True
+    assert response["result"]["_meta"]["apiforgekit.permissionContinuation"] is False
     assert response["result"]["_meta"]["apiforgekit.command"] == "validate-api-suite"
     assert response["result"]["_meta"]["apiforgekit.blockedCommand"] == "/validate-api-suite whatsapp_validation_pack --http-real"
     request = next(request for request in agent.outbox if request["method"] == "session/request_permission")
