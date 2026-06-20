@@ -217,4 +217,4 @@ Stop or request permission when real output is missing, PostgreSQL is offline fo
 
 ## Reference Docs
 
-Use `docs/SUMMARY.md` for the complete docs index. Main refs: `docs/MVP_100_PERCENT_MAP.md`, `docs/MVP_100_PERCENT_CHECKLIST.md`, `docs/ALGORITHM_TEST_PLAN.md`, `docs/ACP_AGENT_ARCHITECTURE.md`, `docs/architecture.md`.
+Use `docs/SUMMARY.md` and `docs/MVP_100_PERCENT_MAP.md` for docs. Obsidian: sync then read `00 - Retomar Agora.md` and `00 - Mapa do Projeto.md`; preserve non-generated vault text. See `docs/OBSIDIAN_CONTEXT_BRAIN.md`.

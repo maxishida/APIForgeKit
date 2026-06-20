@@ -94,6 +94,8 @@ npm run validate:mvp:unix # Linux/macOS: valida o MVP inteiro via Docker Python
 npm run validate:mvp:provider:unix # Linux/macOS: valida o MVP e roda xAI real
 npm run demo:clean:dry  # lista artefatos de demo que seriam removidos
 npm run demo:clean      # remove caches/exports gerados sem tocar .env, tests ou banco
+npm run obsidian:sync -- --vault "C:\Users\USER\Documents\Obsidian Vault\ApiContextbuilder"
+npm run obsidian:validate -- --vault "C:\Users\USER\Documents\Obsidian Vault\ApiContextbuilder"
 ```
 
 Atalho por sistema:
@@ -154,6 +156,17 @@ A raiz fica curta de propósito:
 - [docs/MVP_100_PERCENT_MAP.md](./docs/MVP_100_PERCENT_MAP.md): o que é real, dry-run, seed, legacy e blocked.
 - [docs/DEMO_SCRIPT.md](./docs/DEMO_SCRIPT.md): roteiro para demo ou vídeo.
 - [docs/ACP_AGENT_ARCHITECTURE.md](./docs/ACP_AGENT_ARCHITECTURE.md): detalhes do executor ACP.
+- [docs/OBSIDIAN_CONTEXT_BRAIN.md](./docs/OBSIDIAN_CONTEXT_BRAIN.md): cérebro operacional no Obsidian, sync e retomada de contexto.
+
+## Retomar Com Obsidian
+
+O vault local em `C:\Users\USER\Documents\Obsidian Vault\ApiContextbuilder` guarda o contexto navegável do projeto. Após um commit ou antes de retomar trabalho, sincronize e abra no Obsidian:
+
+```bash
+npm run obsidian:sync -- --vault "C:\Users\USER\Documents\Obsidian Vault\ApiContextbuilder"
+```
+
+Comece por `00 - Retomar Agora.md`; ele aponta o commit, a documentação ativa, o comando de validação e o próximo passo. Depois abra `00 - Mapa do Projeto.md` para navegar pelo grafo.
 
 ## Status
 

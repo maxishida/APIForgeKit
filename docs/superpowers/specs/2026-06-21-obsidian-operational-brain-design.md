@@ -19,6 +19,7 @@ The vault starts empty, so the first version creates the following shallow struc
 ```text
 ApiContextbuilder/
 ├─ 00 - Mapa do Projeto.md
+├─ 00 - Retomar Agora.md
 ├─ AGENTS.md
 ├─ 01 - Inbox/
 ├─ 02 - Projetos/
@@ -36,6 +37,8 @@ ApiContextbuilder/
 ```
 
 `00 - Mapa do Projeto` is the mandatory hub. It links to the project vision, engineering practices, architecture, MVP, workflow, decisions, logs, backlog, prompts, and memory. Every principal note links back to this map and to at least one directly related note.
+
+`00 - Retomar Agora` is the operational entry point for a resumed human or AI session. It is updated during each sync with the current branch, commit, recent commit subject, source-document index, validated commands, and recommended next action. A protected user section records session-specific notes that the sync must preserve.
 
 ## Graph Model
 
@@ -70,7 +73,9 @@ A repository command, planned as `python scripts/sync_obsidian_vault.py --vault 
 - architecture and workflow documents in `docs/`
 - the module layout under `agents/`, `core/`, `ui/`, `scripts/`, and `tests/`
 
-It will update only notes in `06 - Engenharia/Gerado/` and generated sections delimited by `<!-- @generated:start -->` and `<!-- @generated:end -->`. It never removes vault files, never moves existing notes, never reads `.env`, and never exports secrets. A manifest records source paths, source commit, and generation timestamp.
+It will update only notes in `06 - Engenharia/Gerado/` and generated sections delimited by `<!-- @generated:start -->` and `<!-- @generated:end -->`. It never removes vault files, never moves existing notes, never reads `.env`, and never exports secrets. A stable manifest records source paths, source commit, generated-note paths, and a source fingerprint.
+
+The sync also refreshes the generated block in `00 - Retomar Agora`. It reads Git metadata as the commit anchor and catalogs safe documentation present in the workspace at sync time; it does not inspect or export private environment files, credentials, or raw working-tree diffs.
 
 Human-created notes, decisions, logs, prompts, tickets, and text outside generated blocks remain untouched.
 
@@ -93,6 +98,7 @@ Human-created notes, decisions, logs, prompts, tickets, and text outside generat
 ## Validation Criteria
 
 - `00 - Mapa do Projeto` exists and links to every canonical hub.
+- `00 - Retomar Agora` identifies the current repository commit and links to the map, architecture snapshot, active documentation, and next action.
 - Every canonical hub links back to the map.
 - Every generated architecture note includes source metadata and generated markers.
 - A second sync makes no material change when source files are unchanged.

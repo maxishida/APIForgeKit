@@ -20,6 +20,7 @@ A raiz do repositório deve ficar simples:
 9. [Workflow](./workflow.md): fluxo `teste -> logs -> evidências -> contexto`.
 10. [Architecture](./architecture.md): arquitetura local-first com NiceGUI, PostgreSQL e labs.
 11. [Implementation Checklist](./IMPLEMENTATION_CHECKLIST.md): o que já existe e como testar.
+12. [Obsidian Context Brain](./OBSIDIAN_CONTEXT_BRAIN.md): memória navegável, retomada automática e sincronização segura do vault.
 
 ## Labs
 
@@ -111,6 +112,8 @@ Para custo de tokens, `docs_verified` exige conferência manual na fonte oficial
 
 ```txt
 SKILL.md
+↓
+00 - Retomar Agora (Obsidian, quando configurado)
 ↓
 docs/workflow.md
 ↓

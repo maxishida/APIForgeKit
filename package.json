@@ -22,6 +22,8 @@
     "validate:mvp:unix": "bash scripts/validate_mvp.sh",
     "validate:mvp:provider:unix": "bash scripts/validate_mvp.sh --provider-smoke",
     "demo:clean:dry": "python scripts/clean_demo_artifacts.py",
-    "demo:clean": "python scripts/clean_demo_artifacts.py --apply"
+    "demo:clean": "python scripts/clean_demo_artifacts.py --apply",
+    "obsidian:sync": "node scripts/obsidian_vault.js sync",
+    "obsidian:validate": "node scripts/obsidian_vault.js validate"
   }
 }
