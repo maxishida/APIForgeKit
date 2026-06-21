@@ -156,7 +156,7 @@ The xAI Voice Lab REST path validates TTS, STT and a text agent response as `rea
 
 ## Context And Reports
 
-Reports are generated from real database events:
+Reports are generated from structured database events. Each report preserves its `evidence_mode`, so `real_http`, `dry_run_contract`, `seed_validation`, `protocol_trace`, `legacy` and `blocked` evidence are never conflated:
 
 ```txt
 exports/reports/*.md

@@ -19,6 +19,13 @@ function Assert-LastExitCode {
     }
 }
 
+function Assert-DockerReady {
+    docker info *> $null
+    if ($LASTEXITCODE -ne 0) {
+        throw "Docker Desktop/Engine não está pronto. Abra o Docker Desktop, aguarde o daemon iniciar e execute npm run validate:mvp novamente."
+    }
+}
+
 function Invoke-DockerPython {
     param(
         [Parameter(Mandatory = $true)]
@@ -36,8 +43,7 @@ function Invoke-DockerPython {
 
 Push-Location $root
 try {
-    docker info *> $null
-    Assert-LastExitCode "docker info"
+    Assert-DockerReady
     docker compose up -d
     Assert-LastExitCode "docker compose up"
     git diff --check

@@ -38,9 +38,16 @@ run_docker_python() {
     bash -lc "${command}"
 }
 
+assert_docker_ready() {
+  if ! docker info >/dev/null 2>&1; then
+    echo "Docker Desktop/Engine não está pronto. Inicie o Docker Desktop/Engine, aguarde o daemon e execute npm run validate:mvp novamente." >&2
+    exit 1
+  fi
+}
+
 cd "${root}"
 
-docker info >/dev/null
+assert_docker_ready
 docker compose up -d
 git diff --check
 

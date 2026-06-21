@@ -70,6 +70,7 @@ Este fluxo ainda segue a tese técnica: `Teste -> Log estruturado -> PostgreSQL 
 npm run db
 npm run dev
 npm run test
+npm run validate:mvp
 npm run algorithm:suite
 npm run acp
 npm run demo:clean:dry

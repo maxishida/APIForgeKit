@@ -2,23 +2,26 @@
 
 Use este checklist antes de apresentação, release ou gravação.
 
-Última validação completa: 2026-06-20.
+Última validação completa: 2026-06-22.
 
 Evidência desta rodada:
 
 - `npm run db`: PostgreSQL online em Docker.
 - `npm run validate:mvp`: comando único recomendado para validação local via Docker Python.
 - `npm run validate:mvp:unix`: equivalente Linux/macOS via `scripts/validate_mvp.sh`.
-- `python -m pytest -q`: 150 passed, executado em container Python 3.13.
+- `python -m pytest -q`: 177 passed, executado em container Python 3.13.
 - `python -m compileall app.py core ui agents scripts run_algorithm_lab.py run_acp_prompt.py run_acp_workflow.py run_xai_voice.py`: OK.
 - `git diff --check`: OK.
 - `npm run algorithm:suite`: 17/17 passed.
 - `npm run acp:workflow`: 9/9 prompts passed.
-- `npm run voice:run`: success, 9 eventos `real_http`, run `874ee302-a3cb-484d-9a98-2205f862b7a0`.
-- xAI Responses API smoke: `responses_api/basic` success, endpoint `/v1/responses`, preview `api-lab-ok`.
 - UI smoke: 9/9 rotas HTTP 200.
 - `npm run demo:clean:dry`: lista artefatos sem apagar.
 - Observação de ambiente: `python` no host Windows aponta para alias da Microsoft Store; validação Python foi rodada via Docker `python:3.13-slim`.
+
+Evidência de provider registrada anteriormente, mas não reexecutada nesta validação básica para evitar chamadas pagas:
+
+- `npm run voice:run`: success, 9 eventos `real_http`, run `874ee302-a3cb-484d-9a98-2205f862b7a0`.
+- xAI Responses API smoke: `responses_api/basic` success, endpoint `/v1/responses`, preview `api-lab-ok`.
 
 ## Ambiente
 

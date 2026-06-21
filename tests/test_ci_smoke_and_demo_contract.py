@@ -110,6 +110,14 @@ def test_validate_mvp_unix_runner_mirrors_windows_validation_flow():
     assert '"validate:mvp:provider:unix": "bash scripts/validate_mvp.sh --provider-smoke"' in package_json
 
 
+def test_validate_mvp_scripts_explain_how_to_recover_when_docker_is_unavailable():
+    windows_script = Path("scripts/validate_mvp.ps1").read_text(encoding="utf-8")
+    unix_script = Path("scripts/validate_mvp.sh").read_text(encoding="utf-8")
+
+    assert "Docker Desktop/Engine não está pronto" in windows_script
+    assert "Docker Desktop/Engine não está pronto" in unix_script
+
+
 def test_local_ai_context_state_is_ignored_by_git():
     gitignore = Path(".gitignore").read_text(encoding="utf-8")
 
