@@ -77,6 +77,8 @@ npm run demo:clean:dry
 npm run demo:clean
 ```
 
+`npm run demo:clean` remove somente artefatos gerados/ignorados e preserva código, `tests/*.py`, docs, `.env`, `.context`, banco e `.gitkeep`.
+
 ## O que pode ser demonstrado hoje
 
 - Rodar `lead_score` no Algorithm Test Lab com 17 casos canônicos.

@@ -92,8 +92,8 @@ npm run validate:mvp    # valida o MVP inteiro via Docker Python
 npm run validate:mvp:provider # valida o MVP e roda xAI real com aprovação/custo
 npm run validate:mvp:unix # Linux/macOS: valida o MVP inteiro via Docker Python
 npm run validate:mvp:provider:unix # Linux/macOS: valida o MVP e roda xAI real
-npm run demo:clean:dry  # lista artefatos de demo que seriam removidos
-npm run demo:clean      # remove caches/exports gerados sem tocar .env, tests ou banco
+npm run demo:clean:dry  # resume artefatos de demo que seriam removidos
+npm run demo:clean      # remove apenas artefatos gerados, sem tocar código, testes-fonte, .env, .context ou banco
 npm run obsidian:sync -- --vault "C:\Users\USER\Documents\Obsidian Vault\ApiContextbuilder"
 npm run obsidian:validate -- --vault "C:\Users\USER\Documents\Obsidian Vault\ApiContextbuilder"
 ```
@@ -144,6 +144,8 @@ python run_acp_prompt.py "/validate-voice-roundtrip"
 - Voice Lab REST é funcional com `XAI_API_KEY`; Voice Agent realtime WebSocket e Agents seguem como V2.
 - Sem Context Builder Ready = não implementar; gere contexto/evidence pack validado primeiro.
 - Antes de `npm run demo:clean`, preserve exports if Project Health depends on them.
+- `npm run demo:clean` remove somente artefatos ignorados: exports gerados, `logs/*.jsonl`, `outputs/*.json` e caches Python. Arquivos em `tests/*.py`, docs, migrations, `.env`, `.context`, banco Docker e `.gitkeep` são preservados.
+- Os comandos mostram contagem e tamanho por padrão. Para listar caminhos antes de limpar, use `npm run demo:clean:dry -- --verbose`.
 - Next.js/Prisma é destino futuro, não geração automática no MVP.
 
 ## Documentação

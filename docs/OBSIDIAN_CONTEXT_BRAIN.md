@@ -57,6 +57,8 @@ O sync cria arquivos ausentes e atualiza somente conteúdo entre:
 
 Texto fora desses marcadores, especialmente a seção `Notas da sessão`, é preservado. O processo não apaga, move ou renomeia notas existentes; não lê `.env` nem exporta segredos. No modo Docker, ele recebe somente branch, commit e assunto do último commit como metadados públicos para atualizar a nota de retomada.
 
+O vault indexa código e documentação do projeto, não Evidence Packs descartáveis. Antes de uma demo limpa, execute `npm run demo:clean:dry`; depois de `npm run demo:clean`, execute o sync novamente para registrar o commit e a documentação atual, sem depender de exports antigos.
+
 ## Para Agentes
 
 Antes de sugerir trabalho, o agente deve ler `00 - Retomar Agora`, `00 - Mapa do Projeto`, o ticket relacionado e o `SKILL.md` do repositório. Aplique PREVC, registre decisões e logs, e mantenha toda nova nota conectada a um hub existente.

@@ -30,8 +30,18 @@ def test_ui_smoke_script_and_npm_helper_cover_main_pages():
     ):
         assert route in content
     assert '"ui:smoke": "python scripts/ui_smoke.py"' in package_json
-    assert '"demo:clean:dry": "python scripts/clean_demo_artifacts.py"' in package_json
-    assert '"demo:clean": "python scripts/clean_demo_artifacts.py --apply"' in package_json
+    assert '"demo:clean:dry": "node scripts/demo_clean.js dry"' in package_json
+    assert '"demo:clean": "node scripts/demo_clean.js apply"' in package_json
+
+
+def test_demo_clean_uses_the_docker_python_runner_when_host_python_is_unavailable():
+    launcher = Path("scripts/demo_clean.js")
+
+    assert launcher.exists()
+    content = launcher.read_text(encoding="utf-8")
+    assert "python:3.13-slim" in content
+    assert "scripts/clean_demo_artifacts.py" in content
+    assert "spawnSync('docker', ['info']" in content
 
 
 def test_validate_mvp_single_command_uses_docker_python_runner():

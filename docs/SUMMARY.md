@@ -79,6 +79,10 @@ npm run demo:clean
 
 Antes de usar `npm run demo:clean`, preserve exports if Project Health depends on them.
 
+O limpador remove apenas dados descartáveis e ignorados pelo Git: exports de relatório/contexto/blueprint, JSONL local, JSONs em `outputs/` e caches Python. Ele preserva código, arquivos `tests/*.py`, documentação, migrations, `.env`, `.context`, banco Docker e `.gitkeep`.
+
+O resultado padrão mostra contagem e tamanho. Use `npm run demo:clean:dry -- --verbose` para listar os caminhos antes de executar a limpeza.
+
 Para validar o MVP inteiro em uma máquina Windows sem Python local funcional:
 
 ```bash

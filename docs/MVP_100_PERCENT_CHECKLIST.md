@@ -9,13 +9,13 @@ Evidência desta rodada:
 - `npm run db`: PostgreSQL online em Docker.
 - `npm run validate:mvp`: comando único recomendado para validação local via Docker Python.
 - `npm run validate:mvp:unix`: equivalente Linux/macOS via `scripts/validate_mvp.sh`.
-- `python -m pytest -q`: 177 passed, executado em container Python 3.13.
+- `python -m pytest -q`: 181 passed, executado em container Python 3.13.
 - `python -m compileall app.py core ui agents scripts run_algorithm_lab.py run_acp_prompt.py run_acp_workflow.py run_xai_voice.py`: OK.
 - `git diff --check`: OK.
 - `npm run algorithm:suite`: 17/17 passed.
 - `npm run acp:workflow`: 9/9 prompts passed.
 - UI smoke: 9/9 rotas HTTP 200.
-- `npm run demo:clean:dry`: lista artefatos sem apagar.
+- `npm run demo:clean:dry`: resume artefatos sem apagar.
 - Observação de ambiente: `python` no host Windows aponta para alias da Microsoft Store; validação Python foi rodada via Docker `python:3.13-slim`.
 
 Evidência de provider registrada anteriormente, mas não reexecutada nesta validação básica para evitar chamadas pagas:
@@ -29,6 +29,7 @@ Evidência de provider registrada anteriormente, mas não reexecutada nesta vali
 - [x] `.env` configurado quando testes reais de provider forem usados.
 - [x] UI abre com `npm run dev` ou `python app.py`.
 - [x] Nenhum segredo aparece em logs, prints ou exports.
+- [x] Limpeza de demo remove somente artefatos ignorados e preserva testes-fonte, docs, `.env`, `.context`, banco e `.gitkeep`.
 
 ## Validação automática
 

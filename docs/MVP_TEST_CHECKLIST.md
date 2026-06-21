@@ -2,7 +2,7 @@
 
 Use este checklist para validar o MVP antes de demo, release, gravação ou mudança grande.
 
-Última execução registrada: 2026-06-20.
+Última execução registrada: 2026-06-22.
 
 ## 1. Ambiente
 
@@ -48,7 +48,7 @@ npm run acp:workflow
 npm run ui:smoke:local
 ```
 
-Fallback usado em 2026-06-20, porque `python` no host Windows apontava para alias da Microsoft Store:
+Runner Docker confirmado em 2026-06-22, porque `python` no host Windows aponta para alias da Microsoft Store:
 
 ```bash
 docker run --rm -v "${PWD}:/app" -w /app \
@@ -62,9 +62,9 @@ docker run --rm -v "${PWD}:/app" -w /app \
   && python scripts/ui_smoke_local.py"
 ```
 
-Resultado de 2026-06-20:
+Resultado de 2026-06-22:
 
-- [x] Pytest: `147 passed`.
+- [x] Pytest: `181 passed`.
 - [x] Compile: OK.
 - [x] Algorithm suite: `17/17 passed`.
 - [x] ACP workflow: `9/9 prompts passed`.
@@ -111,7 +111,7 @@ Esses comandos rodam a validação base e depois executam xAI Voice REST + xAI R
 ## 5. Evidência e Limpeza
 
 - [x] Evidence Packs gerados em `exports/reports/`.
-- [x] `npm run demo:clean:dry` lista caches e exports sem apagar.
+- [x] `npm run demo:clean:dry` resume caches e exports sem apagar.
 - [x] `.env`, banco Docker e `tests/` não entram na limpeza.
 - [x] Before running `npm run demo:clean`, preserve exports if Project Health depends on them.
 - [x] Segredos não devem aparecer em logs, commits ou exports.
