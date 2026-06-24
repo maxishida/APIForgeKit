@@ -2,6 +2,68 @@
 
 Este diagrama mostra o fluxo completo do MVP evidence-first, começando no ACP e no `SKILL.md`.
 
+## APIForgeKit Evidence Harness
+
+```mermaid
+flowchart LR
+    subgraph entryPoints[Entry Points]
+        direction TB
+        operator[Human / Operator] --> studio[NiceGUI Studio]
+        ide[IDE / AI Client] --> dotcontext[Dotcontext MCP optional]
+        acpClient[ACP / CLI Client] --> acpExecutor[ACP Executor]
+    end
+
+    subgraph control[Operational Control]
+        direction TB
+        dotcontext -.-> skillGates[SKILL.md Gates]
+        acpExecutor --> skillGates
+        skillGates --> coreServices[Core Services]
+    end
+
+    subgraph validation[Validation Labs]
+        direction TB
+        algorithmLab[Algorithm Test Lab]
+        apiLab[Generic API Lab]
+        providerLab[xAI / Voice Validation]
+        tokenCalculator[Token Calculator]
+    end
+
+    subgraph evidence[Evidence and Review]
+        direction TB
+        evidenceStore[PostgreSQL Evidence Store]
+        dashboardLogs[Dashboard / Logs]
+        contextBuilder[Context Builder / Evidence Pack]
+    end
+
+    subgraph handoff[AI Handoff]
+        direction TB
+        originalHandoff[Original Evidence Handoff]
+        headroomOpt[Optional Headroom CLI]
+        implementationAi[Implementation AI]
+    end
+
+    studio --> algorithmLab
+    studio --> apiLab
+    studio --> providerLab
+    studio --> tokenCalculator
+    coreServices --> algorithmLab
+    coreServices --> apiLab
+    coreServices --> providerLab
+    coreServices --> tokenCalculator
+    algorithmLab --> evidenceStore
+    apiLab --> evidenceStore
+    providerLab --> evidenceStore
+    tokenCalculator --> evidenceStore
+    evidenceStore --> dashboardLogs
+    evidenceStore --> contextBuilder
+    contextBuilder --> originalHandoff
+    originalHandoff --> implementationAi
+    contextBuilder -. sanitized copy only .-> headroomOpt
+    headroomOpt --> implementationAi
+```
+
+`Dotcontext MCP optional` guides an IDE workflow but does not replace the ACP executor or become a source of evidence. PostgreSQL, structured logs, raw exports and the original Evidence Pack remain canonical. `Optional Headroom CLI` runs only after Context Builder readiness and only on a sanitized handoff copy; it never sits in front of provider tests, labs, PostgreSQL, logs or ACP.
+
 ```mermaid
 flowchart LR
     A[ACP Client / CLI / IDE] --> B[agents/acp_agent.py]

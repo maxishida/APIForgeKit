@@ -29,6 +29,36 @@ def test_system_diagram_doc_contains_full_acp_to_evidence_flow():
         assert expected in text
 
 
+def test_system_diagram_documents_harness_boundaries_and_optional_tools():
+    text = (ROOT / "docs" / "SYSTEM_DIAGRAM.md").read_text(encoding="utf-8")
+
+    for expected in [
+        "APIForgeKit Evidence Harness",
+        "Human / Operator",
+        "NiceGUI Studio",
+        "IDE / AI Client",
+        "Dotcontext MCP optional",
+        "ACP / CLI Client",
+        "SKILL.md Gates",
+        "ACP Executor",
+        "Core Services",
+        "Algorithm Test Lab",
+        "Generic API Lab",
+        "xAI / Voice Validation",
+        "Token Calculator",
+        "PostgreSQL Evidence Store",
+        "Dashboard / Logs",
+        "Context Builder / Evidence Pack",
+        "Optional Headroom CLI",
+        "Implementation AI",
+    ]:
+        assert expected in text
+
+    assert "headroomOpt --> evidenceStore" not in text
+    assert "headroomOpt --> acpExecutor" not in text
+    assert "headroomOpt --> algorithmLab" not in text
+
+
 def test_tutorial_exposes_system_diagram_lanes():
     labels = [lane["label"] for lane in tutorial.SYSTEM_DIAGRAM_LANES]
 
