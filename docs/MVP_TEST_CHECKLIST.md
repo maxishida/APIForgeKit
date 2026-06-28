@@ -36,6 +36,8 @@ No Windows, mantenha o comando PowerShell como padrão. O runner Unix também fu
 
 Esses comandos usam Docker `python:3.13-slim`, sobem PostgreSQL, rodam testes, compile, Algorithm Suite, ACP workflow, UI smoke local e limpeza em dry-run.
 
+GitHub Actions está configurado como manual-only (`workflow_dispatch`). Use `npm run validate:mvp` como validação oficial antes de commit, push, demo ou release; dispare o workflow no GitHub apenas quando quiser validar em runner remoto.
+
 Quando Python local estiver funcional e você quiser rodar manualmente:
 
 ```bash

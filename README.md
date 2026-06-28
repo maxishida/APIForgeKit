@@ -112,6 +112,8 @@ npm run validate:mvp:provider:unix
 
 No Windows, prefira os comandos PowerShell. Os comandos `:unix` são para Linux/macOS; em Windows eles só fazem sentido se Git Bash estiver antes do launcher WSL no `PATH`.
 
+GitHub Actions fica manual-only (`workflow_dispatch`). A validação oficial do MVP é local, via Docker, com `npm run validate:mvp`; rode CI no GitHub apenas quando quiser testar o workflow em nuvem.
+
 ACP quick prompts:
 
 ```bash
