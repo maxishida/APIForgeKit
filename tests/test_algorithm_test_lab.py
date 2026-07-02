@@ -188,9 +188,9 @@ def test_community_bot_engine_suite_passes_all_seed_cases():
     run = runner.run_suite(definition["id"])
     results = repository.list_results(algorithm_id=definition["id"], limit=30)
 
-    assert len(cases) == 15
+    assert len(cases) == 17
     assert run["status"] == "passed"
-    assert run["passed"] == 15
+    assert run["passed"] == 17
     assert run["failed"] == 0
     summary = summarize_algorithm_invariants(results)
     assert summary["all_passed"] is True

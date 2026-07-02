@@ -100,9 +100,25 @@ def test_full_evidence_requires_every_declared_source_before_ready():
         live_metrics={"total_tests": 0, "success": 0, "failures": 0},
         token_metrics={"total_estimates": 0},
         acp_metrics={"total_events": 0, "successful_prompts": 0, "failed_prompts": 0},
+        community_metrics={"status": "Needs tests", "total": 0, "passed": 0, "failed": 0},
     )
 
     assert readiness["overall"]["status"] == "Needs tests"
+
+
+def test_full_evidence_ready_when_all_sources_including_community_are_ready():
+    readiness = build_context_readiness(
+        source_mode="full",
+        algorithm_metrics={"total_results": 17, "passed": 17, "failed": 0},
+        api_metrics={"total_results": 4, "passed": 4, "failed": 0},
+        live_metrics={"total_tests": 2, "success": 2, "failures": 0},
+        token_metrics={"total_estimates": 1},
+        acp_metrics={"total_events": 3, "successful_prompts": 3, "failed_prompts": 0},
+        community_metrics={"status": "Ready", "total": 29, "passed": 29, "failed": 0},
+    )
+
+    assert readiness["overall"]["status"] == "Ready"
+    assert readiness["community"]["status"] == "Ready"
 
 
 def test_guided_context_builder_exports_markdown_json_html_and_zip(tmp_path):
@@ -157,8 +173,8 @@ def test_community_pipeline_mode_marks_ready_when_both_suites_pass():
         token_metrics={"total_estimates": 0},
         community_metrics={
             "status": "Ready",
-            "total": 27,
-            "passed": 27,
+            "total": 29,
+            "passed": 29,
             "failed": 0,
             "ready_count": 2,
             "required_algorithms": 2,

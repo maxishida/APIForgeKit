@@ -83,6 +83,18 @@ def calculate_member_engagement_score(member: MemberEngagementInput) -> MemberEn
         score += 15
         reasons.append("first_theory:+15")
 
+    extra_posts = max(member.posts_count - (1 if member.has_first_post else 0), 0)
+    posts_bonus = min(extra_posts * 2, 20)
+    if posts_bonus:
+        score += posts_bonus
+        reasons.append(f"extra_posts:+{posts_bonus}")
+
+    extra_theories = max(member.theories_count - (1 if member.has_first_theory else 0), 0)
+    theories_bonus = min(extra_theories * 3, 15)
+    if theories_bonus:
+        score += theories_bonus
+        reasons.append(f"extra_theories:+{theories_bonus}")
+
     streak_bonus = min(max(member.days_active_streak, 0) * 5, 25)
     if streak_bonus:
         score += streak_bonus

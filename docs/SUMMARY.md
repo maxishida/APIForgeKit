@@ -25,7 +25,7 @@ A raiz do repositório deve ficar simples:
 ## Labs
 
 - [Algorithm Test Plan](./ALGORITHM_TEST_PLAN.md): validação de algoritmos determinísticos, com foco em `lead_score`.
-- [Community Bot Engine](./COMMUNITY_BOT_ENGINE.md): Vice City NPC Engine — `community_bot_engine`, UI, CLI e handoff IDE.
+- [Community Bot Engine](./COMMUNITY_BOT_ENGINE.md): Vice City NPC Engine — `member_engagement_score` + `community_bot_engine`, pipeline, UI, CLI e handoff IDE.
 - [xAI Test Plan](./XAI_TEST_PLAN.md): fases de validação da API xAI.
 - [Providers](./providers.md): notas de provedores e documentação externa.
 

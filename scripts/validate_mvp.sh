@@ -55,6 +55,7 @@ base_validation='python -m pip install --no-cache-dir -r requirements.txt >/tmp/
 python -m pytest -q &&
 python -m compileall app.py core ui agents scripts run_algorithm_lab.py run_acp_prompt.py run_acp_workflow.py run_xai_voice.py &&
 python run_algorithm_lab.py --suite lead_score --export &&
+python scripts/run_community_pipeline.py &&
 python run_acp_workflow.py &&
 python scripts/ui_smoke_local.py &&
 python scripts/clean_demo_artifacts.py'

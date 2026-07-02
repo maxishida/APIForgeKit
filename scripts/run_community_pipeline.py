@@ -15,7 +15,12 @@ from core.algorithm_test_lab import (
     export_algorithm_suite,
     summarize_algorithm_invariants,
 )
-from core.community_pipeline import COMMUNITY_ALGORITHMS, build_community_pipeline_context, community_pipeline_metrics
+from core.community_pipeline import (
+    COMMUNITY_ALGORITHMS,
+    build_community_pipeline_context,
+    community_pipeline_metrics,
+    export_community_pipeline_handoff,
+)
 from core.config import get_settings
 from core.database import build_engine, build_session_factory, init_db
 
@@ -47,8 +52,9 @@ def main() -> int:
     settings.reports_dir.mkdir(parents=True, exist_ok=True)
     context_path = settings.reports_dir / "community_pipeline_context.md"
     context_path.write_text(build_community_pipeline_context(repository), encoding="utf-8")
+    handoff_paths = export_community_pipeline_handoff(repository, settings.reports_dir)
 
-    exports: dict[str, str] = {"context": str(context_path)}
+    exports: dict[str, str] = {"context": str(context_path), **handoff_paths}
     for suite in suites:
         algorithm_name = str(suite["algorithm"])
         definition = repository.get_definition_by_name(algorithm_name)

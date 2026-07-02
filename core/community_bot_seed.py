@@ -16,6 +16,8 @@ COMMUNITY_BOT_ENGINE_RULES = [
     "credits.low dispara VIPBot com recommend_page /vip",
     "user.inactive_3_days dispara retorno da comunidade",
     "theory.trending cria post automático no feed",
+    "user.engagementTier e user.engagementScore alimentados por member_engagement_score",
+    "Theorist elegível recebe missão avançada extra em theory.first_created",
 ]
 
 COMMUNITY_BOT_NEXTJS_FILES = [
@@ -183,6 +185,28 @@ _BASE_RULES = [
             {"type": "give_credits", "amount": 15, "reason": "first_theory_bonus"},
         ],
         "priority": 80,
+        "run_once_per_user": True,
+    },
+    {
+        "id": "rule_theorist_bonus",
+        "bot_id": "bot_theory",
+        "bot_name": "TheoryBot",
+        "bot_slug": "theorybot",
+        "name": "Bônus pipeline para Theorist elegível",
+        "event_name": "theory.first_created",
+        "condition_json": {
+            "user.engagementTier": {"operator": "equals", "path": "user.engagementTier", "value": "Theorist"},
+            "user.engagementScore": {"operator": "greater_than", "path": "user.engagementScore", "value": 60},
+        },
+        "action_json": [
+            {
+                "type": "assign_mission",
+                "mission_slug": "advanced_theory",
+                "mission_name": "Teoria avançada desbloqueada",
+            },
+            {"type": "give_credits", "amount": 5, "reason": "theorist_pipeline_bonus"},
+        ],
+        "priority": 75,
         "run_once_per_user": True,
     },
     {
@@ -644,5 +668,71 @@ DEFAULT_COMMUNITY_BOT_CASES = [
             "official_tag": "BOT OFICIAL",
         },
         "tags": ["official", "branding"],
+    },
+    {
+        "name": "pipeline theorist elegivel recebe bonus",
+        "input_payload": {
+            "event": {
+                "user_id": "user_pipe",
+                "event_name": "theory.first_created",
+                "entity_type": "theory",
+                "entity_id": "theory_pipe",
+                "metadata_json": {"title": "Leonida volta?"},
+            },
+            "user": {
+                "user_id": "user_pipe",
+                "username": "Theorist",
+                "engagementTier": "Theorist",
+                "engagementScore": 65,
+                "credits": 5,
+                "badges": [],
+            },
+            "rules": _BASE_RULES,
+            "history": [],
+            "templates": _DEFAULT_TEMPLATES,
+        },
+        "expected_output": {
+            "classification": "success",
+            "rules_matched": 2,
+            "actions_executed_count": 5,
+            "action_types": [
+                "send_notification",
+                "give_badge",
+                "give_credits",
+                "assign_mission",
+                "give_credits",
+            ],
+        },
+        "tags": ["pipeline", "engagement", "theorist"],
+    },
+    {
+        "name": "pipeline visitor sem bonus theorist",
+        "input_payload": {
+            "event": {
+                "user_id": "user_visitor",
+                "event_name": "theory.first_created",
+                "entity_type": "theory",
+                "entity_id": "theory_visitor",
+                "metadata_json": {"title": "Primeira teoria"},
+            },
+            "user": {
+                "user_id": "user_visitor",
+                "username": "Visitor",
+                "engagementTier": "Visitor",
+                "engagementScore": 15,
+                "credits": 0,
+                "badges": [],
+            },
+            "rules": _BASE_RULES,
+            "history": [],
+            "templates": _DEFAULT_TEMPLATES,
+        },
+        "expected_output": {
+            "classification": "success",
+            "rules_matched": 1,
+            "actions_executed_count": 3,
+            "action_types": ["send_notification", "give_badge", "give_credits"],
+        },
+        "tags": ["pipeline", "engagement", "visitor"],
     },
 ]

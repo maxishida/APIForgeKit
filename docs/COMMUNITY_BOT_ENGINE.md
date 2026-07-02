@@ -7,7 +7,7 @@ Motor determinístico de bots oficiais validado no **Algorithm Test Lab** como `
 Manter a comunidade viva com **mini conteúdo** (notificações, missões, posts, badges, créditos) **sem IA no MVP**:
 
 ```txt
-User Action → User Behavior Event → Bot Rules Engine → Conditions → Actions → Logs
+User Action → Event → member_engagement_score → Bot Rules Engine → Conditions → Actions → Logs
 ```
 
 Frase do produto:
@@ -24,7 +24,8 @@ Bots oficiais (tag obrigatória: `BOT OFICIAL` / `SISTEMA` / `IA DESATIVADA NO M
 | --- | --- |
 | Algoritmo | `community_bot_engine` |
 | Evidence mode | `seed_validation` |
-| Casos seed | 15/15 |
+| Casos seed | 17/17 (inclui 2 casos cross-pipeline com `engagementTier`) |
+| Pipeline | `member_engagement_score` + `community_bot_engine` |
 | UI | `/community-bot-lab` |
 | Código | `core/community_bot_engine.py` |
 | Casos | `core/community_bot_seed.py` |
@@ -48,13 +49,15 @@ Na página:
 
 1. Escolha um cenário MVP no dropdown
 2. **Executar sandbox** — teste rápido com JSON editável
-3. **Rodar suíte 15/15** — validação canônica no PostgreSQL
-4. **Export Evidence Pack** — ZIP para handoff à IDE
+3. **Rodar suíte 17/17** — validação canônica do Bot Engine
+4. **Rodar pipeline completa** — valida `member_engagement_score` + `community_bot_engine`
+5. **Export Evidence Pack** — ZIP para handoff à IDE
 
 ## Como testar via CLI
 
 ```bash
 npm run db
+npm run community:pipeline   # recomendado: valida score + bot + exporta handoff
 python scripts/run_community_bot_suite.py
 ```
 
@@ -69,10 +72,15 @@ python run_algorithm_lab.py --suite community_bot_engine --export
 Após export, os arquivos ficam em `exports/reports/` (gitignored). Com o Studio rodando:
 
 ```txt
+http://localhost:8080/download/reports/CODE_GTA6_COMMUNITY_PIPELINE_IMPLEMENTATION_CONTEXT.md
 http://localhost:8080/download/reports/CODE_GTA6_COMMUNITY_BOT_ENGINE_IMPLEMENTATION_CONTEXT.md
+http://localhost:8080/download/reports/community_pipeline_context.md
 http://localhost:8080/download/reports/community_bot_engine_context.md
 http://localhost:8080/download/reports/community_bot_engine.json
+http://localhost:8080/download/reports/member_engagement_score.json
 ```
+
+**Context Builder:** selecione modo **Community Pipeline** em `/context-builder`.
 
 Gere o pacote completo com **Export Evidence Pack** na UI ou `run_community_bot_suite.py`.
 
@@ -102,7 +110,7 @@ add_ranking_points | recommend_page | assign_mission
 - `cooldown_minutes` → `rate_limited`
 - `unique_event_key` → `{userId}:{eventName}:{ruleId}`
 
-## Fluxos MVP (15 casos seed)
+## Fluxos MVP (17 casos seed)
 
 | Fluxo | Evento | Resultado validado |
 | --- | --- | --- |
@@ -116,12 +124,14 @@ add_ranking_points | recommend_page | assign_mission
 | Teoria trending | `theory.trending` | Post automático no feed |
 | Cooldown VIP | `credits.low` | `rate_limited` |
 | Simulador admin | `simulate: true` | Ações com `simulated: true` |
+| Theorist elegível | `theory.first_created` + `engagementTier: Theorist` | Badge + missão avançada + créditos |
+| Visitor sem bônus | `theory.first_created` + `engagementTier: Visitor` | Apenas badge primeira teoria |
 
 ## Handoff para IDE (Code GTA6 Community)
 
-1. Rode suíte até `15/15 passed`
-2. Baixe `CODE_GTA6_COMMUNITY_BOT_ENGINE_IMPLEMENTATION_CONTEXT.md`
-3. Cole na IDE com: *implemente só o validado; reproduza os 15 casos como testes unitários*
+1. Rode `npm run community:pipeline` até `Ready`
+2. Baixe `CODE_GTA6_COMMUNITY_PIPELINE_IMPLEMENTATION_CONTEXT.md`
+3. Cole na IDE com: *implemente só o validado; reproduza os casos seed como testes unitários*
 4. Não inventar payloads, regras ou endpoints fora da evidência
 
 ## Arquivos sugeridos no projeto destino

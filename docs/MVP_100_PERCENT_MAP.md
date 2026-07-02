@@ -31,7 +31,8 @@ Este fluxo ainda segue a tese técnica: `Teste -> Log estruturado -> PostgreSQL 
 | Módulo | Status | Evidência | Observação |
 | --- | --- | --- | --- |
 | Algorithm Test Lab | Funcional real local | `seed_validation` | Caminho canônico para `lead_score` e `community_bot_engine`, expected vs actual, diff e invariantes. |
-| Community Bot Lab | Funcional real local | `seed_validation` | UI `/community-bot-lab` para Vice City NPC Engine: sandbox, suíte 15/15, export e download de contexto. |
+| Community Bot Lab | Funcional real local | `seed_validation` | UI `/community-bot-lab` para Vice City NPC Engine: sandbox, pipeline Score→Bot, suíte 17/17, export e download de contexto. |
+| Community Pipeline | Funcional real local | `seed_validation` | `member_engagement_score` + `community_bot_engine`; CLI `npm run community:pipeline`; Context Builder modo **Community Pipeline**. |
 | Generic API Lab | Funcional | `dry_run_contract` e `real_http` | Dry-run valida contrato; HTTP real exige casos com URL real e confirmação. |
 | Live Dashboard / xAI compact runner | Funcional com credencial | `real_http` e `blocked` | Responses API, connectivity, chat legacy, structured outputs, streaming e tools rodam com `XAI_API_KEY`. |
 | xAI Voice Lab REST | Funcional com credencial | `real_http` | TTS gera áudio, STT transcreve, agente responde e eventos entram em Logs/Dashboard/Context Builder. |
@@ -83,8 +84,9 @@ npm run demo:clean
 ## O que pode ser demonstrado hoje
 
 - Rodar `lead_score` no Algorithm Test Lab com 17 casos canônicos.
-- Rodar `community_bot_engine` no Community Bot Lab com 15 casos seed e sandbox de eventos.
-- Baixar contexto de implementação via `/download/reports/CODE_GTA6_COMMUNITY_BOT_ENGINE_IMPLEMENTATION_CONTEXT.md`.
+- Rodar `community_bot_engine` no Community Bot Lab com 17 casos seed e sandbox de eventos.
+- Rodar `npm run community:pipeline` para validar Score + Bot (29 casos no último run).
+- Baixar contexto via `/download/reports/CODE_GTA6_COMMUNITY_PIPELINE_IMPLEMENTATION_CONTEXT.md`.
 - Rodar WhatsApp validation pack como `dry_run_contract`.
 - Rodar xAI compact runner com `XAI_API_KEY` configurada.
 - Ver `responses_api/basic` como evidência preferida para xAI text.

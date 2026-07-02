@@ -87,38 +87,52 @@ def render_context_builder(services) -> None:
 
     def render_summary(bundle: dict[str, object]) -> None:
         readiness = bundle["readiness"]
+        source_mode = str(bundle.get("source_mode") or "algorithm_api")
+        columns = 2 if source_mode == "community_pipeline" else 3 if source_mode in {"algorithm", "api", "acp"} else 4
+        summary_container.classes(remove="grid-cols-2 grid-cols-3 grid-cols-4")
+        summary_container.classes(add=f"grid-cols-{columns}")
         summary_container.clear()
         with summary_container:
             metric_card("Readiness", readiness["overall"]["status"], readiness["overall"]["message"], _status_color(readiness["overall"]["status"]))
-            metric_card(
-                "Algorithm",
-                bundle["algorithm_metrics"]["total_results"],
-                f"{bundle['algorithm_metrics']['passed']} passed / {bundle['algorithm_metrics']['failed']} failed",
-                _status_color(readiness["algorithm"]["status"]),
-            )
-            metric_card(
-                "API",
-                bundle["api_metrics"]["total_results"],
-                f"{bundle['api_metrics']['passed']} passed / {bundle['api_metrics']['failed']} failed",
-                _status_color(readiness["api"]["status"]),
-            )
-            metric_card(
-                "Token Evidence",
-                bundle["token_metrics"]["total_estimates"],
-                "Estimativas salvas para decisão de custo",
-                _status_color(readiness["token"]["status"]),
-            )
-            metric_card(
-                "ACP Trace",
-                bundle["acp_metrics"].get("total_events", 0),
-                f"{bundle['acp_metrics'].get('successful_prompts', 0)} prompts OK / {bundle['acp_metrics'].get('permission_requests', 0)} gates",
-                _status_color(readiness["acp"]["status"]),
-            )
-            if "community" in readiness:
+            if source_mode in {"algorithm_api", "algorithm", "full"}:
+                metric_card(
+                    "Algorithm",
+                    bundle["algorithm_metrics"]["total_results"],
+                    f"{bundle['algorithm_metrics']['passed']} passed / {bundle['algorithm_metrics']['failed']} failed",
+                    _status_color(readiness["algorithm"]["status"]),
+                )
+            if source_mode in {"algorithm_api", "api", "full"}:
+                metric_card(
+                    "API",
+                    bundle["api_metrics"]["total_results"],
+                    f"{bundle['api_metrics']['passed']} passed / {bundle['api_metrics']['failed']} failed",
+                    _status_color(readiness["api"]["status"]),
+                )
+            if source_mode == "full":
+                metric_card(
+                    "Token Evidence",
+                    bundle["token_metrics"]["total_estimates"],
+                    "Estimativas salvas para decisão de custo",
+                    _status_color(readiness["token"]["status"]),
+                )
+                metric_card(
+                    "ACP Trace",
+                    bundle["acp_metrics"].get("total_events", 0),
+                    f"{bundle['acp_metrics'].get('successful_prompts', 0)} prompts OK / {bundle['acp_metrics'].get('permission_requests', 0)} gates",
+                    _status_color(readiness["acp"]["status"]),
+                )
+            if source_mode in {"community_pipeline", "full"} and "community" in readiness:
+                community_metrics = bundle.get("community_metrics", {})
                 metric_card(
                     "Community Pipeline",
-                    bundle.get("community_metrics", {}).get("ready_count", 0),
-                    str(bundle.get("community_metrics", {}).get("message", "Score + Bot Engine")),
+                    f"{community_metrics.get('passed', 0)}/{community_metrics.get('total', 0)}",
+                    str(community_metrics.get("message", "Score + Bot Engine")),
+                    _status_color(readiness["community"]["status"]),
+                )
+                metric_card(
+                    "Suítes prontas",
+                    f"{community_metrics.get('ready_count', 0)}/{community_metrics.get('required_algorithms', 2)}",
+                    "member_engagement_score + community_bot_engine",
                     _status_color(readiness["community"]["status"]),
                 )
 
@@ -166,6 +180,7 @@ def render_context_builder(services) -> None:
                     "live": bundle["live_metrics"],
                     "token": bundle["token_metrics"],
                     "acp": bundle["acp_metrics"],
+                    "community": bundle.get("community_metrics", {}),
                 },
                 "Fontes": bundle["contexts"],
                 "Export JSON": bundle,

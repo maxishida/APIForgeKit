@@ -64,6 +64,22 @@ def test_inactive_member_loses_points():
     assert result.bot_eligible is False
 
 
+def test_extra_posts_and_theories_add_bonus_points():
+    result = calculate_member_engagement_score(
+        MemberEngagementInput(
+            member_id="m_extra",
+            username="Active",
+            has_first_post=True,
+            has_first_theory=True,
+            posts_count=4,
+            theories_count=3,
+        )
+    )
+    assert "extra_posts:+6" in result.reasons
+    assert "extra_theories:+6" in result.reasons
+    assert result.score >= 37
+
+
 def test_member_id_is_required():
     try:
         calculate_member_engagement_score(MemberEngagementInput(member_id=""))

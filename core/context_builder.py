@@ -330,6 +330,8 @@ def _required_sections(source_mode: str) -> list[str]:
         return ["acp"]
     if source_mode == "community_pipeline":
         return ["community"]
+    if source_mode == "full":
+        return ["algorithm", "api", "live", "token", "acp", "community"]
     return ["algorithm", "api", "live", "token", "acp"]
 
 

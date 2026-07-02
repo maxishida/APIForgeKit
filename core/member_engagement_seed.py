@@ -4,6 +4,7 @@ MEMBER_ENGAGEMENT_RULES = [
     "Score 0-100 com clamp determinístico",
     "Tiers: Visitor 0-30, Resident 31-60, Theorist 61-80, Legend 81-100",
     "+10 first_post, +15 first_theory",
+    "+2 por post extra além do first (cap 20), +3 por teoria extra além da first (cap 15)",
     "+5 por dia de streak (cap 25)",
     "+3 por like recebido (cap 30), +2 por comentário (cap 20)",
     "-25 se days_inactive >= 7",

@@ -7,7 +7,7 @@ Transformar o APIForgeKit Studio em um jeito simples de validar algoritmos usand
 Status atual:
 
 - Algorithm Test Lab implementado em `/algorithm-test-lab`.
-- Algoritmos canônicos: `lead_score` (17 casos) e `community_bot_engine` (15 casos — Vice City NPC Engine).
+- Algoritmos canônicos: `lead_score` (17 casos), `member_engagement_score` (12 casos) e `community_bot_engine` (17 casos — Vice City NPC Engine + pipeline).
 - Casos seed com bordas, idempotência, cooldown, condições e overrides inválidos.
 - Persistência em PostgreSQL.
 - Diff esperado x recebido.

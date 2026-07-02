@@ -63,6 +63,23 @@ def test_run_once_blocks_duplicate_welcome():
     assert reason == "duplicate_blocked"
 
 
+def test_unmet_engagement_gate_does_not_force_partial_classification():
+    event = BotEvent(user_id="user_visitor", event_name="theory.first_created")
+    user = {
+        "user_id": "user_visitor",
+        "username": "Visitor",
+        "engagementTier": "Visitor",
+        "engagementScore": 15,
+        "credits": 0,
+        "badges": [],
+    }
+    rules = [_rule("rule_first_theory"), _rule("rule_theorist_bonus")]
+    result = process_bot_event(event, user, rules, templates=_DEFAULT_TEMPLATES)
+
+    assert result.classification == "success"
+    assert result.rules_matched == 1
+
+
 def test_credits_low_condition_uses_user_state():
     event = BotEvent(user_id="user_2", event_name="credits.low")
     user = {"user_id": "user_2", "username": "Low", "credits": 20}

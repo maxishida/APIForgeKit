@@ -15,6 +15,13 @@ from core.algorithm_test_lab import (
     summarize_algorithm_invariants,
 )
 from core.community_bot_seed import DEFAULT_COMMUNITY_BOT_CASES, _BASE_RULES, _DEFAULT_TEMPLATES
+from core.community_pipeline import (
+    COMMUNITY_ALGORITHMS,
+    BOT_HANDOFF_FILENAME,
+    PIPELINE_HANDOFF_FILENAME,
+    community_pipeline_metrics,
+    export_community_pipeline_handoff,
+)
 from core.database import database_status
 from core.report_bundle import create_report_bundle
 from ui.components.alerts import db_offline, empty_state
@@ -77,22 +84,69 @@ def render_community_bot_lab(services) -> None:
         return
 
     metrics_row = ui.grid(columns=4).classes("w-full gap-4")
+    pipeline_row = ui.grid(columns=4).classes("w-full gap-4")
     playground = ui.column().classes("afk-card w-full gap-4").style("padding:18px;")
     output_panel = ui.column().classes("afk-card w-full gap-4").style("padding:18px;")
     suite_panel = ui.column().classes("afk-card w-full gap-4").style("padding:18px;")
 
+    def _latest_bot_results() -> list[dict[str, object]]:
+        runs = [
+            run
+            for run in services.algorithm_repository.list_runs(limit=20)
+            if run.get("algorithm_id") == definition["id"]
+        ]
+        if not runs:
+            return []
+        return services.algorithm_repository.list_results(run_id=str(runs[0]["id"]), limit=100)
+
     def refresh_metrics() -> None:
-        results = services.algorithm_repository.list_results(algorithm_id=str(definition["id"]), limit=100)
-        passed = sum(1 for item in results if item["status"] == "passed")
-        failed = sum(1 for item in results if item["status"] == "failed")
+        runs = [
+            run
+            for run in services.algorithm_repository.list_runs(limit=20)
+            if run.get("algorithm_id") == definition["id"]
+        ]
+        latest_run = runs[0] if runs else None
+        passed = int((latest_run or {}).get("passed") or 0)
+        failed = int((latest_run or {}).get("failed") or 0)
+        results = _latest_bot_results()
         invariants = summarize_algorithm_invariants(results)
         metrics_row.clear()
         with metrics_row:
             metric_card("Casos seed", len(DEFAULT_COMMUNITY_BOT_CASES), "Fluxos MVP documentados", "#00D4FF")
-            metric_card("Passed", passed, "Execuções aprovadas", "#10B981")
-            metric_card("Failed", failed, "Divergências", "#EF4444")
-            ready = invariants.get("all_passed") and failed == 0 and passed >= len(DEFAULT_COMMUNITY_BOT_CASES)
-            metric_card("Readiness", "Ready" if ready else "Needs tests", "Contexto para implementação", "#8B5CF6")
+            metric_card("Passed", passed, "Último run aprovado", "#10B981")
+            metric_card("Failed", failed, "Último run com falha", "#EF4444")
+            ready = bool(latest_run) and str(latest_run.get("status")) == "passed" and failed == 0
+            metric_card("Readiness", "Ready" if ready else "Needs tests", "Bot Engine no último run", "#8B5CF6")
+
+    def refresh_pipeline_metrics() -> None:
+        metrics = community_pipeline_metrics(services.algorithm_repository)
+        pipeline_row.clear()
+        with pipeline_row:
+            metric_card(
+                "Community Pipeline",
+                metrics["status"],
+                str(metrics["message"]),
+                "#10B981" if metrics["status"] == "Ready" else "#F59E0B" if metrics["failed"] == 0 else "#EF4444",
+            )
+            metric_card(
+                "Suítes prontas",
+                f"{metrics['ready_count']}/{metrics['required_algorithms']}",
+                "member_engagement_score + community_bot_engine",
+                "#00D4FF",
+            )
+            metric_card(
+                "Último run",
+                f"{metrics['passed']}/{metrics['total']}",
+                "Casos passed na pipeline",
+                "#8B5CF6",
+            )
+            score_suite = next((suite for suite in metrics["suites"] if suite["name"] == "member_engagement_score"), {})
+            metric_card(
+                "Member Score",
+                score_suite.get("latest_run_status", "never_run"),
+                f"{score_suite.get('passed', 0)} passed / {score_suite.get('failed', 0)} failed",
+                "#10B981" if score_suite.get("ready") else "#F59E0B",
+            )
 
     def render_playground() -> None:
         playground.clear()
@@ -135,10 +189,15 @@ def render_community_bot_lab(services) -> None:
                 ui.button("Executar sandbox", icon="play_circle", on_click=lambda: run_sandbox(payload_area, output_panel)).classes(
                     "afk-primary-btn"
                 )
-                ui.button("Rodar suíte 15/15", icon="verified", on_click=lambda: run_full_suite()).classes("afk-primary-btn")
+                ui.button(
+                    f"Rodar suíte {len(DEFAULT_COMMUNITY_BOT_CASES)}/{len(DEFAULT_COMMUNITY_BOT_CASES)}",
+                    icon="verified",
+                    on_click=lambda: run_full_suite(),
+                ).classes("afk-primary-btn")
+                ui.button("Rodar pipeline completa", icon="hub", on_click=lambda: run_full_pipeline()).classes("afk-primary-btn")
                 ui.button("Export Evidence Pack", icon="inventory_2", on_click=lambda: export_pack()).classes("afk-ghost-btn")
                 ui.button("Abrir Algorithm Lab", icon="science", on_click=lambda: ui.navigate.to("/algorithm-test-lab")).classes("afk-ghost-btn")
-                ui.button("Context Builder", icon="integration_instructions", on_click=lambda: ui.navigate.to("/context-builder")).classes(
+                ui.button("Context Builder Pipeline", icon="integration_instructions", on_click=lambda: ui.navigate.to("/context-builder")).classes(
                     "afk-ghost-btn"
                 )
 
@@ -159,6 +218,7 @@ def render_community_bot_lab(services) -> None:
             runner = AlgorithmTestRunner(services.algorithm_repository)
             run = runner.run_suite(str(definition["id"]))
             refresh_metrics()
+            refresh_pipeline_metrics()
             render_suite_results()
             ui.notify(
                 f"Suíte: {run['passed']} passed / {run['failed']} failed",
@@ -166,6 +226,27 @@ def render_community_bot_lab(services) -> None:
             )
         except Exception as exc:  # noqa: BLE001
             ui.notify(f"Erro na suíte: {exc}", type="negative")
+
+    def run_full_pipeline() -> None:
+        try:
+            runner = AlgorithmTestRunner(services.algorithm_repository)
+            runs: list[dict[str, object]] = []
+            for algorithm_name in COMMUNITY_ALGORITHMS:
+                algo_definition = services.algorithm_repository.get_definition_by_name(algorithm_name)
+                runs.append(runner.run_suite(str(algo_definition["id"])))
+            handoff = export_community_pipeline_handoff(services.algorithm_repository, services.reports_dir)
+            refresh_metrics()
+            refresh_pipeline_metrics()
+            render_suite_results()
+            metrics = community_pipeline_metrics(services.algorithm_repository)
+            ui.notify(
+                f"Pipeline: {metrics['status']} — {metrics['passed']}/{metrics['total']} casos no último run",
+                type="positive" if metrics["status"] == "Ready" else "negative",
+            )
+            if handoff.get("pipeline"):
+                ui.notify(f"Handoff exportado: {PIPELINE_HANDOFF_FILENAME}", type="info")
+        except Exception as exc:  # noqa: BLE001
+            ui.notify(f"Erro na pipeline: {exc}", type="negative")
 
     def export_pack() -> None:
         try:
@@ -192,7 +273,7 @@ def render_community_bot_lab(services) -> None:
         with suite_panel:
             ui.label("Últimos resultados da suíte").classes("text-xl font-bold afk-title")
             if not results:
-                ui.label("Nenhum resultado ainda. Clique em Rodar suíte 15/15.").classes("afk-muted")
+                ui.label(f"Nenhum resultado ainda. Clique em Rodar suíte {len(DEFAULT_COMMUNITY_BOT_CASES)}/{len(DEFAULT_COMMUNITY_BOT_CASES)}.").classes("afk-muted")
                 return
             rows = [
                 {
@@ -230,9 +311,12 @@ def render_community_bot_lab(services) -> None:
 
     def render_docs_card() -> None:
         reports = [
-            "CODE_GTA6_COMMUNITY_BOT_ENGINE_IMPLEMENTATION_CONTEXT.md",
+            PIPELINE_HANDOFF_FILENAME,
+            BOT_HANDOFF_FILENAME,
+            "community_pipeline_context.md",
             "community_bot_engine_context.md",
             "community_bot_engine.json",
+            "member_engagement_score.json",
         ]
         with ui.column().classes("afk-card w-full gap-2").style("padding:18px;"):
             ui.label("Documentação para implementação").classes("text-xl font-bold afk-title")
@@ -245,7 +329,9 @@ def render_community_bot_lab(services) -> None:
                     ui.button(icon="download", on_click=lambda n=name: download_report_file(n)).props("flat round dense")
             ui.markdown(
                 """
-**Pipeline validado:** User Action → Event → Rules Engine → Conditions → Actions → Logs
+**Pipeline validada:** User Action → Event → member_engagement_score → Bot Engine → mini conteúdo → Logs
+
+**Context Builder:** selecione modo **Community Pipeline** em `/context-builder`
 
 **Bots:** ViceBot, MissionBot, TheoryBot, NewsBot, ModBot, VIPBot (tag `BOT OFICIAL`)
 
@@ -257,6 +343,7 @@ def render_community_bot_lab(services) -> None:
     _render_output(output_panel, None, title="Saída do motor de regras")
     render_suite_results()
     refresh_metrics()
+    refresh_pipeline_metrics()
     render_docs_card()
 
 

@@ -446,10 +446,13 @@ def process_bot_event(
 
         reasons.append(f"{rule.name}: {len(rule_outputs)} ação(ões) executada(s)")
 
+    blocking_skips = [
+        item for item in skipped if str(item.get("status")) not in {"condition_not_met", "rule_inactive", "bot_inactive"}
+    ]
     classification = "success"
     if matched == 0 and skipped:
         classification = "blocked"
-    elif matched > 0 and skipped:
+    elif matched > 0 and blocking_skips:
         classification = "partial"
 
     return BotEngineResult(

@@ -438,6 +438,27 @@ class AlgorithmTestRepository:
             session.refresh(row)
             return row.to_dict()
 
+    def update_case(
+        self,
+        case_id: str,
+        *,
+        input_payload: dict[str, object],
+        expected_output: dict[str, object],
+        tags: list[str] | None = None,
+        enabled: bool = True,
+    ) -> dict[str, object]:
+        with self.session_factory() as session:
+            row = session.get(AlgorithmTestCase, case_id)
+            if row is None:
+                raise ValueError(f"Unknown case_id: {case_id}")
+            row.input_payload = input_payload
+            row.expected_output = expected_output
+            row.tags = tags or []
+            row.enabled = enabled
+            session.commit()
+            session.refresh(row)
+            return row.to_dict()
+
     def get_case(self, case_id: str) -> dict[str, object]:
         with self.session_factory() as session:
             row = session.get(AlgorithmTestCase, case_id)
@@ -686,10 +707,7 @@ def ensure_default_algorithms(repository: AlgorithmTestRepository) -> None:
             rules=LEAD_SCORE_RULES,
             nextjs_files=LEAD_SCORE_NEXTJS_FILES,
         )
-    lead_existing = {case["name"] for case in repository.list_cases(lead_definition["id"])}
-    for case in DEFAULT_LEAD_SCORE_CASES:
-        if case["name"] not in lead_existing:
-            repository.create_case(algorithm_id=lead_definition["id"], **case)
+    _sync_seed_cases(repository, lead_definition["id"], DEFAULT_LEAD_SCORE_CASES)
 
     try:
         bot_definition = repository.get_definition_by_name("community_bot_engine")
@@ -702,10 +720,7 @@ def ensure_default_algorithms(repository: AlgorithmTestRepository) -> None:
             rules=COMMUNITY_BOT_ENGINE_RULES,
             nextjs_files=COMMUNITY_BOT_NEXTJS_FILES,
         )
-    bot_existing = {case["name"] for case in repository.list_cases(bot_definition["id"])}
-    for case in DEFAULT_COMMUNITY_BOT_CASES:
-        if case["name"] not in bot_existing:
-            repository.create_case(algorithm_id=bot_definition["id"], **case)
+    _sync_seed_cases(repository, bot_definition["id"], DEFAULT_COMMUNITY_BOT_CASES)
 
     try:
         member_definition = repository.get_definition_by_name("member_engagement_score")
@@ -718,10 +733,26 @@ def ensure_default_algorithms(repository: AlgorithmTestRepository) -> None:
             rules=MEMBER_ENGAGEMENT_RULES,
             nextjs_files=MEMBER_ENGAGEMENT_NEXTJS_FILES,
         )
-    member_existing = {case["name"] for case in repository.list_cases(member_definition["id"])}
-    for case in DEFAULT_MEMBER_ENGAGEMENT_CASES:
-        if case["name"] not in member_existing:
-            repository.create_case(algorithm_id=member_definition["id"], **case)
+    _sync_seed_cases(repository, member_definition["id"], DEFAULT_MEMBER_ENGAGEMENT_CASES)
+
+
+def _sync_seed_cases(
+    repository: AlgorithmTestRepository,
+    algorithm_id: str,
+    cases: list[dict[str, object]],
+) -> None:
+    existing_by_name = {case["name"]: case for case in repository.list_cases(algorithm_id)}
+    for case in cases:
+        payload = {
+            "input_payload": case["input_payload"],
+            "expected_output": case["expected_output"],
+            "tags": case.get("tags", []),
+            "enabled": case.get("enabled", True),
+        }
+        if case["name"] in existing_by_name:
+            repository.update_case(str(existing_by_name[case["name"]]["id"]), **payload)
+            continue
+        repository.create_case(algorithm_id=algorithm_id, name=str(case["name"]), **payload)
 
 
 def run_algorithm(name: str, input_payload: dict[str, object]) -> dict[str, object]:
