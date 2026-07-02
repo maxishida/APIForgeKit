@@ -20,6 +20,7 @@ SOURCE_MODE_LABELS = {
     "algorithm": "Algorithm only",
     "api": "API only",
     "acp": "ACP Evidence",
+    "community_pipeline": "Community Pipeline",
     "full": "Full evidence",
 }
 
@@ -29,6 +30,7 @@ SECTION_LABELS = {
     "live": "Live Observability",
     "token": "Token Calculator",
     "acp": "ACP Skill Executor",
+    "community": "Community Pipeline",
 }
 
 
@@ -140,6 +142,7 @@ def build_context_readiness(
     live_metrics: Mapping[str, object] | None = None,
     token_metrics: Mapping[str, object] | None = None,
     acp_metrics: Mapping[str, object] | None = None,
+    community_metrics: Mapping[str, object] | None = None,
 ) -> dict[str, object]:
     mode = _normalize_source_mode(source_mode)
     sections = {
@@ -178,6 +181,7 @@ def build_context_readiness(
             label="ACP Skill Executor",
             evidence_modes=_mapping(acp_metrics or {}, "evidence_modes"),
         ),
+        "community": _community_metric_status(community_metrics or {}),
     }
     required = _required_sections(mode)
     required_statuses = [sections[name]["status"] for name in required]
@@ -210,6 +214,8 @@ def build_guided_context_bundle(
     token_metrics: Mapping[str, object] | None = None,
     acp_context: str = "",
     acp_metrics: Mapping[str, object] | None = None,
+    community_context: str = "",
+    community_metrics: Mapping[str, object] | None = None,
 ) -> dict[str, object]:
     mode = _normalize_source_mode(source_mode)
     readiness = build_context_readiness(
@@ -219,6 +225,7 @@ def build_guided_context_bundle(
         live_metrics=live_metrics or {},
         token_metrics=token_metrics or {},
         acp_metrics=acp_metrics or {},
+        community_metrics=community_metrics or {},
     )
     contexts = {
         "live": live_context.strip(),
@@ -226,6 +233,7 @@ def build_guided_context_bundle(
         "api": api_context.strip(),
         "token": token_context.strip(),
         "acp": acp_context.strip(),
+        "community": community_context.strip(),
     }
     context = _render_guided_context(
         source_mode=mode,
@@ -247,6 +255,7 @@ def build_guided_context_bundle(
         "live_metrics": deepcopy(dict(live_metrics or {})),
         "token_metrics": deepcopy(dict(token_metrics or {})),
         "acp_metrics": deepcopy(dict(acp_metrics or {})),
+        "community_metrics": deepcopy(dict(community_metrics or {})),
         "contexts": contexts,
         "context": context,
     }
@@ -304,6 +313,7 @@ def _normalize_source_mode(source_mode: str) -> str:
         "api only": "api",
         "acp evidence": "acp",
         "full evidence": "full",
+        "community pipeline": "community_pipeline",
     }
     normalized = aliases.get(mode, mode)
     return normalized if normalized in SOURCE_MODE_LABELS else "algorithm_api"
@@ -318,7 +328,28 @@ def _required_sections(source_mode: str) -> list[str]:
         return ["api"]
     if source_mode == "acp":
         return ["acp"]
+    if source_mode == "community_pipeline":
+        return ["community"]
     return ["algorithm", "api", "live", "token", "acp"]
+
+
+def _community_metric_status(metrics: Mapping[str, object]) -> dict[str, object]:
+    status = str(metrics.get("status") or "Needs tests")
+    if status == "Ready":
+        normalized = "Ready"
+    elif status == "Has failures":
+        normalized = "Has failures"
+    else:
+        normalized = "Needs tests"
+    return {
+        "status": normalized,
+        "label": str(metrics.get("label") or "Community Pipeline"),
+        "total": _number(metrics, "total"),
+        "passed": _number(metrics, "passed"),
+        "failed": _number(metrics, "failed"),
+        "evidence_modes": _mapping(metrics, "evidence_modes"),
+        "message": str(metrics.get("message") or "Rode member_engagement_score e community_bot_engine."),
+    }
 
 
 def _metric_status(
@@ -401,7 +432,14 @@ def _render_guided_context(
         "",
         "## Métricas",
         "",
-        _render_metrics(algorithm_metrics, api_metrics, live_metrics, token_metrics, acp_metrics),
+        _render_metrics(
+            algorithm_metrics,
+            api_metrics,
+            live_metrics,
+            token_metrics,
+            acp_metrics,
+            readiness.get("community", {}),
+        ),
         "",
         "## Bloqueios antes de implementar",
         "",
@@ -437,7 +475,7 @@ def _render_guided_context(
 
 def _render_readiness_lines(readiness: Mapping[str, object]) -> str:
     lines = []
-    for key in ("algorithm", "api", "live", "token", "acp"):
+    for key in ("algorithm", "api", "live", "token", "acp", "community"):
         item = readiness.get(key, {})
         lines.append(
             f"- {item.get('label', key)}: `{item.get('status', 'Needs tests')}` "
@@ -453,7 +491,9 @@ def _render_metrics(
     live_metrics: Mapping[str, object],
     token_metrics: Mapping[str, object],
     acp_metrics: Mapping[str, object],
+    community_readiness: Mapping[str, object] | None = None,
 ) -> str:
+    community = community_readiness or {}
     return "\n".join(
         [
             f"- Algorithm results: {_number(algorithm_metrics, 'total_results')} | passed={_number(algorithm_metrics, 'passed')} | failed={_number(algorithm_metrics, 'failed')}",
@@ -461,6 +501,7 @@ def _render_metrics(
             f"- Live tests: {_number(live_metrics, 'total_tests')} | success={_number(live_metrics, 'success')} | failures={_number(live_metrics, 'failures')}",
             f"- Token estimates: {_number(token_metrics, 'total_estimates')}",
             f"- ACP events: {_number(acp_metrics, 'total_events')} | successful_prompts={_number(acp_metrics, 'successful_prompts')} | permission_requests={_number(acp_metrics, 'permission_requests')} | modes={_render_modes(_mapping(acp_metrics, 'evidence_modes'))}",
+            f"- Community Pipeline: `{community.get('status', 'Needs tests')}` | total={community.get('total', 0)} | passed={community.get('passed', 0)} | failed={community.get('failed', 0)}",
         ]
     )
 
@@ -473,7 +514,7 @@ def _render_modes(modes: Mapping[str, object]) -> str:
 
 def _bundle_evidence_modes(bundle: Mapping[str, object]) -> dict[str, int]:
     modes: dict[str, int] = {}
-    for metrics_key in ("algorithm_metrics", "api_metrics", "live_metrics", "token_metrics", "acp_metrics"):
+    for metrics_key in ("algorithm_metrics", "api_metrics", "live_metrics", "token_metrics", "acp_metrics", "community_metrics"):
         metrics = bundle.get(metrics_key)
         if not isinstance(metrics, Mapping):
             continue
@@ -489,7 +530,7 @@ def _render_context_presence(contexts: Mapping[str, object]) -> str:
     if not contexts:
         return "- Nenhuma fonte de contexto anexada."
     lines = []
-    for key in ("algorithm", "api", "live", "token", "acp"):
+    for key in ("algorithm", "api", "live", "token", "acp", "community"):
         text = str(contexts.get(key) or "").strip()
         lines.append(f"- {SECTION_LABELS.get(key, key)}: {'incluida' if text else 'ausente'}")
     return "\n".join(lines)
@@ -509,24 +550,20 @@ def _render_blockers(missing: list[str], failures: list[str]) -> str:
 def _selected_contexts(source_mode: str, contexts: Mapping[str, str]) -> str:
     selected = _required_sections(source_mode)
     if source_mode == "full":
-        selected = ["algorithm", "api", "live", "token", "acp"]
+        selected = ["algorithm", "api", "live", "token", "acp", "community"]
+    if source_mode == "community_pipeline":
+        selected = ["community"]
     rendered = []
     for key in selected:
         text = contexts.get(key, "").strip()
-        label = {
-            "algorithm": "Algorithm Test Lab",
-            "api": "API Test Lab",
-            "live": "Live Observability",
-            "token": "Token Calculator",
-            "acp": "ACP Skill Executor",
-        }[key]
+        label = SECTION_LABELS.get(key, key)
         rendered.append(f"### {label}\n\n{text or '- Nenhum contexto disponível ainda.'}")
     return "\n\n".join(rendered)
 
 
 def _render_limitations(readiness: Mapping[str, object]) -> str:
     limitations = []
-    for key in ("algorithm", "api", "live", "token", "acp"):
+    for key in ("algorithm", "api", "live", "token", "acp", "community"):
         item = readiness.get(key, {})
         if item.get("status") != "Ready":
             limitations.append(f"- {item.get('label', key)}: {item.get('message', 'sem evidência suficiente')}")

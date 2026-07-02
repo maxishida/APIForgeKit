@@ -8,6 +8,7 @@ from nicegui import ui
 from core.acp_audit import build_acp_context
 from core.algorithm_test_lab import build_algorithm_context
 from core.api_test_lab import build_api_context
+from core.community_pipeline import build_community_pipeline_context, community_pipeline_metrics
 from core.context_builder import SOURCE_MODE_LABELS, build_final_ai_prompt, build_guided_context_bundle, export_guided_context_bundle
 from core.database import database_status
 from core.observability import build_live_context
@@ -66,18 +67,22 @@ def render_context_builder(services) -> None:
             token_modes[mode] = token_modes.get(mode, 0) + 1
         token_metrics = {"total_estimates": len(token_estimates), "evidence_modes": token_modes}
         acp_metrics = services.acp_audit_repository.metrics() if status["online"] else {"total_events": 0, "successful_prompts": 0, "failed_prompts": 0}
+        source_mode = source_options[str(selected_source.value)]
+        community_metrics = community_pipeline_metrics(services.algorithm_repository) if status["online"] else {}
         return build_guided_context_bundle(
-            source_mode=source_options[str(selected_source.value)],
+            source_mode=source_mode,
             live_context=build_live_context(runs, events),
             algorithm_context=build_algorithm_context(services.algorithm_repository, algorithm_name="lead_score") if status["online"] else "",
             api_context=build_api_context(services.api_test_repository) if status["online"] else "",
             token_context=build_token_usage_context(services.token_usage_repository) if status["online"] else "",
             acp_context=build_acp_context(services.acp_audit_repository) if status["online"] else "",
+            community_context=build_community_pipeline_context(services.algorithm_repository) if status["online"] else "",
             algorithm_metrics=algorithm_metrics,
             api_metrics=api_metrics,
             live_metrics=live_metrics,
             token_metrics=token_metrics,
             acp_metrics=acp_metrics,
+            community_metrics=community_metrics,
         )
 
     def render_summary(bundle: dict[str, object]) -> None:
@@ -109,6 +114,13 @@ def render_context_builder(services) -> None:
                 f"{bundle['acp_metrics'].get('successful_prompts', 0)} prompts OK / {bundle['acp_metrics'].get('permission_requests', 0)} gates",
                 _status_color(readiness["acp"]["status"]),
             )
+            if "community" in readiness:
+                metric_card(
+                    "Community Pipeline",
+                    bundle.get("community_metrics", {}).get("ready_count", 0),
+                    str(bundle.get("community_metrics", {}).get("message", "Score + Bot Engine")),
+                    _status_color(readiness["community"]["status"]),
+                )
 
     def render_workflow(bundle: dict[str, object]) -> None:
         readiness = bundle["readiness"]

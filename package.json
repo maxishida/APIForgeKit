@@ -12,6 +12,7 @@
     "test:docker": "node scripts/test_mvp.js",
     "algorithm:suite": "python run_algorithm_lab.py --suite lead_score --export",
     "bot:suite": "python scripts/run_community_bot_suite.py",
+    "community:pipeline": "python scripts/run_community_pipeline.py",
     "voice:run": "python run_xai_voice.py --export-report",
     "acp": "python -m agents.acp_agent",
     "acp:prompt": "python run_acp_prompt.py",

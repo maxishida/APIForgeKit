@@ -16,6 +16,14 @@ from core.community_bot_seed import (
     COMMUNITY_BOT_OUTPUT_SCHEMA,
     DEFAULT_COMMUNITY_BOT_CASES,
 )
+from core.member_engagement_score import MemberEngagementInput, calculate_member_engagement_score
+from core.member_engagement_seed import (
+    DEFAULT_MEMBER_ENGAGEMENT_CASES,
+    MEMBER_ENGAGEMENT_INPUT_SCHEMA,
+    MEMBER_ENGAGEMENT_NEXTJS_FILES,
+    MEMBER_ENGAGEMENT_OUTPUT_SCHEMA,
+    MEMBER_ENGAGEMENT_RULES,
+)
 from core.lead_algorithm import LeadInput, SPAM_PATTERNS, calculate_lead_score
 from core.models import AlgorithmDefinition, AlgorithmTestCase, AlgorithmTestResult, AlgorithmTestRun
 
@@ -613,6 +621,8 @@ class AlgorithmTestRunner:
             expected = dict(case["expected_output"])
             if definition["name"] == "community_bot_engine":
                 diff = validate_community_expected_output(expected, actual)
+            elif definition["name"] == "member_engagement_score":
+                diff = validate_member_engagement_expected(expected, actual)
             else:
                 diff = validate_expected_output(expected, actual)
             invariants = _algorithm_invariants(str(definition["name"]), dict(case["input_payload"]), actual)
@@ -697,10 +707,28 @@ def ensure_default_algorithms(repository: AlgorithmTestRepository) -> None:
         if case["name"] not in bot_existing:
             repository.create_case(algorithm_id=bot_definition["id"], **case)
 
+    try:
+        member_definition = repository.get_definition_by_name("member_engagement_score")
+    except ValueError:
+        member_definition = repository.create_definition(
+            name="member_engagement_score",
+            description="Score determinístico de engajamento do membro para organizar tiers e elegibilidade do Bot Engine.",
+            input_schema=MEMBER_ENGAGEMENT_INPUT_SCHEMA,
+            output_schema=MEMBER_ENGAGEMENT_OUTPUT_SCHEMA,
+            rules=MEMBER_ENGAGEMENT_RULES,
+            nextjs_files=MEMBER_ENGAGEMENT_NEXTJS_FILES,
+        )
+    member_existing = {case["name"] for case in repository.list_cases(member_definition["id"])}
+    for case in DEFAULT_MEMBER_ENGAGEMENT_CASES:
+        if case["name"] not in member_existing:
+            repository.create_case(algorithm_id=member_definition["id"], **case)
+
 
 def run_algorithm(name: str, input_payload: dict[str, object]) -> dict[str, object]:
     if name == "community_bot_engine":
         return _run_community_bot_engine(input_payload)
+    if name == "member_engagement_score":
+        return _run_member_engagement_score(input_payload)
     if name != "lead_score":
         raise ValueError(f"Unsupported algorithm: {name}")
     _validate_required_fields(input_payload, LEAD_SCORE_INPUT_SCHEMA["required"])
@@ -775,6 +803,55 @@ def _run_community_bot_engine(input_payload: dict[str, object]) -> dict[str, obj
             "user_updates": user_payload,
             "error": str(exc),
         }
+
+
+def _run_member_engagement_score(input_payload: dict[str, object]) -> dict[str, object]:
+    try:
+        member = MemberEngagementInput(
+            member_id=str(input_payload.get("member_id", "")),
+            username=_optional_string(input_payload.get("username", ""), "username"),
+            posts_count=int(input_payload.get("posts_count", 0) or 0),
+            theories_count=int(input_payload.get("theories_count", 0) or 0),
+            likes_received=int(input_payload.get("likes_received", 0) or 0),
+            comments_received=int(input_payload.get("comments_received", 0) or 0),
+            days_active_streak=int(input_payload.get("days_active_streak", 0) or 0),
+            days_inactive=int(input_payload.get("days_inactive", 0) or 0),
+            badges_count=int(input_payload.get("badges_count", 0) or 0),
+            has_first_post=bool(input_payload.get("has_first_post", False)),
+            has_first_theory=bool(input_payload.get("has_first_theory", False)),
+            spam_flag=_optional_string(input_payload.get("spam_flag", ""), "spam_flag"),
+        )
+        return calculate_member_engagement_score(member).to_dict()
+    except ValueError as exc:
+        return {
+            "member_id": str(input_payload.get("member_id", "")),
+            "score": 0,
+            "tier": "Visitor",
+            "status": "invalid_input",
+            "classification": "Visitor",
+            "reasons": [str(exc)],
+            "recommended_action": "",
+            "bot_eligible": False,
+            "error": str(exc),
+        }
+
+
+def validate_member_engagement_expected(expected: dict[str, object], actual: dict[str, object]) -> dict[str, object]:
+    mismatches: list[dict[str, object]] = []
+    base = validate_expected_output(
+        {key: value for key, value in expected.items() if key in {"classification", "status", "tier", "bot_eligible", "score"}},
+        actual,
+    )
+    mismatches.extend(base.get("mismatches", []))
+    if "min_score" in expected:
+        score = actual.get("score")
+        if not isinstance(score, (int, float)) or score < expected["min_score"]:
+            mismatches.append({"field": "score", "expected": f">= {expected['min_score']}", "actual": score})
+    if "max_score" in expected:
+        score = actual.get("score")
+        if not isinstance(score, (int, float)) or score > expected["max_score"]:
+            mismatches.append({"field": "score", "expected": f"<= {expected['max_score']}", "actual": score})
+    return {"passed": not mismatches, "mismatches": mismatches}
 
 
 def validate_community_expected_output(expected: dict[str, object], actual: dict[str, object]) -> dict[str, object]:
@@ -876,10 +953,37 @@ def _nextjs_impact_for_algorithm(name: str) -> str:
             "Implementar Community Bot Engine em TypeScript com EventTrackingService, "
             "BotRulesEngine, ConditionEvaluator, BotActionExecutor e logs em PostgreSQL."
         )
+    if name == "member_engagement_score":
+        return (
+            "Implementar member_engagement_score em TypeScript; alimentar user.engagementScore "
+            "e user.engagementTier consumidos pelo Bot Engine."
+        )
     return "Implementar lógica determinística em /lib/lead-score.ts e cobrir estes casos em testes unitários."
 
 
 def _algorithm_invariants(name: str, input_payload: dict[str, object], actual: dict[str, object]) -> dict[str, object]:
+    if name == "member_engagement_score":
+        if actual.get("status") == "invalid_input":
+            return {
+                "payload_validated": True,
+                "deterministic": True,
+                "score_clamped": True,
+                "tier_valid": True,
+            }
+        second = run_algorithm(name, dict(input_payload))
+        stable_fields = ("score", "tier", "status", "reasons", "recommended_action", "bot_eligible")
+        deterministic = {field: actual.get(field) for field in stable_fields} == {
+            field: second.get(field) for field in stable_fields
+        }
+        score = actual.get("score")
+        tier = actual.get("tier")
+        valid_tiers = {"Visitor", "Resident", "Theorist", "Legend"}
+        return {
+            "payload_validated": actual.get("status") != "invalid_input",
+            "deterministic": deterministic,
+            "score_clamped": isinstance(score, int) and 0 <= score <= 100,
+            "tier_valid": tier in valid_tiers,
+        }
     if name == "community_bot_engine":
         if actual.get("status") == "invalid_event":
             return {
@@ -1024,6 +1128,8 @@ def summarize_algorithm_invariants(results: list[dict[str, object]]) -> dict[str
             "cooldown_enforced",
             "all_actions_logged",
         ]
+    elif "tier_valid" in sample:
+        invariant_names = ["payload_validated", "deterministic", "score_clamped", "tier_valid"]
     else:
         invariant_names = ["payload_validated", "deterministic", "score_clamped", "invalid_override_checked"]
     summary: dict[str, object] = {"total": len(results), "failed": 0, "all_passed": False}
@@ -1083,6 +1189,7 @@ def build_algorithm_context(repository: AlgorithmTestRepository, limit: int = 10
     for key, label in (
         ("score_clamped", "Score 0-100"),
         ("invalid_override_checked", "Invalid override"),
+        ("tier_valid", "Tier válido"),
         ("idempotency_enforced", "Idempotência"),
         ("cooldown_enforced", "Cooldown"),
         ("all_actions_logged", "Logs completos"),

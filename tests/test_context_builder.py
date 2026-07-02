@@ -132,6 +132,47 @@ def test_guided_context_builder_exports_markdown_json_html_and_zip(tmp_path):
     assert "lead_score passou" in payload["context"]
 
 
+def test_community_pipeline_mode_requires_both_suites_ready():
+    readiness = build_context_readiness(
+        source_mode="community_pipeline",
+        algorithm_metrics={"total_results": 0, "passed": 0, "failed": 0},
+        api_metrics={"total_results": 0, "passed": 0, "failed": 0},
+        community_metrics={"status": "Needs tests", "total": 0, "passed": 0, "failed": 0},
+    )
+    assert readiness["overall"]["status"] == "Needs tests"
+    assert readiness["community"]["status"] == "Needs tests"
+
+
+def test_community_pipeline_mode_marks_ready_when_both_suites_pass():
+    bundle = build_guided_context_bundle(
+        source_mode="community_pipeline",
+        live_context="",
+        algorithm_context="",
+        api_context="",
+        token_context="",
+        community_context="# Community\n\n- member_engagement_score passou\n- community_bot_engine passou",
+        algorithm_metrics={"total_results": 0, "passed": 0, "failed": 0},
+        api_metrics={"total_results": 0, "passed": 0, "failed": 0},
+        live_metrics={"total_tests": 0, "success": 0, "failures": 0},
+        token_metrics={"total_estimates": 0},
+        community_metrics={
+            "status": "Ready",
+            "total": 27,
+            "passed": 27,
+            "failed": 0,
+            "ready_count": 2,
+            "required_algorithms": 2,
+            "evidence_modes": {"seed_validation": 27},
+        },
+    )
+
+    assert bundle["readiness"]["overall"]["status"] == "Ready"
+    assert bundle["source_mode"] == "community_pipeline"
+    assert "Community Pipeline" in bundle["context"]
+    assert "member_engagement_score passou" in bundle["context"]
+    assert "community_bot_engine passou" in bundle["context"]
+
+
 def test_final_ai_prompt_is_short_and_evidence_bounded():
     bundle = build_guided_context_bundle(
         source_mode="algorithm_api",
