@@ -52,6 +52,7 @@ NAV_ITEMS = (
     ("Voice Lab", "/voice-lab", "graphic_eq"),
     ("Generic API Lab", "/api-test-lab", "api"),
     ("Algorithm Test Lab", "/algorithm-test-lab", "rule"),
+    ("Community Bot Lab", "/community-bot-lab", "smart_toy"),
     ("Token Calculator", "/token-calculator", "calculate"),
     ("Logs", "/logs", "terminal"),
     ("Context Builder", "/context-builder", "integration_instructions"),

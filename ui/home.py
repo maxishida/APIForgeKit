@@ -66,6 +66,17 @@ def render_home(services) -> None:
             accent="#10B981",
         )
         _track_card(
+            title="Community Bot Lab",
+            badge="Vice City NPC",
+            caption="Teste o motor de bots oficiais — eventos, regras, missões, badges e logs sem IA.",
+            primary_label="Open Bot Lab",
+            primary_icon="smart_toy",
+            primary_action=lambda: ui.navigate.to("/community-bot-lab"),
+            secondary_label="Run Suite",
+            secondary_target="/community-bot-lab",
+            accent="#8B5CF6",
+        )
+        _track_card(
             title="Generic API Lab",
             badge="HTTP + Dry-run",
             caption="Valide APIs, webhooks e contratos como WhatsApp antes de conectar no SaaS real.",

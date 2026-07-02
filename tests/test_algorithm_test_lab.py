@@ -160,6 +160,24 @@ def test_single_case_execution_records_validation_error_without_crashing():
     assert result["diff"]["mismatches"][0]["field"] == "input_payload"
 
 
+def test_community_bot_engine_suite_passes_all_seed_cases():
+    repository = _repository()
+    ensure_default_algorithms(repository)
+    runner = AlgorithmTestRunner(repository)
+
+    definition = repository.get_definition_by_name("community_bot_engine")
+    cases = repository.list_cases(definition["id"])
+    run = runner.run_suite(definition["id"])
+    results = repository.list_results(algorithm_id=definition["id"], limit=30)
+
+    assert len(cases) == 15
+    assert run["status"] == "passed"
+    assert run["passed"] == 15
+    assert run["failed"] == 0
+    summary = summarize_algorithm_invariants(results)
+    assert summary["all_passed"] is True
+
+
 def test_algorithm_context_includes_rules_results_edge_cases_and_nextjs_files():
     repository = _repository()
     ensure_default_algorithms(repository)

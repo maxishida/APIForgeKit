@@ -31,7 +31,8 @@ O objetivo é simples: **economizar tempo e tokens de LLM usando evidência real
 
 ## O Que Dá Para Fazer
 
-- **Algorithm Test Lab:** valida algoritmos determinísticos, como `lead_score`, com input, expected output, actual output, diff e invariantes.
+- **Algorithm Test Lab:** valida algoritmos determinísticos, como `lead_score` e `community_bot_engine`, com input, expected output, actual output, diff e invariantes.
+- **Community Bot Lab:** testa o Vice City NPC Engine — eventos, regras, bots oficiais, sandbox e suíte 15/15 sem IA.
 - **Generic API Lab:** testa contratos de APIs/webhooks em `dry_run_contract` ou HTTP real com permissão.
 - **Live Dashboard:** mostra métricas, eventos, latência, falhas recentes e modos de evidência.
 - **Logs:** permite buscar e filtrar JSON estruturado por provider, módulo, status, latência e `evidence_mode`.
@@ -84,6 +85,7 @@ npm run db              # sobe PostgreSQL
 npm run dev             # roda o Studio
 npm run test            # roda a suíte de testes
 npm run algorithm:suite # valida lead_score e exporta evidência
+npm run bot:suite       # valida community_bot_engine e exporta evidência
 npm run voice:run       # roda xAI Voice Lab real com XAI_API_KEY
 npm run ui:smoke        # valida rotas principais com a UI já rodando
 npm run ui:smoke:local  # sobe a UI se necessário e valida rotas
@@ -128,6 +130,7 @@ python run_acp_prompt.py "/validate-voice-roundtrip"
 ## O Que Está Pronto no MVP
 
 - `lead_score` com 17 casos canônicos e invariantes.
+- `community_bot_engine` com 15 casos seed (Vice City NPC Engine) e UI em `/community-bot-lab`.
 - API contract pack de WhatsApp em `dry_run_contract`.
 - Context Builder com export Markdown, JSON, HTML e ZIP.
 - Context Builder com `Generate AI Prompt` para entregar instruções curtas e baseadas em evidência para outra IA.
@@ -161,6 +164,7 @@ A raiz fica curta de propósito:
 - [docs/DEMO_SCRIPT.md](./docs/DEMO_SCRIPT.md): roteiro para demo ou vídeo.
 - [docs/ACP_AGENT_ARCHITECTURE.md](./docs/ACP_AGENT_ARCHITECTURE.md): detalhes do executor ACP.
 - [docs/OBSIDIAN_CONTEXT_BRAIN.md](./docs/OBSIDIAN_CONTEXT_BRAIN.md): cérebro operacional no Obsidian, sync e retomada de contexto.
+- [docs/COMMUNITY_BOT_ENGINE.md](./docs/COMMUNITY_BOT_ENGINE.md): Vice City NPC Engine — lab, suíte, download e handoff para IDE.
 
 ## Retomar Com Obsidian
 

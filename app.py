@@ -7,6 +7,7 @@ from core.acp_audit import AcpAuditRepository
 from core.algorithm_test_lab import AlgorithmTestRepository, ensure_default_algorithms
 from core.api_test_lab import ApiTestRepository, ensure_default_api_suites
 from core.config import get_settings
+from core.report_downloads import register_report_download_routes
 from core.database import build_engine, build_session_factory, database_status, init_db
 from core.observability import ObservabilityRepository
 from core.repositories import LeadTestRepository
@@ -14,6 +15,7 @@ from core.token_usage import TokenUsageRepository
 from ui.app_shell import AppServices, render_shell, set_services
 from ui.api_lab import render_api_lab
 from ui.algorithm_lab import render_algorithm_lab
+from ui.community_bot_lab import render_community_bot_lab
 from ui.blueprint import render_blueprint
 from ui.context_builder import render_context_builder
 from ui.home import render_home
@@ -122,6 +124,17 @@ def algorithm_test_lab_page() -> None:
     )
 
 
+@ui.page("/community-bot-lab")
+def community_bot_lab_page() -> None:
+    apply_theme()
+    render_shell(
+        "Community Bot Lab",
+        "Vice City NPC Engine",
+        "Teste o Community Bot Engine — eventos, regras, bots oficiais e logs",
+        lambda: render_community_bot_lab(_services()),
+    )
+
+
 @ui.page("/token-calculator")
 def token_calculator_page() -> None:
     apply_theme()
@@ -193,6 +206,9 @@ def _services() -> AppServices:
     from ui.app_shell import get_services
 
     return get_services()
+
+
+register_report_download_routes()
 
 
 if __name__ in {"__main__", "__mp_main__"}:

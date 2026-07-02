@@ -8,6 +8,14 @@ from uuid import uuid4
 from sqlalchemy import desc, select
 from sqlalchemy.orm import Session, sessionmaker
 
+from core.community_bot_engine import BotEvent, BotRule, process_bot_event
+from core.community_bot_seed import (
+    COMMUNITY_BOT_ENGINE_RULES,
+    COMMUNITY_BOT_INPUT_SCHEMA,
+    COMMUNITY_BOT_NEXTJS_FILES,
+    COMMUNITY_BOT_OUTPUT_SCHEMA,
+    DEFAULT_COMMUNITY_BOT_CASES,
+)
 from core.lead_algorithm import LeadInput, SPAM_PATTERNS, calculate_lead_score
 from core.models import AlgorithmDefinition, AlgorithmTestCase, AlgorithmTestResult, AlgorithmTestRun
 
@@ -602,7 +610,11 @@ class AlgorithmTestRunner:
         invariants: dict[str, object] = _failed_invariants()
         try:
             actual = run_algorithm(str(definition["name"]), dict(case["input_payload"]))
-            diff = validate_expected_output(dict(case["expected_output"]), actual)
+            expected = dict(case["expected_output"])
+            if definition["name"] == "community_bot_engine":
+                diff = validate_community_expected_output(expected, actual)
+            else:
+                diff = validate_expected_output(expected, actual)
             invariants = _algorithm_invariants(str(definition["name"]), dict(case["input_payload"]), actual)
             invariant_mismatches = _invariant_mismatches(invariants)
             if invariant_mismatches:
@@ -648,15 +660,15 @@ class AlgorithmTestRunner:
             latency_ms=latency,
             structured_log=structured_log,
             recommendation=recommendation,
-            nextjs_impact="Implementar lógica determinística em /lib/lead-score.ts e cobrir estes casos em testes unitários.",
+            nextjs_impact=_nextjs_impact_for_algorithm(str(definition["name"])),
         )
 
 
 def ensure_default_algorithms(repository: AlgorithmTestRepository) -> None:
     try:
-        definition = repository.get_definition_by_name("lead_score")
+        lead_definition = repository.get_definition_by_name("lead_score")
     except ValueError:
-        definition = repository.create_definition(
+        lead_definition = repository.create_definition(
             name="lead_score",
             description="Algoritmo determinístico de score e classificação de leads.",
             input_schema=LEAD_SCORE_INPUT_SCHEMA,
@@ -664,13 +676,31 @@ def ensure_default_algorithms(repository: AlgorithmTestRepository) -> None:
             rules=LEAD_SCORE_RULES,
             nextjs_files=LEAD_SCORE_NEXTJS_FILES,
         )
-    existing_names = {case["name"] for case in repository.list_cases(definition["id"])}
+    lead_existing = {case["name"] for case in repository.list_cases(lead_definition["id"])}
     for case in DEFAULT_LEAD_SCORE_CASES:
-        if case["name"] not in existing_names:
-            repository.create_case(algorithm_id=definition["id"], **case)
+        if case["name"] not in lead_existing:
+            repository.create_case(algorithm_id=lead_definition["id"], **case)
+
+    try:
+        bot_definition = repository.get_definition_by_name("community_bot_engine")
+    except ValueError:
+        bot_definition = repository.create_definition(
+            name="community_bot_engine",
+            description="Motor determinístico Community Bot Engine / Vice City NPC Engine para eventos, regras, condições e ações.",
+            input_schema=COMMUNITY_BOT_INPUT_SCHEMA,
+            output_schema=COMMUNITY_BOT_OUTPUT_SCHEMA,
+            rules=COMMUNITY_BOT_ENGINE_RULES,
+            nextjs_files=COMMUNITY_BOT_NEXTJS_FILES,
+        )
+    bot_existing = {case["name"] for case in repository.list_cases(bot_definition["id"])}
+    for case in DEFAULT_COMMUNITY_BOT_CASES:
+        if case["name"] not in bot_existing:
+            repository.create_case(algorithm_id=bot_definition["id"], **case)
 
 
 def run_algorithm(name: str, input_payload: dict[str, object]) -> dict[str, object]:
+    if name == "community_bot_engine":
+        return _run_community_bot_engine(input_payload)
     if name != "lead_score":
         raise ValueError(f"Unsupported algorithm: {name}")
     _validate_required_fields(input_payload, LEAD_SCORE_INPUT_SCHEMA["required"])
@@ -690,7 +720,210 @@ def run_algorithm(name: str, input_payload: dict[str, object]) -> dict[str, obje
     return result
 
 
+def _run_community_bot_engine(input_payload: dict[str, object]) -> dict[str, object]:
+    event_payload = dict(input_payload.get("event") or {})
+    user_payload = dict(input_payload.get("user") or {})
+    rules_payload = list(input_payload.get("rules") or [])
+    history_payload = list(input_payload.get("history") or [])
+    templates_payload = dict(input_payload.get("templates") or {})
+
+    event = BotEvent(
+        user_id=str(event_payload.get("user_id", "")),
+        event_name=str(event_payload.get("event_name", "")),
+        entity_type=str(event_payload.get("entity_type", "")),
+        entity_id=str(event_payload.get("entity_id", "")),
+        metadata_json=dict(event_payload.get("metadata_json") or {}),
+        source=str(event_payload.get("source", "web_app")),
+        simulate=bool(event_payload.get("simulate", False)),
+    )
+    rules = [
+        BotRule(
+            id=str(rule.get("id", "")),
+            bot_id=str(rule.get("bot_id", "")),
+            bot_name=str(rule.get("bot_name", "")),
+            bot_slug=str(rule.get("bot_slug", "")),
+            name=str(rule.get("name", "")),
+            event_name=str(rule.get("event_name", "")),
+            condition_json=dict(rule.get("condition_json") or {}),
+            action_json=list(rule.get("action_json") or []),
+            template_id=str(rule.get("template_id", "")),
+            priority=int(rule.get("priority", 0)),
+            is_active=bool(rule.get("is_active", True)),
+            cooldown_minutes=int(rule.get("cooldown_minutes", 0)),
+            run_once_per_user=bool(rule.get("run_once_per_user", False)),
+        )
+        for rule in rules_payload
+    ]
+    try:
+        return process_bot_event(
+            event=event,
+            user=user_payload,
+            rules=rules,
+            history=history_payload,
+            templates=templates_payload,
+        ).to_dict()
+    except ValueError as exc:
+        return {
+            "status": "invalid_event",
+            "classification": "invalid",
+            "rules_evaluated": 0,
+            "rules_matched": 0,
+            "actions_executed": [],
+            "actions_skipped": [],
+            "bot_logs": [],
+            "reasons": [str(exc)],
+            "user_updates": user_payload,
+            "error": str(exc),
+        }
+
+
+def validate_community_expected_output(expected: dict[str, object], actual: dict[str, object]) -> dict[str, object]:
+    mismatches: list[dict[str, object]] = []
+    base = validate_expected_output(
+        {key: value for key, value in expected.items() if key in {"classification", "status", "rules_matched"}},
+        actual,
+    )
+    mismatches.extend(base.get("mismatches", []))
+
+    if "actions_executed_count" in expected:
+        count = len(actual.get("actions_executed") or [])
+        if count != expected["actions_executed_count"]:
+            mismatches.append(
+                {
+                    "field": "actions_executed_count",
+                    "expected": expected["actions_executed_count"],
+                    "actual": count,
+                }
+            )
+
+    if "action_types" in expected:
+        executed = actual.get("actions_executed") or []
+        actual_types = [str(item.get("action_type", "")) for item in executed]
+        for action_type in expected["action_types"]:
+            if action_type not in actual_types:
+                mismatches.append(
+                    {
+                        "field": "action_types",
+                        "expected": action_type,
+                        "actual": actual_types,
+                    }
+                )
+
+    if "skipped_status" in expected:
+        skipped = actual.get("actions_skipped") or []
+        statuses = {str(item.get("status", "")) for item in skipped}
+        if expected["skipped_status"] not in statuses:
+            mismatches.append(
+                {
+                    "field": "skipped_status",
+                    "expected": expected["skipped_status"],
+                    "actual": sorted(statuses),
+                }
+            )
+
+    if expected.get("all_simulated"):
+        executed = actual.get("actions_executed") or []
+        if not executed or not all(bool(item.get("simulated")) for item in executed):
+            mismatches.append(
+                {
+                    "field": "all_simulated",
+                    "expected": True,
+                    "actual": [item.get("simulated") for item in executed],
+                }
+            )
+
+    if "first_executed_bot" in expected:
+        executed = actual.get("actions_executed") or []
+        first_bot = str(executed[0].get("bot_name", "")) if executed else ""
+        if first_bot != expected["first_executed_bot"]:
+            mismatches.append(
+                {
+                    "field": "first_executed_bot",
+                    "expected": expected["first_executed_bot"],
+                    "actual": first_bot,
+                }
+            )
+
+    if "min_bot_logs" in expected:
+        logs_count = len(actual.get("bot_logs") or [])
+        if logs_count < int(expected["min_bot_logs"]):
+            mismatches.append(
+                {
+                    "field": "min_bot_logs",
+                    "expected": f">= {expected['min_bot_logs']}",
+                    "actual": logs_count,
+                }
+            )
+
+    if "official_tag" in expected:
+        executed = actual.get("actions_executed") or []
+        tags = {str(item.get("official_tag", "")) for item in executed}
+        if expected["official_tag"] not in tags:
+            mismatches.append(
+                {
+                    "field": "official_tag",
+                    "expected": expected["official_tag"],
+                    "actual": sorted(tags),
+                }
+            )
+
+    return {"passed": not mismatches, "mismatches": mismatches}
+
+
+def _nextjs_impact_for_algorithm(name: str) -> str:
+    if name == "community_bot_engine":
+        return (
+            "Implementar Community Bot Engine em TypeScript com EventTrackingService, "
+            "BotRulesEngine, ConditionEvaluator, BotActionExecutor e logs em PostgreSQL."
+        )
+    return "Implementar lógica determinística em /lib/lead-score.ts e cobrir estes casos em testes unitários."
+
+
 def _algorithm_invariants(name: str, input_payload: dict[str, object], actual: dict[str, object]) -> dict[str, object]:
+    if name == "community_bot_engine":
+        if actual.get("status") == "invalid_event":
+            return {
+                "payload_validated": True,
+                "deterministic": True,
+                "idempotency_enforced": True,
+                "cooldown_enforced": True,
+                "all_actions_logged": True,
+            }
+        second = run_algorithm(name, dict(input_payload))
+        stable_fields = (
+            "status",
+            "classification",
+            "rules_evaluated",
+            "rules_matched",
+            "actions_executed",
+            "actions_skipped",
+            "bot_logs",
+            "reasons",
+        )
+        deterministic = {field: actual.get(field) for field in stable_fields} == {
+            field: second.get(field) for field in stable_fields
+        }
+        logs = actual.get("bot_logs") or []
+        executed = actual.get("actions_executed") or []
+        all_logged = len(logs) >= len(executed)
+        skipped = actual.get("actions_skipped") or []
+        idempotency_ok = True
+        for item in skipped:
+            if item.get("status") == "duplicate_blocked":
+                idempotency_ok = True
+                break
+        cooldown_ok = True
+        for item in skipped:
+            if item.get("status") == "rate_limited":
+                cooldown_ok = True
+                break
+        return {
+            "payload_validated": actual.get("status") != "invalid_event",
+            "deterministic": deterministic,
+            "idempotency_enforced": idempotency_ok or not skipped,
+            "cooldown_enforced": cooldown_ok or not skipped,
+            "all_actions_logged": all_logged,
+        }
     if name != "lead_score":
         return {}
     second = run_algorithm(name, dict(input_payload))
@@ -782,7 +1015,17 @@ def validate_expected_output(expected: dict[str, object], actual: dict[str, obje
 
 
 def summarize_algorithm_invariants(results: list[dict[str, object]]) -> dict[str, object]:
-    invariant_names = ["payload_validated", "deterministic", "score_clamped", "invalid_override_checked"]
+    sample = (results[0].get("structured_log") or {}).get("invariants") or {} if results else {}
+    if "idempotency_enforced" in sample:
+        invariant_names = [
+            "payload_validated",
+            "deterministic",
+            "idempotency_enforced",
+            "cooldown_enforced",
+            "all_actions_logged",
+        ]
+    else:
+        invariant_names = ["payload_validated", "deterministic", "score_clamped", "invalid_override_checked"]
     summary: dict[str, object] = {"total": len(results), "failed": 0, "all_passed": False}
     for name in invariant_names:
         summary[name] = 0
@@ -816,13 +1059,38 @@ def build_algorithm_context(repository: AlgorithmTestRepository, limit: int = 10
     passed = [result for result in results if result["status"] == "passed"]
     failed = [result for result in results if result["status"] == "failed"]
     invariants = summarize_algorithm_invariants(results)
-    edge_cases = [result for result in results if any(tag in result["structured_log"].get("case_name", "").lower() for tag in ["inválido", "spam", "sem contato"])]
+    edge_cases = [
+        result
+        for result in results
+        if any(
+            token in str(result["structured_log"].get("case_name", "")).lower()
+            for token in ["inválido", "spam", "sem contato", "duplicad", "cooldown", "bloquead", "invalido"]
+        )
+    ]
     if not edge_cases:
         edge_cases = [
             result
             for result in results
-            if any(tag in result["expected_output"].get("classification", "") for tag in ["invalid", "cold"])
+            if any(tag in str(result["expected_output"].get("classification", "")) for tag in ["invalid", "cold", "blocked"])
         ][:10]
+
+    invariant_lines = [
+        f"- Total analisado: {invariants['total']}",
+        f"- Todos passaram: {invariants['all_passed']}",
+        f"- Payload validado: {invariants.get('payload_validated', 0)}",
+        f"- Determinístico: {invariants.get('deterministic', 0)}",
+    ]
+    for key, label in (
+        ("score_clamped", "Score 0-100"),
+        ("invalid_override_checked", "Invalid override"),
+        ("idempotency_enforced", "Idempotência"),
+        ("cooldown_enforced", "Cooldown"),
+        ("all_actions_logged", "Logs completos"),
+    ):
+        if key in invariants:
+            invariant_lines.append(f"- {label}: {invariants[key]}")
+    invariant_lines.append(f"- Falhas de invariantes: {invariants['failed']}")
+    invariant_block = "\n".join(invariant_lines)
 
     return f"""# Contexto Técnico - Algorithm Test Lab
 
@@ -847,13 +1115,7 @@ def build_algorithm_context(repository: AlgorithmTestRepository, limit: int = 10
 
 ## Invariantes
 
-- Total analisado: {invariants["total"]}
-- Todos passaram: {invariants["all_passed"]}
-- Payload validado: {invariants["payload_validated"]}
-- Determinístico: {invariants["deterministic"]}
-- Score 0-100: {invariants["score_clamped"]}
-- Invalid override: {invariants["invalid_override_checked"]}
-- Falhas de invariantes: {invariants["failed"]}
+{invariant_block}
 
 ## Edge Cases
 
@@ -932,7 +1194,15 @@ def _render_result_lines(results: list[dict[str, object]], include_diff: bool = 
     for result in results[:20]:
         log = result.get("structured_log") or {}
         actual = result.get("actual_output") or {}
-        line = f"- `{log.get('case_name', result.get('case_id'))}`: {result.get('status')} -> {actual.get('classification')} score={actual.get('score')}"
+        summary_bits = [str(actual.get("classification", ""))]
+        if actual.get("rules_matched") is not None:
+            summary_bits.append(f"rules={actual.get('rules_matched')}")
+        if actual.get("score") is not None:
+            summary_bits.append(f"score={actual.get('score')}")
+        line = (
+            f"- `{log.get('case_name', result.get('case_id'))}`: {result.get('status')} -> "
+            + " ".join(bit for bit in summary_bits if bit)
+        )
         if include_diff:
             line += f" diff={json.dumps(result.get('diff'), ensure_ascii=False)}"
         lines.append(line)

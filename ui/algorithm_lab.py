@@ -35,7 +35,8 @@ def render_algorithm_lab(services) -> None:
         return
 
     definition_by_label = {definition["name"]: definition for definition in definitions}
-    selected_algorithm = ui.select(list(definition_by_label), value=definitions[0]["name"], label="Selecionar algoritmo").classes("w-full")
+    default_algo = "community_bot_engine" if "community_bot_engine" in definition_by_label else definitions[0]["name"]
+    selected_algorithm = ui.select(list(definition_by_label), value=default_algo, label="Selecionar algoritmo").classes("w-full")
 
     metrics_container = ui.grid(columns=4).classes("w-full gap-4")
     editor_container = ui.column().classes("afk-card w-full gap-4").style("padding:18px;")
@@ -101,6 +102,7 @@ def render_algorithm_lab(services) -> None:
                     "afk-primary-btn"
                 )
                 ui.button("Run Canonical lead_score", icon="verified", on_click=run_canonical_lead_score).classes("afk-primary-btn")
+                ui.button("Community Bot Lab", icon="smart_toy", on_click=lambda: ui.navigate.to("/community-bot-lab")).classes("afk-ghost-btn")
                 ui.button("Run Canonical Suite", icon="playlist_play", on_click=lambda: run_suite(definition)).classes("afk-primary-btn")
                 ui.button("Export Evidence Pack", icon="inventory_2", on_click=lambda: export_evidence_pack(definition)).classes("afk-ghost-btn")
                 ui.button("Export Suite JSON", icon="download", on_click=lambda: export_suite(definition)).classes("afk-ghost-btn")
@@ -128,12 +130,18 @@ def render_algorithm_lab(services) -> None:
                 if latest_run and latest_run[0]["status"] == "passed" and invariant_summary["all_passed"]:
                     ui.html("<span class='afk-badge' style='color:#10B981'>Ready for implementation context</span>")
             with ui.row().classes("gap-2"):
-                for label, key in [
-                    ("Payload", "payload_validated"),
-                    ("Deterministic", "deterministic"),
-                    ("Score 0-100", "score_clamped"),
-                    ("Invalid Override", "invalid_override_checked"),
-                ]:
+                invariant_labels = {
+                    "payload_validated": "Payload",
+                    "deterministic": "Deterministic",
+                    "score_clamped": "Score 0-100",
+                    "invalid_override_checked": "Invalid Override",
+                    "idempotency_enforced": "Idempotência",
+                    "cooldown_enforced": "Cooldown",
+                    "all_actions_logged": "Logs",
+                }
+                for key, label in invariant_labels.items():
+                    if key not in invariant_summary:
+                        continue
                     value = invariant_summary[key]
                     color = "#10B981" if invariant_summary["total"] and value == invariant_summary["total"] else "#F59E0B"
                     ui.html(f"<span class='afk-badge' style='color:{color}'>{label}: {value}/{invariant_summary['total']}</span>")

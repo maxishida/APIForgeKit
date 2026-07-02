@@ -7,8 +7,8 @@ Transformar o APIForgeKit Studio em um jeito simples de validar algoritmos usand
 Status atual:
 
 - Algorithm Test Lab implementado em `/algorithm-test-lab`.
-- Primeiro algoritmo: `lead_score`.
-- 17 casos seed prontos, incluindo casos base, bordas, conflitos e overrides inválidos.
+- Algoritmos canônicos: `lead_score` (17 casos) e `community_bot_engine` (15 casos — Vice City NPC Engine).
+- Casos seed com bordas, idempotência, cooldown, condições e overrides inválidos.
 - Persistência em PostgreSQL.
 - Diff esperado x recebido.
 - Validação forte de payload antes de executar o algoritmo.
